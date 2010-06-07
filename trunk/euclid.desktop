@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Euclid WM
+Comment=Dynamic, tiling window manager that aims to have the most flexible layout engine, and most intuitive interface. 
+Exec=start-euclid
+Type=XSession
