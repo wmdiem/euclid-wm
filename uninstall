@@ -1,0 +1,6 @@
+#! /bin/sh
+
+rm -f ./euclid-wm /usr/bin/euclid-wm
+rm -f ./start-euclid /usr/bin/start-euclid
+rm -f ./euclid.desktop /usr/share/xsessions/euclid.desktop
+rm -f ./euclid.1 /usr/share/man/
