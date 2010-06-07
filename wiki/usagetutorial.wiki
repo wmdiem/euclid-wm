@@ -51,15 +51,15 @@ Now we can move this window right. Moving windows the same keys as moving focus,
 
         `<alt> + <shift> + l`
 
-Now you will have two equal, vertically-oriented tracks. The one on the left has three stacked windows, the one on the right, has a single window. The window on the right should still have focus. We can resize it using y/u/i/o Remember these are just like the standard movement keys, just shifted up a row. Think of them as moving the bottom right corner, so to make it taller move the bottom corner down:
+Now you will have two equal, vertically-oriented tracks. The one on the left has three stacked windows, the one on the right, has a single window. The window on the right should still have focus. We can resize it using y/u/i/o Remember these are just like the standard movement keys, just shifted up a row. Think of them as moving the bottom right corner, so to make it wider move the bottom corner right:
 
-        `<alt> + u`
+        `<alt> + o`
 
 Maybe we need it way bigger:
 
         `<alt> + <shift> + <space>`
 
-Will toggle fullscreen. 
+will toggle fullscreen. 
 
 
 Now we, are done with the middle window in the left column, and wish to hid it for now, so we add it to the "stack":
