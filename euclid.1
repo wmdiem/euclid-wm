@@ -1,0 +1,104 @@
+.TH EUCLID 1 6-6-2010
+.SH NAME
+euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
+.SH SYNOPSIS
+.B start-euclid
+.SH DESCRIPTION
+.B euclid  
+.I (euclid-wm)
+aims to be a highly flexible tiling window manger, which allows easy management of large collections of windows entirely from the keyboard.
+.SH USAGE
+.SS Basic Concepts
+Euclid's state can be described from the top down as:
+.IP * A set of 
+.B views.
+These are aranged in a series. Up to 9 of them are numbered. They are composed of a set of visible windows (arranged in 
+.B tracks
+) and minimized windows (stored in a 
+.B stack
+).
+.IP * 
+.B tracks
+are either rows or collumns (the orientation can be toggled at runtime), that contain visible windows. 
+.IP * the
+.B stack
+is a set of minimized windows, associated with a view, which can be viewed at the bottom of the screen in the form of a box containing their titles.
+
+All bindings are prefaced by Meta (M).
+
+.SS Starting Programs
+.IP
+.B M + <enter>
+\- start run dialogue (dmenu). NB: this takes keyboard focus as long as it is open; Once it is opened you must either select a command (with enter) or exit the dialog (with esc).
+.IP 
+.B M + <shift> + <enter>
+\- start x-terminal-emulator
+
+.SS Basic Window Manipulation
+.IP  
+.B M + h/j/k/l 
+\- move focus left/down/up/right
+.IP
+.B M + H/J/K/L 
+\- move focused window left/down/up/right
+.IP
+.B M + u/i/o/p
+\- resize window: move lower right corner left/down/up/right
+.IP
+.B M + <esc>
+\- close currently focused window
+.IP
+.B M + <shift> + <esc>
+\- kill window (for unresponsive programs)
+
+.SS The Stack
+The stack maintins its own focus, which can be identified by its blue color. 
+.IP 
+.B M + <shift> + <space>
+\- Toggle the stack's visibility 
+.IP 
+.B M + .
+\- Move the currently focused window to the stack (i.e., minimize it)
+.IP
+.B M + ,
+\- Move the currently focused stack item to the main area (i.e., restore it)
+.IP
+.B M + ;/'
+\ - Move stack focus up/down
+
+.SS Manipulating Views
+.IP
+.B M + n/m
+\- Move to the previous/next view
+.IP
+.B M + N/M
+\- Move currently focused window to the previous/next view
+.IP
+.B M + 1-9
+\- Move to the 1-9th view
+.IP
+.B M + <shift> + 1-9
+\- Move the currently focused window to the 1-9th view
+
+A note on the order and numbering of views:
+The enumeration is not strictly accurate; View 9 may not be the 9th view. Specifically, once a view is assigned a number it reatins that number regardless of where it actually falls in the list of views. This is so that accessing views based on their number remains consistent. 
+
+The first view, created when euclid starts, is view 1; Going to the previous view makes a new view, but view 1 remains the original one, even though by counting it is now actually the second. Likewise, if one starts on view 1, and goes to view 9, view 9 remains view 9, even though it may actually be the second view. However, numbered views are always in order. So if one starts with view 1 and creates view 9, then creates view 8, view 8 will be placed between views 1 and 9.  
+
+.SS Other 
+.IP
+.B M + <shift> + <space>
+\- Change to fullscreen mode
+.IP 
+.B M + <tab> 
+\- toggle the orientation of the tracks (vertical or horizontal layout)
+.SH BUGS (AND TODO AND MISSING FEATURES)
+.SS TODO:
+.IP 
+Add fullscreen awareness.
+.IP
+Implement config file
+
+.SS MISSING FEATURES (may or may not be implemented)
+.IP 
+Multiscreen awareness. 
