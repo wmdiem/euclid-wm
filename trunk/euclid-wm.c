@@ -6,6 +6,7 @@
 #include<X11/Xutil.h>
 #include<X11/Xatom.h>
 	//need this to get hints and properties
+
 /*BASIC VARIABLE TYPES*/
 
 
