@@ -1832,29 +1832,34 @@ int event_loop() {
 					Atom *prot = NULL;
 					Atom *pp;
 					int n, j;
-					
+					bool dest = true; 
 						if (XGetWMProtocols(dpy, cv->mfocus->win->id, &prot, &n)) {
-							for (j = 0, pp = prot; j < n; j++, pp++)
+							for (j = 0, pp = prot; j < n; j++, pp++) {
 								if (*pp == wm_del_win) {
-							
-										XClientMessageEvent	cm;
-
-										bzero(&cm, sizeof cm);
-										cm.type = ClientMessage;
-										cm.window = cv->mfocus->win->id;
-										cm.message_type = wm_prot;
-										cm.format = 32;
-										cm.data.l[0] = wm_del_win;
-										cm.data.l[1] = CurrentTime;
-										XSendEvent(dpy, cv->mfocus->win->id, False, 0L, (XEvent *)&cm);
-								} else {
-									
-									XDestroyWindow(dpy,cv->mfocus->win->id);
+									dest = false;		
 								};
- 							if (prot)
-								XFree(prot);
+							};	
 						};
-					
+ 						if (prot) {
+							XFree(prot);
+						} else {
+							XDestroyWindow(dpy,cv->mfocus->win->id);
+						};
+						if (dest == false) {
+							XClientMessageEvent	cm;
+							bzero(&cm, sizeof cm);
+							cm.type = ClientMessage;
+							cm.window = cv->mfocus->win->id;
+							cm.message_type = wm_prot;
+							cm.format = 32;
+							cm.data.l[0] = wm_del_win;
+							cm.data.l[1] = CurrentTime;
+							XSendEvent(dpy, cv->mfocus->win->id, False, 0L, (XEvent *)&cm);
+						} else {
+							XDestroyWindow(dpy,cv->mfocus->win->id);
+
+						};
+
 
 					break;
 				case 45:
@@ -1901,14 +1906,15 @@ int event_loop() {
 	
 		
 		} else if (ev.type == EnterNotify && sloppy_focus == true) {
-	//		printf("Mouse entered win %6.0lx\n",ev.xcrossing.window);
+			printf("Mouse entered win %6.0lx\n",ev.xcrossing.window);
 			//set focus
-		/*	struct box *f;
-			f = id_to_box(ev.xcrossing.window);
+			
+			struct cont *f;
+			f = id_to_cont(ev.xcrossing.window);
 			if (f != NULL) {
-				cur_view->main_focus == f;
+				cv->mfocus == f;
 				redraw == true;
-			}; */
+			}; 
 			//do we give focus to windows we don't know about?
 			//XSetInputFocus(dpy,cur_view->main_focus->win->id,None,CurrentTime);
 			//redraw = true;
