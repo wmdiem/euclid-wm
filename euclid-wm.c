@@ -139,20 +139,9 @@ struct cont {
 //we keep a chain of all wins 
 struct  win {
 	struct win *next;
-	
-	bool mapped;   //mapped unmapped: note: this is the internal state
-		//it does not set the state, but alows us to filter dup unmap events
-	bool transient;	//transient? if it is we need to make sure we draw it 
-			//over another window, use XGetTrasientForHint()
-
+	bool del_win;	
+	bool take_focus;
 	Window id; //window id
-	char *title; //use XGetWMName(dpy,w,XTextProperty *->value) to set this
-			//of course it's a string so we need strcpy() to get it
-
-	//it would make life a lot easier to keep a pointer for all the containers and stack items that 
-	//point to this window
-	//maintining the list might be a bitch
-
 };
 
 /*The STACK ITEM
@@ -196,6 +185,7 @@ unsigned long stack_unfocus_pix;
 bool gxerror = false;
 Window stackid;
 Atom wm_del_win;
+Atom wm_take_focus;
 Atom wm_prot;
 
 //actually registers an individual keybinding with X
@@ -484,6 +474,24 @@ struct win * add_win(Window  id) {
 	*/
 
 	struct win *p = (struct win *) malloc(sizeof(struct win));
+	p->take_focus = false;
+	p->del_win = false;
+	Atom *prot = NULL;
+	Atom *pp;
+	int n, j;
+
+	if (XGetWMProtocols(dpy, id, &prot, &n)) {
+		for (j = 0, pp = prot; j < n; j++, pp++) {
+			if (*pp == wm_del_win) {
+				p->del_win = true;		
+			} else if (*pp == wm_take_focus) {
+				p->take_focus = true;
+			};	
+		};
+ 	};	
+	if (prot) {
+		XFree(prot);
+	};
 	p->next = first_win;
 	first_win = p;
 	p->id = id;
@@ -1828,24 +1836,7 @@ int event_loop() {
 					break;
 				//close win soft or hard
 				case 44:
-					printf("closing %6.0lx\n",cv->mfocus->win->id);
-					Atom *prot = NULL;
-					Atom *pp;
-					int n, j;
-					bool dest = true; 
-						if (XGetWMProtocols(dpy, cv->mfocus->win->id, &prot, &n)) {
-							for (j = 0, pp = prot; j < n; j++, pp++) {
-								if (*pp == wm_del_win) {
-									dest = false;		
-								};
-							};	
-						};
- 						if (prot) {
-							XFree(prot);
-						} else {
-							XDestroyWindow(dpy,cv->mfocus->win->id);
-						};
-						if (dest == false) {
+					if (cv->mfocus->win->del_win == true) {
 							XClientMessageEvent	cm;
 							bzero(&cm, sizeof cm);
 							cm.type = ClientMessage;
@@ -1857,10 +1848,7 @@ int event_loop() {
 							XSendEvent(dpy, cv->mfocus->win->id, False, 0L, (XEvent *)&cm);
 						} else {
 							XDestroyWindow(dpy,cv->mfocus->win->id);
-
 						};
-
-
 					break;
 				case 45:
 					XKillClient(dpy,cv->mfocus->win->id);
@@ -2088,6 +2076,7 @@ int main() {
 	
 	//get the delwin atom
 	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",True);
+	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",True);
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	//to compensate for dumb programs
 	work_around();
