@@ -1462,6 +1462,16 @@ void layout() {
 			
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
+					if (cv->mfocus->win->take_focus == true) {
+						XClientMessageEvent cm;
+						bzero (&cm, sizeof(cm));
+						cm.type = ClientMessage;
+						cm.window = cv->mfocus->win->id;
+						cm.message_type = wm_prot;
+						cm.format = 32;
+						cm.data.l[0] = wm_take_focus;
+						cm.data.l[1] = CurrentTime;
+					};
 					XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
 				
 				} else {
