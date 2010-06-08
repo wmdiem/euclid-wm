@@ -423,55 +423,6 @@ struct win * add_win(Window  id) {
 		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
-//	Window par;
-//	XSizeHints *size = XAllocSizeHints();
-//	char **name;
-//	int i;
-//	XTextProperty tp;
-	//XGetTransientForHint(dpy,id,&par);
-	//XGetWMName(dpy,id,&tp);
-	//XGetWMSizeHints(dpy,id,size,NULL,atom);
-//	long user_mask;
-	//XGetWMNormalHints(dpy,id,size,&user_mask);
-	//XmbTextPropertyToTextList(dpy,&tp,&name,&i);
-	//XGetWMSizeHints(dpy,id, . . .);
-	//printf("transient for %lu\nname %s\n",par,name[0]);
-	
-//	if ((size->flags & PPosition) != 0) {
-		//printf("supplied position: %d %d\n",size->x,size->y);
-//	};
-//	if ((size->flags & PSize) != 0) {
-		//printf("supplied size: %dw %dh\n",size->width,size->height);
-		
-//	};
-//	XFree(size);
-	
-	//let's also see which protocols it supports, so we can easily implement them later:
-	// atom = a 32 bit string period. 
-	//XGetWMProtocols(display, w, protocols_return, count_return)
-	//Atom *a;
-	//int tot;
-	//XGetWMProtocols(dpy,id,(Atom **)&a,&tot);
-	//just test reading them:
-	//int j;
-	//int k;
-	
-	/*
-	printf("number of atoms %d\n",tot);
-	for (j = 0; j < tot; j++) {
-		if (*a[j] == wm_del_win) {printf("delwin set\n");};
-		
-	};
-	*/ 
-	//filter: 
-	/*
-	for (j=0; j<tot; j++) {
-		if (a[j] == WM_TAKE_FOCUS) {
-			printf("wmtakefocus true\n");
-		} else if (a[j] == WM_DELETE_WINDOW) {
-			printf("wmdeletewindow true\n");
-	};
-	*/
 
 	struct win *p = (struct win *) malloc(sizeof(struct win));
 	p->take_focus = false;
