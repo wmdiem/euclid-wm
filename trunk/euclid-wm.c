@@ -1878,14 +1878,13 @@ int event_loop() {
 			if (ev.xreparent.parent == root) {
 
 				if (is_top_level(ev.xreparent.window) == true) {
-
-					//add win, check whether it's mapped and add to view	
-					//TODO
-					//look at the startup routine in main() for how to do this
-
-					redraw = true;
-				} else {
-					;
+					struct win *t;
+					XWindowAttributes att;
+					XGetWindowAttributes (dpy,ev.xreparent.window,&att);
+						if (att.map_state != IsUnmapped) {
+							add_client_to_view(t,cv);
+							redraw = true;
+						};
 				};
 			} else {
 				forget_win(ev.xreparent.window);	
@@ -1917,47 +1916,24 @@ int event_loop() {
 		};
 		
 		} else if (ev.type == UnmapNotify ) {
-			//don't think we should check is_top_level, since it may already have b
-			//been destroyed
-	//TODO XXX
-			//not noting this seems to cause problems
-			/*struct box *s;
-			s = id_to_box(ev.xunmap.window);
-			if (s == NULL ) {
-				printf("can't unmap %6.0lx\n",ev.xunmap.window);
-			} else {
-				printf("removing box for win %6.0lx\n",s->win->id);
-				//we don't want to move it to stack
+			struct cont *s;
+			s = id_to_cont(ev.xunmap.window);
+			if (s != NULL ) {
+				//should we move it to stack?
+				//if we do, we probably want to check the wm_state property first
 				//move_to_stack(s);
-				//we want to leave its wins entry
-				//but remove its box
-				//we also have to check whether it's focused
-				if (s->win == cur_view->main_focus->win) {
-					struct box *tmp;
-					tmp = find_rel_win(true,true);
-					if (tmp == NULL) {tmp = find_rel_win(true,false);};
-					if (tmp == NULL) {tmp = find_rel_win(false,true);};
-					if (tmp == NULL) {tmp = find_rel_win(false, false);}
-					cur_view->main_focus = tmp;
-
-					if (cur_view->main_focus != NULL) {
-						printf("focus now set to %6.0lx\n",cur_view->main_focus->win->id);
-					} else {
-						printf("no windows\n");
-					};
-	
-				};
-				remove_box(s);
+					remove_cont(s);	
+				
 				//unless we caused this, we should check the window's original state 
 				//before setting this
 				redraw = true;
 			};
-			*/
+			
 		} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
 
 			add_win(ev.xcreatewindow.window);
-		} else if (ev.type == MappingNotify) {
-			;
+	//	} else if (ev.type == MappingNotify) {
+	//		;
 		};
 	
 	} while (XPending(dpy)); 
