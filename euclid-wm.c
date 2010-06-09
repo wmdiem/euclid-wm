@@ -1335,7 +1335,7 @@ void layout() {
 		XSetInputFocus(dpy,root,None,CurrentTime);
 	};
 	
-	if (cv->fs == true) {
+	if (cv->fs == true && cv->mfocus != NULL && cv->mfocus->win != NULL) {
 		//draw mf fullscreen
 		//make sure height is less stackheight
 		int w = scrn_w;
