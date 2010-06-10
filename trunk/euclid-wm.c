@@ -1344,6 +1344,7 @@ void layout() {
 		
 		XMoveResizeWindow(dpy,cv->mfocus->win->id,(0),(0),(w),(h));
 		XRaiseWindow(dpy,cv->mfocus->win->id);
+		//shoudl we use wm_take_focus?
 		XSetInputFocus(dpy,cv->mfocus->win->id,None,CurrentTime);
 		XSync(dpy,false);
 		
@@ -1459,7 +1460,8 @@ void layout() {
 				//draw curc
 				//set border:
 				if (curc == cv->mfocus) {
-			
+				//check whether it already has focus?
+				
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
 					if (cv->mfocus->win->take_focus == true) {
@@ -1471,8 +1473,11 @@ void layout() {
 						cm.format = 32;
 						cm.data.l[0] = wm_take_focus;
 						cm.data.l[1] = CurrentTime;
-					};
+					}; 
+					//we intentionally do this even if the event was sent, the
+					//event alone does not suffice to get focus on the window
 					XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
+					
 				
 				} else {
 					XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
