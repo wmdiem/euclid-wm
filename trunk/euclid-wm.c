@@ -368,7 +368,6 @@ void remove_cont(struct cont *c) {
 					
 	//is c first in the track?
 	if (c->track->c == c) {
-							
 		//is it only in track?
 		if (c->next == NULL) {
 			//is track first?
@@ -376,13 +375,9 @@ void remove_cont(struct cont *c) {
 			if (c->track == c->track->view->ft) {
 				//is track only?
 				if (c->track->next == NULL) {
-					//TODO, c is the only container in the view
-					//what do we do? leave the track?
-					
 					c->track->c = NULL;
 					free(c);
 					//set focus to root so we still get keys!
-					//it too me _*HOURS*_ to remember this
 					XSetInputFocus(dpy,root,None,CurrentTime);
 				} else {
 					//its the first track, but there is a next
@@ -400,18 +395,19 @@ void remove_cont(struct cont *c) {
 				free (c->track);
 				free(c);
 			}; 
-						
 		} else {//its just first
 			c->track->c = c->next;
 			c->next->prev = NULL;
 			free(c);				
 		};
-	} else { //there a prev 
+	} else { // is there a prev 
 		c->prev->next = c->next;
 		if (c->next != NULL) {
 			c->next->prev = c->prev;
 		};
 		free(c);
+	};
+	if (c != NULL) {
 	};
 	
 };
@@ -420,7 +416,7 @@ void remove_cont(struct cont *c) {
 struct win * add_win(Window  id) {
 //	XSelectInput(dpy,id,EnterWindowMask);
 	if (sloppy_focus == true) {
-		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask | LeaveWindowMask);
+		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
 
@@ -1203,7 +1199,7 @@ void goto_view(struct view *v) {
 void move_to_view(struct view *v) {
 	//move currenlty focused item
 	
-	if (v == NULL || v == cv) {return;};
+	if (v == NULL || v == cv || cv->mfocus == NULL) {return;};
 	
 	//remove it from the current view
 	struct win *w = cv->mfocus->win;
@@ -1307,9 +1303,10 @@ void layout() {
 		
 		struct stack_item *si = cv->stack;
 		int i = 15;
+		GC gc;
+		XGCValues xgcv;
+
 		while (si != NULL) {
-			GC gc;
-			XGCValues xgcv;
 			if (si == cv->sfocus) {
 				xgcv.foreground = stack_focus_pix;
 			} else {
@@ -1461,7 +1458,6 @@ void layout() {
 				//set border:
 				if (curc == cv->mfocus) {
 				//check whether it already has focus?
-				printf ("%6.0lx focused\n", cv->mfocus->win->id);	
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
 					if (cv->mfocus->win->take_focus == true) {
@@ -1859,7 +1855,7 @@ int event_loop() {
 		} else if (ev.type == MapRequest) {
 	
 		
-		} else if (ev.type == EnterNotify && sloppy_focus == true) {
+		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false) {
 			//set focus
 			
 			struct cont *f;
