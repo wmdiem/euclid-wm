@@ -418,9 +418,9 @@ void remove_cont(struct cont *c) {
 
 
 struct win * add_win(Window  id) {
-	XSelectInput(dpy,id,EnterWindowMask);
+//	XSelectInput(dpy,id,EnterWindowMask);
 	if (sloppy_focus == true) {
-		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask);
+		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask | LeaveWindowMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
 
@@ -1461,7 +1461,7 @@ void layout() {
 				//set border:
 				if (curc == cv->mfocus) {
 				//check whether it already has focus?
-				
+				printf ("%6.0lx focused\n", cv->mfocus->win->id);	
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
 					if (cv->mfocus->win->take_focus == true) {
@@ -1860,14 +1860,13 @@ int event_loop() {
 	
 		
 		} else if (ev.type == EnterNotify && sloppy_focus == true) {
-			printf("Mouse entered win %6.0lx\n",ev.xcrossing.window);
 			//set focus
 			
 			struct cont *f;
 			f = id_to_cont(ev.xcrossing.window);
 			if (f != NULL) {
-				cv->mfocus == f;
-				redraw == true;
+				cv->mfocus = f;
+				redraw = true;
 			}; 
 			//do we give focus to windows we don't know about?
 			//XSetInputFocus(dpy,cur_view->main_focus->win->id,None,CurrentTime);
