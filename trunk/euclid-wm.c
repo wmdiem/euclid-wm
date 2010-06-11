@@ -675,15 +675,21 @@ bool is_top_level(Window id) {
 	   		
 			XWindowAttributes wa;
 			XGetWindowAttributes(dpy,id,&wa);
-			if (gxerror == true) {return(false);};
+			if (gxerror == true) {
+				XFree(c);
+				return(false);
+			};
 			if (wa.override_redirect == true) {
+				XFree(c);
 				return(false);
 			} else {
+				XFree(c);
 				return(true);
 			};
 	
 		};
 	};
+	XFree(c);
 	return(false);
 
 };
@@ -1913,17 +1919,13 @@ int event_loop() {
 				//finally add to layout
 				add_client_to_view(w,cv);
 				redraw = true;
-		};
+			};
 		
 		} else if (ev.type == UnmapNotify ) {
 			struct cont *s;
 			s = id_to_cont(ev.xunmap.window);
 			if (s != NULL ) {
-				//should we move it to stack?
-				//if we do, we probably want to check the wm_state property first
-				//move_to_stack(s);
 					remove_cont(s);	
-				
 				//unless we caused this, we should check the window's original state 
 				//before setting this
 				redraw = true;
