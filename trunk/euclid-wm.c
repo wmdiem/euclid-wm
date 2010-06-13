@@ -1187,6 +1187,18 @@ void goto_view(struct view *v) {
 		};
 		t = t->next;
 	};
+	if (cv->mfocus == NULL && cv->sfocus == NULL) {
+		//current view should be empty, let's free it
+		if (cv->prev != NULL) {
+			cv->prev->next = cv->next;
+		};
+		if (cv->next != NULL) {
+			cv->next->prev = cv->prev;
+		};
+		if (cv == fv) {
+			fv = cv->next;
+		};
+	};
 	
 	cv = v;
 	t = v->ft;
