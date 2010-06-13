@@ -1317,6 +1317,7 @@ void layout() {
 	if (stackheight != 0) {
 		
 		XMoveResizeWindow(dpy,stackid,0,(scrn_h - (stackheight)),scrn_w,(stackheight));
+		XRaiseWindow(dpy,stackid);
 		XSync(dpy,false);
 		
 		struct stack_item *si = cv->stack;
