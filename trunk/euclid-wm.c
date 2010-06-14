@@ -414,6 +414,7 @@ void remove_cont(struct cont *c) {
 
 
 struct win * add_win(Window  id) {
+
 //	XSelectInput(dpy,id,EnterWindowMask);
 	if (sloppy_focus == true) {
 		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
@@ -426,8 +427,10 @@ struct win * add_win(Window  id) {
 	Atom *prot = NULL;
 	Atom *pp;
 	int n, j;
-
+	//the following line causes a fatal X error, X_configure_request, bad property, at startup
+	//this should not be creating any such  request
 	if (XGetWMProtocols(dpy, id, &prot, &n)) {
+	
 		for (j = 0, pp = prot; j < n; j++, pp++) {
 			if (*pp == wm_del_win) {
 				p->del_win = true;		
@@ -1858,6 +1861,7 @@ int event_loop() {
 	
 			//check whether we know about it
 			//look at scrotwm 3198 
+			/*
 			XWindowChanges wc;
 			wc.x = ev.xconfigurerequest.x;
 			wc.y = ev.xconfigurerequest.y;
@@ -1867,7 +1871,7 @@ int event_loop() {
 			wc.sibling = ev.xconfigurerequest.above;
 			wc.stack_mode = ev.xconfigurerequest.detail;
 			XConfigureWindow(dpy,ev.xconfigurerequest.window,ev.xconfigurerequest.value_mask, &wc);
-			
+			*/
 			add_client_to_view(add_win(ev.xconfigurerequest.window),cv);
 			redraw = 1;
 
@@ -2044,24 +2048,25 @@ int main() {
 	XQueryTree(dpy,root,&d1,&d2,&wins,&no);
 	struct win *t;
 	printf("%d windows\n",no);
-	for (i = 0 ; i<no; i++) {
+/*	for (i = 0 ; i<no; i++) {
 		
 		//we must make sure all these window are mapped 
 		//before adding them to the first view
 	//needs to be coded
 
 		if (is_top_level(wins[i])) {
-			
 			t = add_win(wins[i]);
 			XWindowAttributes att;
 			XGetWindowAttributes(dpy,wins[i],&att);
 			if (att.map_state != IsUnmapped) {
 			//addendum
+			
 				add_client_to_view(t,cv);
 			};
 		};
 
 	};
+*/	
 	//and set an event on root to get new ones
 	if  (XSelectInput(dpy,root,SubstructureNotifyMask )) {
 		printf("Now controlling root\n");
@@ -2070,7 +2075,7 @@ int main() {
 		return(1);
 	};
 	XSync(dpy,False);
-
+	
 //make the stack window:
 	stackid = XCreateSimpleWindow(dpy,root,0,(scrn_h-15),scrn_w,15,1,stack_unfocus_pix,stack_background_pix);
 	XSetWindowAttributes att;
