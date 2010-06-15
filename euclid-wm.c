@@ -672,6 +672,10 @@ bool is_top_level(Window id) {
 	//if (p == root) {return(true);} else {return(false);};
 	gxerror = false;
 	XQueryTree(dpy,root,&r,&p,&c,&nc);
+	if (gxerror) {
+		gxerror = false;
+		return(false);
+	};
 	int i;
 	for (i = 0; i < nc; i++) {
 		if (c[i] == id) {
@@ -679,6 +683,7 @@ bool is_top_level(Window id) {
 			XWindowAttributes wa;
 			XGetWindowAttributes(dpy,id,&wa);
 			if (gxerror == true) {
+				gxerror = false;
 				XFree(c);
 				return(false);
 			};
@@ -2036,19 +2041,21 @@ int main() {
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	//to compensate for dumb programs
 	work_around();
-	 int i;
+	int i;
 	 
-	 cv = make_view();
-	 fv = cv;
-	 cv->idx = 1;
-	
+	cv = make_view();
+	fv = cv;
+	cv->idx = 1;
+
+	XSetErrorHandler(xerror);
+
 	//now we also need to get all already exisiting windows
 	Window d1, d2, *wins = NULL;
 	unsigned int no;
 	XQueryTree(dpy,root,&d1,&d2,&wins,&no);
 	struct win *t;
 	printf("%d windows\n",no);
-/*	for (i = 0 ; i<no; i++) {
+	for (i = 0 ; i<no; i++) {
 		
 		//we must make sure all these window are mapped 
 		//before adding them to the first view
@@ -2066,7 +2073,7 @@ int main() {
 		};
 
 	};
-*/	
+	
 	//and set an event on root to get new ones
 	if  (XSelectInput(dpy,root,SubstructureNotifyMask )) {
 		printf("Now controlling root\n");
@@ -2086,7 +2093,6 @@ int main() {
 
 	//we need to set a custom error handler, so we don't die on recoverable errors
 	//code this:
-	XSetErrorHandler(xerror);
 	
 	layout();
 	//code:
