@@ -1579,8 +1579,7 @@ int event_loop() {
 			//first find the keypress index from bindings[]
 			int i = 0;
 			
-			//TODO this can cause a segfault
-			//apparently i'm listening to more keys than i have recorded? (overrunning the array)
+			//TODO this once appeared to cause a segfault
 			
 			while ((bindings[i].keycode != ev.xkey.keycode) || (bindings[i].mask != ev.xkey.state)) {
 				i++;
@@ -1742,28 +1741,12 @@ int event_loop() {
 					break;
 				//toggle stack
 				case 32:
-				/*in the new version we are going to create this window the the view
-				 * and destroy it with the view
-				 * if it is not displayed, we just unmap it
-				 * is this going to cause us problems with redrawing when the content changes?
-				 * 
-				 */
-				
+		
 					if (cv->showstack == true) {
-					//	XDestroyWindow(dpy,cur_view->stack_id);	
 						cv->showstack = false;
-					//	cur_view->layout->size = scrn_h;		
 					} else {
 						cv->showstack = true;
-						//we have to make sure overrideredirect is set
-						//args: display, parent,x,y,width,height,border_w,border_pix,background
-						//these pixel values could be a problem, may have to define them
-				//		cur_view->stack_id = XCreateSimpleWindow(dpy,root,0,(scrn_h-15),scrn_w,15,1,stack_unfocus_pix,stack_background_pix);
-				//		XSetWindowAttributes att;
-				//		att.override_redirect = true;
-				//		XChangeWindowAttributes(dpy,cur_view->stack_id,CWOverrideRedirect,&att);
-				//		XMapWindow(dpy,cur_view->stack_id);
-					};
+							};
 					
 					redraw = true;
 					break;
@@ -1778,14 +1761,11 @@ int event_loop() {
 				//move to main
 				case 34:
 					move_to_main();
-					//this was cv->mfocus ???
 					XMapWindow(dpy,cv->mfocus->win->id);
-				//	XSync(dpy,false);	
 				
 					redraw = true;
 					break;
-				//swap stack main
-				//we are actually going to use this to flip the layout
+				//flip the layout
 				case 35:
 					if (cv->orientv == true) {
 						cv->orientv = false;
@@ -1865,25 +1845,6 @@ int event_loop() {
 					
 			};
 			
-		} else if (ev.type == ConfigureRequest) {
-	
-			//check whether we know about it
-			//look at scrotwm 3198 
-			/*
-			XWindowChanges wc;
-			wc.x = ev.xconfigurerequest.x;
-			wc.y = ev.xconfigurerequest.y;
-			wc.width = ev.xconfigurerequest.width;
-			wc.height = ev.xconfigurerequest.height;
-			wc.border_width = ev.xconfigurerequest.border_width;
-			wc.sibling = ev.xconfigurerequest.above;
-			wc.stack_mode = ev.xconfigurerequest.detail;
-			XConfigureWindow(dpy,ev.xconfigurerequest.window,ev.xconfigurerequest.value_mask, &wc);
-			*/
-			add_client_to_view(add_win(ev.xconfigurerequest.window),cv);
-			redraw = 1;
-
-		} else if (ev.type == MapRequest) {
 	
 		
 		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false) {
@@ -1895,17 +1856,7 @@ int event_loop() {
 				cv->mfocus = f;
 				redraw = true;
 			}; 
-			//do we give focus to windows we don't know about?
-			//XSetInputFocus(dpy,cur_view->main_focus->win->id,None,CurrentTime);
-			//redraw = true;
 		} else if (ev.type == ReparentNotify) {
-		//this and destroy notify need to be rewritten
-		//of primary importance: 
-		//we must ensure that we are checking all layouts! (otherwise swtiching desktops as we get a destroy notify
-		//will leave null pointers)
-		//also we need to make sure we implement all part of reparent
-		//we should make a forget_win() func that both can call
-
 			if (ev.xreparent.parent == root) {
 
 				if (is_top_level(ev.xreparent.window) == true) {
@@ -1959,8 +1910,6 @@ int event_loop() {
 		} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
 
 			add_win(ev.xcreatewindow.window);
-	//	} else if (ev.type == MappingNotify) {
-	//		;
 		};
 	
 	} while (XPending(dpy)); 
