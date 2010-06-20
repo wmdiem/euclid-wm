@@ -415,9 +415,11 @@ void remove_cont(struct cont *c) {
 
 struct win * add_win(Window  id) {
 
-//	XSelectInput(dpy,id,EnterWindowMask);
+//Here is the problem: EnterWindowMask gives us exactly what we want most of the time
+//but it also gets sent when we move a window under the cursor which is very bad for 
+//usability
 	if (sloppy_focus == true) {
-		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
+		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
 
@@ -1560,18 +1562,14 @@ int event_loop() {
 	do {
 		XNextEvent(dpy, &ev);
 	
-		if (ev.type == MotionNotify && sloppy_focus == true) {
+		if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
 			
-		if (cv->mfocus->win->id != ev.xmotion.window) {
+			if (cv->mfocus->win->id != ev.xmotion.window) {
 				struct cont *f = id_to_cont(ev.xmotion.window);
 				if (f != NULL) {
 					cv->mfocus = f;
-
 					redraw = true;
-				} else {
-					;
 				};
-
 			}; 
 			
 		} else if (ev.type == KeyPress) {
@@ -1846,10 +1844,9 @@ int event_loop() {
 			};
 			
 	
-		
-		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false) {
+		//for this to ever get called we need to have asked for an EnterNotify on the window
+		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false && cv->fs == false) {
 			//set focus
-			
 			struct cont *f;
 			f = id_to_cont(ev.xcrossing.window);
 			if (f != NULL) {
