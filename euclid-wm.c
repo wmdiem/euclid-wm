@@ -1563,7 +1563,7 @@ int event_loop() {
 		XNextEvent(dpy, &ev);
 	
 		if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
-			
+			printf("motion notify");	
 			if (cv->mfocus->win->id != ev.xmotion.window) {
 				struct cont *f = id_to_cont(ev.xmotion.window);
 				if (f != NULL) {
@@ -1847,6 +1847,7 @@ int event_loop() {
 		//for this to ever get called we need to have asked for an EnterNotify on the window
 		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false && cv->fs == false) {
 			//set focus
+			printf("enternotify\n");
 			struct cont *f;
 			f = id_to_cont(ev.xcrossing.window);
 			if (f != NULL) {
@@ -1854,6 +1855,7 @@ int event_loop() {
 				redraw = true;
 			}; 
 		} else if (ev.type == ReparentNotify) {
+			printf("reparent notify\n");
 			if (ev.xreparent.parent == root) {
 
 				if (is_top_level(ev.xreparent.window) == true) {
@@ -1870,11 +1872,14 @@ int event_loop() {
 			};
 			
 		} else if (ev.type == DestroyNotify ) {
-
+			printf("destroy notify\n");
 			forget_win(ev.xdestroywindow.window);
-			redraw = true;
+			//the following should be unnecessary, if it was mapped, we should first have gotten an unmap notify
+			//this is taken out because it appears to have been responsible for the google-chrome bug (no.5)
+			//redraw = true;
 				
 		} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
+			printf("map notify\n");
 			//check whether it's in the layout, if not add it
 			if (id_to_cont(ev.xmap.window) != NULL) {
 				 //it's a dup
@@ -1895,17 +1900,20 @@ int event_loop() {
 			};
 		
 		} else if (ev.type == UnmapNotify ) {
+			printf("unmap notify\n");
 			struct cont *s;
 			s = id_to_cont(ev.xunmap.window);
 			if (s != NULL ) {
+					printf("found, it's displayed");
 					remove_cont(s);	
 				//unless we caused this, we should check the window's original state 
 				//before setting this
+				
 				redraw = true;
 			};
 			
 		} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
-
+			printf("createnotify \n");
 			add_win(ev.xcreatewindow.window);
 		};
 	
