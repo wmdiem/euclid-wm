@@ -1307,15 +1307,13 @@ void layout() {
 		//count items in stack
 		struct stack_item *si = cv->stack;
 		int i = 0;
-		//how can this cause a segfault?
-		//si must be garbage
 		while (si != NULL) {
 			i++;
 			si = si->next;
 		};
 		stackheight = (i * 20); 
 		if (i == 0) {
-			stackheight = 3;
+			stackheight = 8; //this gives the user a visial clue that the stack is visible, but it is just empty. 
 		};
 	};
 	
@@ -1362,11 +1360,16 @@ void layout() {
 	if (cv->fs == true && cv->mfocus != NULL && cv->mfocus->win != NULL) {
 		//draw mf fullscreen
 		//make sure height is less stackheight
-		int w = scrn_w;
+		int w = scrn_w + 2;
 		int h = scrn_h;
+		if (cv->showstack == true) {
+			h += 1;
+		} else {
+			h += 2;
+		};
 		h -= stackheight;
 		
-		XMoveResizeWindow(dpy,cv->mfocus->win->id,(0),(0),(w),(h));
+		XMoveResizeWindow(dpy,cv->mfocus->win->id,(-1),(-1),(w),(h));
 		XRaiseWindow(dpy,cv->mfocus->win->id);
 		//shoudl we use wm_take_focus?
 		XSetInputFocus(dpy,cv->mfocus->win->id,None,CurrentTime);
@@ -1519,7 +1522,7 @@ void layout() {
 					h = curt->size;
 				};
 			
-				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w - 3),(h - 3));
+				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w - 2),(h - 2));
 				offsetc += curc->size;
 				curc = curc->next;
 			};
