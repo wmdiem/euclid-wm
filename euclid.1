@@ -9,7 +9,7 @@ euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
 aims to be a highly flexible tiling window manger, which allows easy management of large collections of windows entirely from the keyboard.
 .SH USAGE
 .SS Basic Concepts
-Euclid's state can be described from the top down as:
+Euclid's state can be described as:
 .IP * A set of 
 .B views.
 These are aranged in a series. Up to 9 of them are numbered. They are composed of a set of visible windows (arranged in 
@@ -24,7 +24,7 @@ are either rows or collumns (the orientation can be toggled at runtime), that co
 .B stack
 is a set of minimized windows, associated with a view, which can be viewed at the bottom of the screen in the form of a box containing their titles.
 
-All bindings are prefaced by Meta (M).
+All bindings are prefaced by Meta (M, generally alt).
 
 .SS Starting Programs
 .IP
@@ -52,7 +52,7 @@ All bindings are prefaced by Meta (M).
 \- kill window (for unresponsive programs)
 
 .SS The Stack
-The stack maintins its own focus, which can be identified by its blue color. 
+The stack maintins its own focus; The currently focused item can be identified by its blue color. 
 .IP 
 .B M + <shift> + <space>
 \- Toggle the stack's visibility 
@@ -95,10 +95,14 @@ The first view, created when euclid starts, is view 1; Going to the previous vie
 .SH BUGS (AND TODO AND MISSING FEATURES)
 .SS TODO:
 .IP 
-Add fullscreen awareness.
+Add fullscreen awarenessi so if a window tries to make itself fullscreen, euclid will switch to fs mode. (You can work around this for the moment by switching euclid to fullscreen mode before switching the app to full screen mode.)
 .IP
 Implement config file
 
-.SS MISSING FEATURES (may or may not be implemented)
+.SS MISSING FEATURES (may or may not be implemented):
 .IP 
 Multiscreen awareness. 
+
+.SS CURRENT issues and reporting: 
+.IP
+Please go to http://code.google.com/p/euclid-wm/issues/list to see the most recent set of known issues, to report new bugs, or request features. 
