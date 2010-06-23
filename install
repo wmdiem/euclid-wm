@@ -1,5 +1,8 @@
 #! /bin/sh
 
+if [ ! `which dmenu_run` ]; then echo "dmenu_run not found, you should install dmenu before running euclid-wm"; fi
+if [ ! `which x-terminal-emulator` ]; then echo "x-terminal-emulator not found, you should define it"; fi
+if [ ! `which x-terminal-emulator` ] && [ ! `which dmenu_run` ]; then echo "neither x-terminal-emulator, nor dmenu_run can be found: without at least one of these you will not be able to run anything once you start euclid-wm"; fi
 cp ./euclid-wm /usr/bin/euclid-wm
 cp ./start-euclid /usr/bin/start-euclid
 cp ./euclid.desktop /usr/share/xsessions/euclid.desktop
