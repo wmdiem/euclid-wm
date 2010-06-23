@@ -6,4 +6,4 @@ if [ ! `which x-terminal-emulator` ] && [ ! `which dmenu_run` ]; then echo "ERRO
 cp ./euclid-wm /usr/bin/euclid-wm
 cp ./start-euclid /usr/bin/start-euclid
 cp ./euclid.desktop /usr/share/xsessions/euclid.desktop
-cp ./euclid.1 /usr/share/man/euclid-wm.1
+cp ./euclid.1 /usr/share/man/man1/euclid-wm.1
