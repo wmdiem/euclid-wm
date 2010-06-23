@@ -1,5 +1,5 @@
 SHARE_DIR = /usr/share
-EXE_DIR = /usr/bin
+BIN_DIR = /usr/bin
 CC = cc
 INSTALL = install
 CFLAGS += -O3
