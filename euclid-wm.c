@@ -295,7 +295,7 @@ void bind_keys() {
 	bind_key("space",mods,&bindings[48]);
 
 	//quit					1	49
-	//bind_key("",mod,&bindings[45]);
+	bind_key("Delete",mods,&bindings[49]);
 
 };
 
@@ -1839,6 +1839,10 @@ int event_loop() {
 						cv->fs = true;
 					};
 					redraw = true;
+					break;
+				//quit	
+				case 49:
+					return;				
 					break;
 					
 			};
