@@ -705,7 +705,7 @@ bool is_top_level(Window id) {
 };
 
 short int convert_to_internal_dir(short int dir) {/*four possibilities: 
-	 * 	1) we are moving down in the track
+	 *  1) we are moving down in the track
 	 *  2) we are movign up in the track
 	 *  3) we are moving down accross tracks
 	 *  4) we are moving up accross tracks
@@ -731,13 +731,13 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 			dir = 4;
 			break;
 		case 2:
-			dir = 2;
+			dir = 1;
 			break;
 		case 3:
 			dir = 3;
 			break;
 		case 4:	
-			dir = 1;
+			dir = 2;
 			break;
 		};
 	
