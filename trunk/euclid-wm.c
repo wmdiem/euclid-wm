@@ -1027,6 +1027,7 @@ void shift_window(short int dir) {
 };
 
 void shift_main_focus(short int dir) {
+	if (cv->mfocus == NULL) {return;};
 
 	dir = convert_to_internal_dir(dir);
 
