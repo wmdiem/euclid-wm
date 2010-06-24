@@ -187,6 +187,8 @@ Window stackid;
 Atom wm_del_win;
 Atom wm_take_focus;
 Atom wm_prot;
+char *dmcmd[] = {"dmenu_run",NULL};
+char *tcmd[] = {"x-terminal-emulator",NULL};
 
 //actually registers an individual keybinding with X
 //and records the keycode in appropriate array
@@ -312,6 +314,19 @@ void work_around() {
 	XChangeProperty(dpy,root,netwmcheck,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
 	XChangeProperty(dpy,root,netwmname,utf8_string,8,PropModeReplace,"LG3D",strlen("LG3D"));
 	XSync(dpy,False);
+};
+
+void spawn(char **arg) {
+	if (fork() == 0) {
+		if (dpy != NULL) {
+			close(ConnectionNumber(dpy));
+			setsid();
+			execvp(arg[0],arg);
+			exit(1);
+		};
+	} else {
+		return;
+	};
 };
 
 /*Makes a new view*/
@@ -1828,11 +1843,13 @@ int event_loop() {
 					break;
 				//run menu/xterm
 				case 46:
-					system("dmenu_run &");
+					spawn(dmcmd);
+					//system("dmenu_run &");
 					break;
 				case 47:
 					//spawn xterm
-					system("x-terminal-emulator &");
+					spawn(tcmd);
+					//system("x-terminal-emulator &");
 					break;
 				//fullscreen:
 				case 48:
