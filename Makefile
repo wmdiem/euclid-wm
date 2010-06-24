@@ -1,37 +1,31 @@
-SHARE_DIR = /usr/share
-BIN_DIR = /usr/bin
-CC = cc
-INSTALL = install
-CFLAGS += -O3
-CFLAGS += -oeuclid-wm
-CFLAGS += -pipe
-LDFLAGS += -lX11
+PREFIX    = usr
+SHAREDIR  = ${PREFIX}/share
+MANDIR    = ${SHAREDIR}/man
+BINDIR    = ${PREFIX}/bin
 
-.SILENT:
-.PHONEY: install clean uninstall dist distclean
+CC = cc -pedantic -Wall
+CFLAGS = -O2 -g
+LDFLAGS = -lX11
 
-all: euclid-wm.c
-	$(CC) $(LDFLAGS) $(CFLAGS) ./euclid-wm.c 
-	
+.PHONY: all install clean uninstall
+
+all: euclid-wm
+
+euclid-wm: euclid-wm.c
+	${CC} ${LDFLAGS} ${CFLAGS} $< -o $@
+
 install: all
-	
-	if [ ! `which dmenu_run` ]; then echo "WARNING: dmenu_run not found, you should install dmenu before running euclid-wm"; fi
-	if [ ! `which x-terminal-emulator` ]; then echo "WARNING: x-terminal-emulator not found, you should define it before running euclid-wm"; fi
-	if [ ! `which x-terminal-emulator` ] && [ ! `which dmenu_run` ]; then echo "ERROR: Neither x-terminal-emulator, nor dmenu_run can be found. Without at least one of these you will not be able to run anything once you start euclid-wm.Please install one of these and try again. Aborting install."; exit 1; fi
-	cp ./euclid-wm $(BIN_DIR)/euclid-wm
-	cp ./start-euclid $(BIN_DIR)/start-euclid
-	cp ./euclid.desktop $(SHARE_DIR)/xsessions/euclid.desktop
-	cp ./euclid.1 $(SHARE_DIR)/man/man1/euclid-wm.1
-	chmod 0755 $(BIN_DIR)/euclid-wm
-	chmod 0644 $(SHARE_DIR)/man/man1/euclid-wm.1
-	chmod 0755 $(SHARE_DIR)/xsessions/euclid.desktop
-	chmod 0755 $(BIN_DIR)/start-euclid
+	@install -m755 euclid-wm -D ${DESTDIR}/${BINDIR}/euclid-wm
+	@install -m755 start-euclid -D ${DESTDIR}/${BINDIR}/start-euclid
+	@install -m644 euclid.desktop -D ${DESTDIR}/${SHAREDIR}/xsessions/euclid.desktop
+	@install -m644 euclid.1 ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 
 uninstall:
-	rm -f $(BIN_DIR)/euclid-wm
-	rm -f $(BIN_DIR)/start-euclid
-	rm -f $(SHARE_DIR)/xsessions/euclid.desktop
-	rm -f $(SHARE_DIR)/man/man1/euclid-wm.1
+	rm -f ${DESTDIR}/${BINDIR}/euclid-wm
+	rm -f ${DESTDIR}/${BINDIR}/start-euclid
+	rm -f ${DESTDIR}/${SHAREDIR}/xsessions/euclid.desktop
+	rm -f ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 
-clean: 
-	rm -f euclid-wm 
+clean:
+	rm -f euclid-wm
+
