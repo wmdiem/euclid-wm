@@ -745,6 +745,9 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 	return dir;
 };
 void shift_window(short int dir) {
+	if (cv->mfocus == NULL) {
+		return;
+	};
 	dir = convert_to_internal_dir(dir);
 	if (dir == 1 && cv->mfocus->next != NULL) { //down in the track;
 		//get a direct reference to all four nodes
