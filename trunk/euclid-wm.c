@@ -2026,9 +2026,6 @@ int main() {
 	scrn_h = DisplayHeight(dpy,DefaultScreen(dpy));
 	scrn_w = DisplayWidth(dpy,DefaultScreen(dpy));
 	printf("Sreen dimensions: %d %d\n",scrn_h, scrn_w);
-	
-	//code this:
-	//cv = make_view();
 
 	//set some stuff
 	if (root = DefaultRootWindow(dpy)) {
@@ -2141,9 +2138,6 @@ int main() {
 	XMapWindow(dpy,stackid);
 	XSync(dpy,False);
 
-	//we need to set a custom error handler, so we don't die on recoverable errors
-	//code this:
-	
 	layout();
 	//code:
 	event_loop();
