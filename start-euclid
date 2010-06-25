@@ -1,8 +1,0 @@
-#! /bin/sh
-
-#rm ~/.euclid.log2
-#cp ~/.euclid.log1 ~/euclid.log2
-
-#MALLOC_CHECK_=0 exec /usr/bin/euclid-wm 
-#>~/.euclid.log1
-/usr/bin/euclid-wm
