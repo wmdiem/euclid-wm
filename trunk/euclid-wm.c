@@ -334,11 +334,13 @@ void load_conf() {
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
 	if (conf == NULL) {
+		bind_keys();
 		return;
 	};
 	printf("conf file opened successfully: %s\n",conffile);
 	//now at long last we can loop through it and set values
 	char line[256];
+	bool bound_keys = false;
 	while (fgets(line, 256, conf) != NULL) {
 		//parse line
 		if (line[0] != '#') {
@@ -394,6 +396,7 @@ void load_conf() {
 					mods = Mod5Mask | ShiftMask;
 				};
 				bind_keys();
+				bound_keys = true;
 			/*
 			 *Actual bindings, format:
 			 *bind_$ACT = mod keyname
@@ -402,6 +405,10 @@ void load_conf() {
 			 */
 			} else if (strcmp(key,"bind_quit") == 0) {
 				//get the name of the key, and the modifier
+				if (bound_keys == false) {
+					bind_keys();
+					bound_keys = true;
+				};
 				char m[3];
 				char xkey[24];
 				split(v,m,xkey,' ');
