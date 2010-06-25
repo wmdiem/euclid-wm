@@ -1,16 +1,34 @@
+#Configuration for euclid-wm
+#This file needs to be in $XDG_CONFIG_HOME (if $XDG_CONFIG_HOME is defined)
+#Otherwise it needs to be in $HOME/.config
+#it must be named euclid-wm.conf
+
+#SYNTAX
+#The parser is quite simple, so take note of case and spaces (including trailing whitespace)
+#The order of some of settings does matter: if modkey is to be set, it *MUST* be set before the
+#first keybinding 
+#the general format is 
+#KEY = VALUE1 VALUE2
+#or
+#KEY = VALUE
+#
+
 #EXTERNAL COMMANDS
 #note, currently these can only be a single argument long (i.e., just the command name)
 #if you need to pass arguments call a script instead. 
+
 dmenu = dmenu_run
 term = xterm
 
 #MODKEY
 #This is just a number
 #It must be defined prior to setting any bindings
+
 modkey = 1
 
 #BINDINGS
 #binding format is bind_ACT = MOD KEY
 #values of mod are M or MS (mod or mod + shift)
 #KEY is an X Keyname
+
 bind_quit = MS q
