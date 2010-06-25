@@ -2031,6 +2031,9 @@ int event_loop() {
 					break;
 				//close win soft or hard
 				case 44:
+					if (cv->mfocus == NULL || cv->mfocus->win == NULL) {
+						break;
+					};
 					if (cv->mfocus->win->del_win == true) {
 							XClientMessageEvent	cm;
 							bzero(&cm, sizeof cm);
@@ -2046,7 +2049,9 @@ int event_loop() {
 						};
 					break;
 				case 45:
-					XKillClient(dpy,cv->mfocus->win->id);
+					if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
+						XKillClient(dpy,cv->mfocus->win->id);
+					};
 					break;
 				//run menu/xterm
 				case 46:
