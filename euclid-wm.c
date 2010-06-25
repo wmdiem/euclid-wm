@@ -187,8 +187,8 @@ Window stackid;
 Atom wm_del_win;
 Atom wm_take_focus;
 Atom wm_prot;
-char *dmcmd[] = {"dmenu_run",NULL};
-char *tcmd[] = {"x-terminal-emulator",NULL};
+char *dmcmd[2];
+char *tcmd[2] = {"xterm",NULL};
 
 //actually registers an individual keybinding with X
 //and records the keycode in appropriate array
@@ -299,6 +299,79 @@ void bind_keys() {
 	//quit					1	49
 	bind_key("Delete",mods,&bindings[49]);
 
+};
+
+void split(char *in, char *out1, char *out2, char delim) {
+	int i = 0;
+	while (*in != '\0' && *in != delim) {
+		out1[i] = *in;
+		in++;
+		i++;
+	};
+	out1[i] = '\0';
+	in++;
+	strcpy (out2,in);
+};
+
+void load_conf() {
+	FILE *conf;
+	char confdir[512];
+	char conffile[512];
+	bzero(confdir, sizeof(confdir));
+	confdir[0] = '\0';
+	char *xdgconf = getenv("XDG_CONFIG_HOME");
+	if (xdgconf == NULL) {
+		char *home = getenv("HOME");
+		if (home != NULL) { 
+			strcpy(confdir, home);
+			strcat(confdir,"/.config");
+		};
+	} else { 
+		strcat(confdir,xdgconf);
+	};
+	//at this point confdir is pointing at xdgconf, if it exists, now we see whether there is a file in it 
+	strcpy(conffile,confdir);
+	strcat(conffile,"/euclid-wm.conf");
+        conf = fopen(conffile,"r");
+	if (conf == NULL) {
+		return;
+	};
+	printf("conf file opened successfully: %s\n",conffile);
+	//now at long last we can loop through it and set values
+	char line[256];
+	while (fgets(line, 256, conf) != NULL) {
+		//parse line
+		if (line[0] != '#') {
+			char key[64];
+			char val[256];
+			char *v;
+			split(line,key,val,'=');
+			if (val[0] == ' ') {
+				v = &val[1];
+			} else {
+				v = &val[0];
+			};
+			if (val[strlen(val)-1] == '\n') {
+				val[strlen(val) - 1] = '\0';
+			};
+		
+			if (strcmp(key,"dmenu ") == 0 || strcmp(key,"dmenu") == 0) {
+				dmcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
+				strcpy(dmcmd[0],v);
+				dmcmd[1] = NULL;
+				printf("dmenu: %s\n",dmcmd[0]);
+				
+			} else if (strcmp(key,"term ") == 0 || strcmp(key,"term") == 0) {
+				tcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
+				strcpy(tcmd[0],v);
+				tcmd[1] = NULL;
+				printf("term: %s\n",tcmd[0]);
+
+			};
+		};
+		//set value
+	};
+	fclose(conf);
 };
 
 /*fixes bugs in dumb programs that assume a reparenting wm
@@ -2009,10 +2082,13 @@ int main() {
 	//we have to do this after we get root
 	bind_keys();
 	
+	load_conf();
+
 	//get the delwin atom
 	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",True);
 	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",True);
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
+
 	//to compensate for dumb programs
 	work_around();
 	int i;
