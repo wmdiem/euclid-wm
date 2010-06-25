@@ -24,11 +24,38 @@ term = xterm
 #This is just a number
 #It must be defined prior to setting any bindings
 
-modkey = 1
+#modkey = 1
 
 #BINDINGS
 #binding format is bind_ACT = MOD KEY
 #values of mod are M or MS (mod or mod + shift)
 #KEY is an X Keyname
 
+bind_resize_left = M t
+bind_resize_down = M u
+bind_resize_up = M i
+bind_resize_right = M o
+bind_goto_next_view = M m
+bind_goto_previous_view = M n
+bind_move_to_next_view = MS m
+bind_move_to_previous_view = MS n
+bind_shift_win_left = MS h
+bind_shift_win_down = MS j
+bind_shift_win_up = MS k
+bind_shift_win_right = MS l
+bind_toggle_stack = M space
+bind_move_to_stack = M period
+bind_move_to_main = M comma
+bind_toggle_orientation = MS Tab
+bind_focus_left = M h
+bind_focus_down = M j
+bind_focus_up = M k
+bind_focus_right = M l
+bind_stack_focus_up = M semicolon
+bind_stack_focus_down = M apostrophe
+bind_close_win = M Escape
+bind_kill_win = MS Escape
+bind_spawn_menu = M Return
+bind_spawn_term = MS Return
+bind_toggle_fullscreen = MS space
 bind_quit = MS q

@@ -202,7 +202,8 @@ void bind_key(char s[12], unsigned int m, struct binding *b) {
 	b->keycode = code;
 	b->mask = m;
 	//register the binding with X
-	XGrabKey(dpy,code,m,root,True,GrabModeAsync,GrabModeAsync);
+	//this should be delayed, to avoid issues with getting getting bindings we don't want
+//	XGrabKey(dpy,code,m,root,True,GrabModeAsync,GrabModeAsync);
 
 };
 
@@ -364,18 +365,17 @@ void load_conf() {
 				dmcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(dmcmd[0],v);
 				dmcmd[1] = NULL;
-				printf("dmenu: %s\n",dmcmd[0]);
 				
 			} else if (strcmp(key,"term") == 0) {
 				tcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(tcmd[0],v);
 				tcmd[1] = NULL;
-				printf("term: %s\n",tcmd[0]);
 				//with keybindings, we need to know the mod key before we define them
 				//the basic sequence is: 
-				//define mod (from file for default)
+				//define mod (from file or default)
 				//then call bind_keys
 				//then overwrite defaults with any custom bindings
+				//then commit them
 			//template:
 			//} else if (strcmp(key,"") == 0) { 
 			} else if (strcmp(key,"modkey") == 0) {
@@ -398,29 +398,112 @@ void load_conf() {
 				bind_keys();
 				bound_keys = true;
 			/*
-			 *Actual bindings, format:
+			 *Actual bindings, format
 			 *bind_$ACT = mod keyname
 			 *mod can be M or MS
 			 *keyname is the exact name passed to X
 			 */
-			} else if (strcmp(key,"bind_quit") == 0) {
-				//get the name of the key, and the modifier
-				if (bound_keys == false) {
-					bind_keys();
-					bound_keys = true;
-				};
-				char m[3];
-				char xkey[24];
-				split(v,m,xkey,' ');
-				if (m[1] == 'S') {
-					bind_key(xkey,mods,&bindings[49]);
+			} else if (key[0] == 'b' && key[1] == 'i' && key[3] == 'd') {
+			bool known = true;
+			//select the appropriate index:
+				int bindx = 0;
+
+				if (strcmp(key,"bind_resize_left") == 0) {
+					bindx = 0;
+				} else if (strcmp(key,"bind_resize_down") == 0) {
+					bindx = 1;
+				} else if (strcmp(key,"bind_resize_up") == 0) {
+					bindx = 2;
+				} else if (strcmp(key,"bind_resize_right") == 0) {
+					bindx = 3;
+				} else if (strcmp(key,"bind_move_to_previous_view") == 0) {
+					bindx = 14;
+				} else if (strcmp(key,"bind_move_to_next_view") == 0) {
+					bindx = 15;
+				} else if (strcmp(key,"bind_goto_previous_view") == 0) {
+					bindx = 26;
+				} else if (strcmp(key,"bind_goto_next_view") == 0) {
+					bindx = 27;
+				} else if (strcmp(key,"bind_shift_win_left") == 0) {
+					bindx = 28;
+				} else if (strcmp(key,"bind_shift_win_down") == 0) {
+					bindx = 29;
+				} else if (strcmp(key,"bind_shift_win_up") == 0) {
+					bindx = 30;
+				} else if (strcmp(key,"bind_shift_win_right") == 0) {
+					bindx = 31;
+				} else if (strcmp(key,"bind_toggle_stack") == 0) {
+					bindx = 32;
+				} else if (strcmp(key,"bind_move_to_stack") == 0) {
+					bindx = 33;
+				} else if (strcmp(key,"bind_move_to_main") == 0) {
+					bindx = 34;
+				} else if (strcmp(key,"bind_toggle_orientation") == 0) {
+					bindx = 35;
+			/*	} else if (strcmp(key,"bind_stack_focus_up") == 0) {
+					bindx = 36;
+				} else if (strcmp(key,"bind_stack_focus_down") == 0) {
+					bindx = 37;
+			*/	} else if (strcmp(key,"bind_focus_left") == 0) {
+					bindx = 38;
+				} else if (strcmp(key,"bind_focus_down") == 0) {
+					bindx = 39;
+				} else if (strcmp(key,"bind_focus_up") == 0) {
+					bindx = 40;
+				} else if (strcmp(key,"bind_focus_right") == 0) {
+					bindx = 41;
+				} else if (strcmp(key,"bind_stack_focus_up") == 0) {
+					bindx = 42;
+				} else if (strcmp(key,"bind_stack_focus_down") == 0) {
+					bindx = 43;
+				} else if (strcmp(key,"bind_close_win") == 0) {
+					bindx = 44;
+				} else if (strcmp(key,"bind_kill_win") == 0) {
+					bindx = 45;
+				} else if (strcmp(key,"bind_spawn_menu") == 0) {
+					bindx = 46;
+				} else if (strcmp(key,"bind_spawn_term") == 0) {
+					bindx = 47;
+				} else if (strcmp(key,"bind_toggle_fullscreen") == 0) {
+					bindx = 48;
+				} else if (strcmp(key,"bind_quit") == 0) {
+					bindx = 49;
 				} else {
-					bind_key(xkey,mod,&bindings[49]);				
+					printf("ERROR: uknown binding in config: \"%s\"",&key),
+					known == false;
 				};
-			};
+
+				if (known == true) {
+					if (bound_keys == false) {
+						bind_keys();
+						bound_keys = true;
+					};
+					//get the name of the key, and the modifier
+					char m[3];
+					char xkey[24];
+					split(v,m,xkey,' ');
+					if (m[1] == 'S') {
+						bind_key(xkey,mods,&bindings[bindx]);
+					} else {
+						bind_key(xkey,mod,&bindings[bindx]);				
+					};
+				};
+			};	 
 		};
 	};
 	fclose(conf);
+	
+};
+
+void commit_bindings() {
+	int i;
+	for (i = 0; i <= 50; i++) {
+		XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
+		if (gxerror == true) {
+			printf("error grabbing key %d\n",bindings[i].keycode);
+			gxerror = false;
+		};
+	};
 };
 
 /*fixes bugs in dumb programs that assume a reparenting wm
@@ -2072,6 +2155,7 @@ int main() {
 	printf("\nRunning\n");
 	
 	dpy = XOpenDisplay(0);
+	XSetErrorHandler(xerror);
 	scrn_h = DisplayHeight(dpy,DefaultScreen(dpy));
 	scrn_w = DisplayWidth(dpy,DefaultScreen(dpy));
 	printf("Sreen dimensions: %d %d\n",scrn_h, scrn_w);
@@ -2128,6 +2212,7 @@ int main() {
 	//we have to do this after we get root
 	
 	load_conf();
+	commit_bindings();
 
 	//get the delwin atom
 	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",True);
@@ -2142,7 +2227,6 @@ int main() {
 	fv = cv;
 	cv->idx = 1;
 
-	XSetErrorHandler(xerror);
 
 	//now we also need to get all already exisiting windows
 	Window d1, d2, *wins = NULL;
