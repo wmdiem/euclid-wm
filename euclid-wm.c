@@ -354,22 +354,64 @@ void load_conf() {
 			if (val[strlen(val)-1] == '\n') {
 				val[strlen(val) - 1] = '\0';
 			};
+			if (key[strlen(key) - 1] == ' ') {
+				key[strlen(key) - 1] = '\0';
+			};
 		
-			if (strcmp(key,"dmenu ") == 0 || strcmp(key,"dmenu") == 0) {
+			if (strcmp(key,"dmenu") == 0) {
 				dmcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(dmcmd[0],v);
 				dmcmd[1] = NULL;
 				printf("dmenu: %s\n",dmcmd[0]);
 				
-			} else if (strcmp(key,"term ") == 0 || strcmp(key,"term") == 0) {
+			} else if (strcmp(key,"term") == 0) {
 				tcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(tcmd[0],v);
 				tcmd[1] = NULL;
 				printf("term: %s\n",tcmd[0]);
-
+				//with keybindings, we need to know the mod key before we define them
+				//the basic sequence is: 
+				//define mod (from file for default)
+				//then call bind_keys
+				//then overwrite defaults with any custom bindings
+			//template:
+			//} else if (strcmp(key,"") == 0) { 
+			} else if (strcmp(key,"modkey") == 0) {
+				if (strcmp(v,"1") == 0) {
+					mod = Mod1Mask;
+					mods = Mod1Mask | ShiftMask;
+				} else if (strcmp(v,"2") == 0) {
+					mod = Mod2Mask;
+					mods = Mod2Mask | ShiftMask;
+				} else if (strcmp(v,"3") == 0) {
+					mod = Mod3Mask;
+					mods = Mod3Mask | ShiftMask;
+				} else if (strcmp(v,"4") == 0) {
+					mod = Mod4Mask;
+					mods = Mod4Mask | ShiftMask;
+				} else if (strcmp(v,"5") == 0) {
+					mod = Mod5Mask;
+					mods = Mod5Mask | ShiftMask;
+				};
+				bind_keys();
+			/*
+			 *Actual bindings, format:
+			 *bind_$ACT = mod keyname
+			 *mod can be M or MS
+			 *keyname is the exact name passed to X
+			 */
+			} else if (strcmp(key,"bind_quit") == 0) {
+				//get the name of the key, and the modifier
+				char m[3];
+				char xkey[24];
+				split(v,m,xkey,' ');
+				if (m[1] == 'S') {
+					bind_key(xkey,mods,&bindings[49]);
+				} else {
+					bind_key(xkey,mod,&bindings[49]);				
+				};
 			};
 		};
-		//set value
 	};
 	fclose(conf);
 };
@@ -2077,7 +2119,6 @@ int main() {
 	
 	
 	//we have to do this after we get root
-	bind_keys();
 	
 	load_conf();
 

@@ -1,0 +1,16 @@
+#EXTERNAL COMMANDS
+#note, currently these can only be a single argument long (i.e., just the command name)
+#if you need to pass arguments call a script instead. 
+dmenu = dmenu_run
+term = xterm
+
+#MODKEY
+#This is just a number
+#It must be defined prior to setting any bindings
+modkey = 1
+
+#BINDINGS
+#binding format is bind_ACT = MOD KEY
+#values of mod are M or MS (mod or mod + shift)
+#KEY is an X Keyname
+bind_quit = MS q
