@@ -187,7 +187,7 @@ Window stackid;
 Atom wm_del_win;
 Atom wm_take_focus;
 Atom wm_prot;
-char *dmcmd[2];
+char *dmcmd[2] = {"dmenu_run",NULL;
 char *tcmd[2] = {"xterm",NULL};
 
 //actually registers an individual keybinding with X
