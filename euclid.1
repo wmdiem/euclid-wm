@@ -93,14 +93,22 @@ The first view, created when euclid starts, is view 1; Going to the previous vie
 .B M + <tab> 
 \- toggle the orientation of the tracks (vertical or horizontal layout)
 .IP 
-.B M + <shift> + <delete> 
+.B M + Q 
 \- quit euclid.  
+.SH FILES
+On startup euclid will look for 
+.I $XDG_CONFIG_HOME/.euclid-wm.conf 
+If $XDG_CONFIG_HOME is not defined it will look for 
+.I $HOME/.config/euclid-wm.conf
+If euclid-wm.conf if found, euclid will override its default settings with those found in the file. 
+A sample config file 
+.I euclid-wm.conf.sample 
+should have come with euclid. 
+  
 .SH BUGS (AND TODO AND MISSING FEATURES)
 .SS TODO:
 .IP 
-Add fullscreen awarenessi so if a window tries to make itself fullscreen, euclid will switch to fs mode. (You can work around this for the moment by switching euclid to fullscreen mode before switching the app to full screen mode.)
-.IP
-Implement config file
+Add fullscreen awareness so if a window tries to make itself fullscreen, euclid will switch to fs mode. (You can work around this for the moment by switching euclid to fullscreen mode before switching the app to full screen mode.)
 
 .SS MISSING FEATURES (may or may not be implemented):
 .IP 
