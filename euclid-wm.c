@@ -1802,7 +1802,7 @@ int event_loop() {
 			
 			//TODO this once appeared to cause a segfault
 			
-			while ((bindings[i].keycode != ev.xkey.keycode) || (bindings[i].mask != ev.xkey.state)) {
+			while ((i <= 50 && (bindings[i].keycode != ev.xkey.keycode) || (bindings[i].mask != ev.xkey.state))) {
 				i++;
 			};
 		
