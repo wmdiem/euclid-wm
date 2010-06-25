@@ -1982,7 +1982,9 @@ int event_loop() {
 				//move to main
 				case 34:
 					move_to_main();
-					XMapWindow(dpy,cv->mfocus->win->id);
+					if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
+						XMapWindow(dpy,cv->mfocus->win->id);
+					};
 				
 					redraw = true;
 					break;
