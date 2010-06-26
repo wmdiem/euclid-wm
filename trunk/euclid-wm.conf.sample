@@ -27,6 +27,11 @@ term = xterm
 reserved_top = 0
 reserved_bottom = 0
 
+#RESIZE INCREMENT
+#the incremental change for each resize keypress
+
+resize_increment = 30 
+
 #MODKEY
 #This is just a number
 #It must be defined prior to setting any bindings
@@ -63,7 +68,7 @@ bind_shift_win_up = MS k
 bind_shift_win_right = MS l
 
 #resize windows (direction refers to the direction the lower right corner is moved relative to the top left corner)
-bind_resize_left = M t
+bind_resize_left = M y
 bind_resize_down = M u
 bind_resize_up = M i
 bind_resize_right = M o
