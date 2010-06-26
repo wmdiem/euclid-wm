@@ -20,6 +20,13 @@
 dmenu = dmenu_run
 term = xterm
 
+#RESERVED SPACE
+#space can be reserved at the top or bottom of the screen, for example to allow dzen to be displayed, 
+#this only applies if the view is not in fullscreen mode:
+
+reserved_top = 0
+reserved_bottom = 0
+
 #MODKEY
 #This is just a number
 #It must be defined prior to setting any bindings
