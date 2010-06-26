@@ -79,6 +79,7 @@ Thus the one or more of the following notices may apply to some sections:
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
 #include <X11/Xlib.h>
