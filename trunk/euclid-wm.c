@@ -561,7 +561,7 @@ struct view * make_view() {
 	
 	ptr->orientv = true;
 	ptr->stack = NULL;
-	ptr->showstack = false;
+	ptr->showstack = true;
 	ptr->fs = false;
 
 	return ptr;
