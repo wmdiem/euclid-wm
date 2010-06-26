@@ -190,6 +190,8 @@ Atom wm_take_focus;
 Atom wm_prot;
 char *dmcmd[2] = {"dmenu_run",NULL};
 char *tcmd[2] = {"xterm",NULL};
+int res_top = 0;
+int res_bot = 0;
 
 //actually registers an individual keybinding with X
 //and records the keycode in appropriate array
@@ -379,6 +381,10 @@ void load_conf() {
 				//then commit them
 			//template:
 			//} else if (strcmp(key,"") == 0) { 
+			} else if (strcmp(key,"reserved_top") == 0) {
+				res_top = atoi(v);
+			} else if (strcmp(key,"reserved_bottom") == 0) {
+				res_bot = atoi(v);
 			} else if (strcmp(key,"modkey") == 0) {
 				if (strcmp(v,"1") == 0) {
 					mod = Mod1Mask;
@@ -1549,7 +1555,7 @@ void layout() {
 	XClearWindow(dpy,stackid);
 	if (stackheight != 0) {
 		
-		XMoveResizeWindow(dpy,stackid,0,(scrn_h - (stackheight)),scrn_w,(stackheight));
+		XMoveResizeWindow(dpy,stackid,0,((scrn_h - res_bot) - (stackheight)),scrn_w,(stackheight));
 		XRaiseWindow(dpy,stackid);
 		XSync(dpy,false);
 		
@@ -1575,7 +1581,7 @@ void layout() {
 			si = si->next;
 			i += 20;
 		}; 
-	} else {
+	} else { //hide stack
 			XMoveResizeWindow(dpy,stackid,0,(scrn_h ),scrn_w,10);
 	};
 	XSync(dpy,false);
@@ -1616,9 +1622,9 @@ void layout() {
 		} else {
 			if (cv->showstack == true) {
 				//stackheight subtract from sreen_h and set target
-				target = scrn_h - stackheight;
+				target = (scrn_h - (res_top + res_bot)) - stackheight;
 			} else {
-				target = scrn_h;
+				target = scrn_h - (res_top + res_bot);
 			};
 		};
 		int nooftracks = 0;
@@ -1654,9 +1660,9 @@ void layout() {
 			target = scrn_w;
 		} else {
 			if (cv->showstack == true) {
-				target = scrn_h - stackheight;
+				target = (scrn_h - (res_top + res_bot)) - stackheight;
 			} else {
-				target = scrn_h;
+				target = (scrn_h - (res_top + res_bot));
 			};
 		}; 
 		
@@ -1739,17 +1745,17 @@ void layout() {
 				//where do x, y, h, w come from?
 				if (cv->orientv == true) {
 					x = offsett;
-					y = offsetc;
-					w = curt->size;
-					h = curc->size;
+					y = offsetc + res_top;
+					w = curt->size - 2;
+					h = curc->size - 2 ;
 				} else {
 					x = offsetc;
-					y = offsett;
-					w = curc->size;
-					h = curt->size;
+					y = offsett + res_top;
+					w = curc->size - 2;
+					h = curt->size - 2;
 				};
 			
-				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w - 2),(h - 2));
+				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w),(h));
 				offsetc += curc->size;
 				curc = curc->next;
 			};
