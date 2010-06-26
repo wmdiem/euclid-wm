@@ -24,38 +24,63 @@ term = xterm
 #This is just a number
 #It must be defined prior to setting any bindings
 
-#modkey = 1
+modkey = 1
 
 #BINDINGS
 #binding format is bind_ACT = MOD KEY
 #values of mod are M or MS (mod or mod + shift)
 #KEY is an X Keyname
 
-bind_resize_left = M t
-bind_resize_down = M u
-bind_resize_up = M i
-bind_resize_right = M o
+#spawn terminal or menu (which term  and  menu are defined above)
+bind_spawn_menu = M Return
+bind_spawn_term = MS Return
+
+#goto view, as in look at it
 bind_goto_next_view = M m
 bind_goto_previous_view = M n
+
+#move focused window to view
 bind_move_to_next_view = MS m
 bind_move_to_previous_view = MS n
-bind_shift_win_left = MS h
-bind_shift_win_down = MS j
-bind_shift_win_up = MS k
-bind_shift_win_right = MS l
-bind_toggle_stack = M space
-bind_move_to_stack = M period
-bind_move_to_main = M comma
-bind_toggle_orientation = MS Tab
+
+#move the main focus:
 bind_focus_left = M h
 bind_focus_down = M j
 bind_focus_up = M k
 bind_focus_right = M l
+
+#move windows within the current view
+bind_shift_win_left = MS h
+bind_shift_win_down = MS j
+bind_shift_win_up = MS k
+bind_shift_win_right = MS l
+
+#resize windows (direction refers to the direction the lower right corner is moved relative to the top left corner)
+bind_resize_left = M t
+bind_resize_down = M u
+bind_resize_up = M i
+bind_resize_right = M o
+
+#stack visibility
+bind_toggle_stack = M space
+
+#move windows to and from the stack (minimize and restore)
+bind_move_to_stack = M period
+bind_move_to_main = M comma
+
+#move the stack focus
 bind_stack_focus_up = M semicolon
 bind_stack_focus_down = M apostrophe
+
+#flip the tracks of the current view 
+bind_toggle_orientation = MS Tab
+
+#close and kill windows
 bind_close_win = M Escape
 bind_kill_win = MS Escape
-bind_spawn_menu = M Return
-bind_spawn_term = MS Return
+
+#toggle fullscreen
 bind_toggle_fullscreen = MS space
+
+#quit the session
 bind_quit = MS q
