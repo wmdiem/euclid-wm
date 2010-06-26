@@ -192,6 +192,7 @@ char *dmcmd[2] = {"dmenu_run",NULL};
 char *tcmd[2] = {"xterm",NULL};
 int res_top = 0;
 int res_bot = 0;
+int resize_inc = 15;
 
 //actually registers an individual keybinding with X
 //and records the keycode in appropriate array
@@ -380,7 +381,9 @@ void load_conf() {
 				//then overwrite defaults with any custom bindings
 				//then commit them
 			//template:
-			//} else if (strcmp(key,"") == 0) { 
+			//}} else if (strcmp(key,"") == 0) { 
+			} else if (strcmp(key,"resize_increment") == 0) { 
+				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
 				res_top = atoi(v);
 			} else if (strcmp(key,"reserved_bottom") == 0) {
@@ -1494,16 +1497,16 @@ void resize (int dir) {
 	if (cv->orientv == true) {
 		switch (dir) {
 			case 1:
-				cv->mfocus->size -= 15;
+				cv->mfocus->size -= resize_inc;
 			break; 
 			case 2:
-				cv->mfocus->track->size += 15;
+				cv->mfocus->track->size += resize_inc;
 			break;
 			case 3:
-				cv->mfocus->size += 15;
+				cv->mfocus->size += resize_inc;
 			break;
 			case 4:
-				cv->mfocus->track->size -= 15;
+				cv->mfocus->track->size -= resize_inc;
 			break;
 		};
 		
@@ -1511,16 +1514,16 @@ void resize (int dir) {
 	} else {
 		switch (dir) {
 			case 1:
-				cv->mfocus->track->size += 15;
+				cv->mfocus->track->size += resize_inc;
 			break; 
 			case 2:
-				cv->mfocus->size += 15;
+				cv->mfocus->size += resize_inc;
 			break;
 			case 3:
-				cv->mfocus->track->size -= 15;
+				cv->mfocus->track->size -= resize_inc;
 			break;
 			case 4:
-				cv->mfocus->size -= 15;
+				cv->mfocus->size -= resize_inc;
 			break;
 		};
 		
