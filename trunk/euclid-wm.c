@@ -86,7 +86,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include<X11/Xutil.h>
 #include<X11/Xatom.h>
 
-
+#define bzero(b,len) (memset((b),'\0',(len)), (void) 0)
 
 /*BASIC VARIABLE TYPES*/
 
