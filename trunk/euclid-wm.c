@@ -209,7 +209,7 @@ void bind_key(char s[12], unsigned int m, struct binding *b) {
 	//this should be delayed, to avoid issues with getting getting bindings we don't want
 //	XGrabKey(dpy,code,m,root,True,GrabModeAsync,GrabModeAsync);
 
-};
+}
 
 
 //handles binding the keys
@@ -304,7 +304,7 @@ void bind_keys() {
 	//quit					1	49
 	bind_key("Delete",mods,&bindings[49]);
 
-};
+}
 
 void split(char *in, char *out1, char *out2, char delim) {
 	int i = 0;
@@ -316,7 +316,7 @@ void split(char *in, char *out1, char *out2, char delim) {
 	out1[i] = '\0';
 	in++;
 	strcpy (out2,in);
-};
+}
 
 void load_conf() {
 	FILE *conf;
@@ -479,8 +479,8 @@ void load_conf() {
 				} else if (strcmp(key,"bind_quit") == 0) {
 					bindx = 49;
 				} else {
-					printf("ERROR: uknown binding in config: \"%s\"",&key),
-					known == false;
+					printf("ERROR: uknown binding in config: \"%s\"",key),
+					known = false;
 				};
 
 				if (known == true) {
@@ -503,7 +503,7 @@ void load_conf() {
 	};
 	fclose(conf);
 	
-};
+}
 
 void commit_bindings() {
 	int i;
@@ -514,7 +514,7 @@ void commit_bindings() {
 			gxerror = false;
 		};
 	};
-};
+}
 
 /*fixes bugs in dumb programs that assume a reparenting wm
  taken from scrotwm, which took it from wmname
@@ -527,9 +527,9 @@ void work_around() {
 	netwmname = XInternAtom(dpy,"_NET_WM_NAME",False);
 	utf8_string = XInternAtom(dpy,"UTF8_STRING",False);
 	XChangeProperty(dpy,root,netwmcheck,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
-	XChangeProperty(dpy,root,netwmname,utf8_string,8,PropModeReplace,"LG3D",strlen("LG3D"));
+	XChangeProperty(dpy,root,netwmname,utf8_string,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
 	XSync(dpy,False);
-};
+}
 
 void spawn(char **arg) {
 	if (fork() == 0) {
@@ -542,7 +542,7 @@ void spawn(char **arg) {
 	} else {
 		return;
 	};
-};
+}
 
 /*Makes a new view*/
 struct view * make_view() {
@@ -575,7 +575,7 @@ struct view * make_view() {
 
 	return ptr;
 	
- };
+ }
 
 void remove_cont(struct cont *c) {
 	
@@ -640,7 +640,7 @@ void remove_cont(struct cont *c) {
 	if (c != NULL) {
 	};
 	
-};
+}
 
 
 struct win * add_win(Window  id) {
@@ -678,7 +678,7 @@ struct win * add_win(Window  id) {
 	first_win = p;
 	p->id = id;
 	return p;
-};	
+}	
 
 void forget_win (Window id) {
 	//first see whether we have a record of it
@@ -796,7 +796,7 @@ void forget_win (Window id) {
 	
 	free(w);
 	
-};
+}
 
 void add_client_to_view (struct win *p, struct view *v) {
 	//make a cont for it
@@ -826,7 +826,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 	};
 	c->win = p;
 	v->mfocus = c;
-};
+}
 
 void move_to_stack(struct cont *c) {
 	//insert in stack
@@ -847,7 +847,7 @@ void move_to_stack(struct cont *c) {
 	
 	remove_cont(c);
 	
-};
+}
 
 void move_to_main() {
 	//just add whatever has stack focus to the layout
@@ -881,7 +881,7 @@ void move_to_main() {
 	};
 	
 	free(p);
-};
+}
 
 void shift_stack_focus (bool dir) {
 	//true up, false, down
@@ -891,7 +891,7 @@ void shift_stack_focus (bool dir) {
 		cv->sfocus = cv->sfocus->next;
 	};
 	
-};
+}
 
 bool is_top_level(Window id) {
 
@@ -932,7 +932,7 @@ bool is_top_level(Window id) {
 	XFree(c);
 	return(false);
 
-};
+}
 
 short int convert_to_internal_dir(short int dir) {/*four possibilities: 
 	 *  1) we are moving down in the track
@@ -973,7 +973,7 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 	
 	};
 	return dir;
-};
+}
 void shift_window(short int dir) {
 	if (cv->mfocus == NULL) {
 		return;
@@ -1257,7 +1257,7 @@ void shift_window(short int dir) {
 		cv->mfocus->size = cv->mfocus->next->size;
 	};
 			
-};
+}
 
 void shift_main_focus(short int dir) {
 	if (cv->mfocus == NULL) {return;};
@@ -1322,7 +1322,7 @@ void shift_main_focus(short int dir) {
 			};
 			cv->mfocus = p;
 	};
-};
+}
 
 
 struct view * find_view (int i) {
@@ -1334,7 +1334,7 @@ struct view * find_view (int i) {
 		
 	//i -2 means move forward -3 means backward
 	
-	struct view *v;
+	struct view *v = NULL;
 	
 	if (i == -2) {
 		//move forward
@@ -1412,7 +1412,7 @@ struct view * find_view (int i) {
 
 	return(v);
 	
-};
+}
 
 void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
@@ -1455,7 +1455,7 @@ void goto_view(struct view *v) {
 		};
 		t = t->next;
 	};
-};
+}
 
 
 void move_to_view(struct view *v) {
@@ -1470,7 +1470,7 @@ void move_to_view(struct view *v) {
 	
 	//add it to the new view
 	add_client_to_view(w, v);
-};
+}
 
 //this is a quick simple version, may well need to be reworked
 
@@ -1490,7 +1490,7 @@ struct cont * id_to_cont(Window w) {
 	};
 	return (NULL);
  
-};
+}
 
 void resize (int dir) {
 	
@@ -1530,7 +1530,7 @@ void resize (int dir) {
 	}
 	
 	
-};
+}
 
 void layout() {
 	//what mode are we in?
@@ -1578,8 +1578,8 @@ void layout() {
 			
 			XTextProperty wmname;
 			XGetWMName(dpy,si->win->id,&wmname);	
-			
-			XDrawString(dpy,stackid,gc,3,i,wmname.value,wmname.nitems);	
+			//added cast to appease gcc
+			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
 			
 			si = si->next;
 			i += 20;
@@ -1767,7 +1767,7 @@ void layout() {
 		};
 	};
 	
-};
+}
 
 int xerror(Display *d, XErrorEvent *e) {
 	//get and print the error description for diagnostics:
@@ -1781,7 +1781,7 @@ int xerror(Display *d, XErrorEvent *e) {
 	};
 	gxerror = true;
 	return(0);
-};
+}
 
 
 int event_loop() {
@@ -1812,7 +1812,7 @@ int event_loop() {
 			
 			//TODO this once appeared to cause a segfault
 			
-			while ((i < 50 && (bindings[i].keycode != ev.xkey.keycode) || (bindings[i].mask != ev.xkey.state))) {
+			while (((i < 50 && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
 				i++;
 			};
 		
@@ -2084,7 +2084,7 @@ int event_loop() {
 					break;
 				//quit	
 				case 49:
-					return;				
+					return(0);				
 					break;
 					
 			};
@@ -2104,6 +2104,7 @@ int event_loop() {
 
 				if (is_top_level(ev.xreparent.window) == true) {
 					struct win *t;
+					t = add_win(ev.xreparent.window);
 					XWindowAttributes att;
 					XGetWindowAttributes (dpy,ev.xreparent.window,&att);
 						if (att.map_state != IsUnmapped) {
@@ -2165,7 +2166,7 @@ int event_loop() {
 	}; //end infinite loop
 
 
-};
+}
 
 
 int main() {
@@ -2178,7 +2179,7 @@ int main() {
 	printf("Sreen dimensions: %d %d\n",scrn_h, scrn_w);
 
 	//set some stuff
-	if (root = DefaultRootWindow(dpy)) {
+	if ((root = DefaultRootWindow(dpy))) {
 		printf("root is %6.0lx\n",root);
 	} else {
 		printf("faild to find root window\n");
@@ -2289,6 +2290,5 @@ int main() {
 
 	layout();
 	//code:
-	event_loop();
-	return (0);
-};
+	return (event_loop());
+}
