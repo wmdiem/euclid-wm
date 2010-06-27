@@ -506,7 +506,7 @@ void load_conf() {
 
 void commit_bindings() {
 	int i;
-	for (i = 0; i <= 50; i++) {
+	for (i = 0; i < 50; i++) {
 		//need to check whether the binding has been set before sending garbage to X
 		if (bindings[i].keycode != 0) {
 			XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
