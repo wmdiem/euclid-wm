@@ -321,7 +321,7 @@ void load_conf() {
 	FILE *conf;
 	char confdir[512];
 	char conffile[512];
-	bzero(confdir, sizeof(confdir));
+	memset(confdir, '\0', sizeof(confdir));
 	confdir[0] = '\0';
 	char *xdgconf = getenv("XDG_CONFIG_HOME");
 	if (xdgconf == NULL) {
@@ -507,10 +507,13 @@ void load_conf() {
 void commit_bindings() {
 	int i;
 	for (i = 0; i <= 50; i++) {
-		XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
-		if (gxerror == true) {
-			printf("error grabbing key %d\n",bindings[i].keycode);
-			gxerror = false;
+		//need to check whether the binding has been set before sending garbage to X
+		if (bindings[1].keycode != 0) {
+			XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
+			if (gxerror == true) {
+				printf("error grabbing key %d\n",bindings[i].keycode);
+				gxerror = false;
+			};
 		};
 	};
 }
@@ -1727,7 +1730,7 @@ void layout() {
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
 					if (cv->mfocus->win->take_focus == true) {
 						XClientMessageEvent cm;
-						bzero (&cm, sizeof(cm));
+						memset (&cm,'\0', sizeof(cm));
 						cm.type = ClientMessage;
 						cm.window = cv->mfocus->win->id;
 						cm.message_type = wm_prot;
@@ -2045,7 +2048,7 @@ int event_loop() {
 					};
 					if (cv->mfocus->win->del_win == true) {
 							XClientMessageEvent	cm;
-							bzero(&cm, sizeof cm);
+							memset(&cm,'\0', sizeof cm);
 							cm.type = ClientMessage;
 							cm.window = cv->mfocus->win->id;
 							cm.message_type = wm_prot;
@@ -2227,7 +2230,7 @@ int main() {
 	
 	
 	//we have to do this after we get root
-	
+	memset(bindings, '\0', sizeof(bindings));
 	load_conf();
 	commit_bindings();
 
