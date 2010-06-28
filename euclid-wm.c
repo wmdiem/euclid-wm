@@ -1539,7 +1539,7 @@ void layout() {
 	
 	//rather than do all this stack crap later, lets just set a variable stackh upfront, 0 if its hidden
 	int stackheight;
-	if (cv->showstack == false) {
+	if (cv->showstack == false || cv->fs == true) {
 		stackheight = 0;
 	} else {
 		//count items in stack
@@ -1974,14 +1974,16 @@ int event_loop() {
 					break;
 				//toggle stack
 				case 32:
-		
-					if (cv->showstack == true) {
-						cv->showstack = false;
-					} else {
-						cv->showstack = true;
-							};
 					
-					redraw = true;
+					if (cv->fs == false) {
+						if (cv->showstack == true) {
+							cv->showstack = false;
+						} else {
+							cv->showstack = true;
+								};
+					
+						redraw = true;
+					};
 					break;
 				//move to stack
 				case 33:
