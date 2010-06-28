@@ -2138,9 +2138,12 @@ int event_loop() {
 						if (ev.xclient.data.l[0] == 1) { //go into full screen
 							wc->track->view->fs = true;
 							redraw = true;
+							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
 						} else { // exit fullscreen
 							wc->track->view->fs = false;
 							redraw = true;
+							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
+
 						};
 					};
 				};
