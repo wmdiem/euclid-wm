@@ -897,6 +897,7 @@ void move_to_main() {
 
 void shift_stack_focus (bool dir) {
 	//true up, false, down
+	if (cv->sfocus == NULL) { return;};
 	if (dir && cv->sfocus->prev != NULL) {
 		cv->sfocus = cv->sfocus->prev;
 	} else if (!dir && cv->sfocus->next != NULL) {
