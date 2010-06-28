@@ -1,3 +1,0 @@
-#! /bin/sh
-
-cc -lX11 -O3 -oeuclid-wm euclid-wm.c
