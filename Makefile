@@ -20,7 +20,7 @@ install: all
 	@install -m644 euclid.1 -D ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 
 install_conf:
-	@if [ ${XDG_CONFIG_HOME} ]; then install -b -m600 euclid-wm.conf.sample ${XDG_CONFIG_HOME}/euclid-wm.conf; else install -b -m600 euclid-wm.conf.sample ${HOME}/.config/euclid-wm.conf; fi
+	@if [ ${XDG_CONFIG_HOME} ]; then install -b -m600 euclid-wm.conf.sample ${XDG_CONFIG_HOME}/euclid-wm.conf && install -b -m700 euclidrc ${XDG_CONFIG_HOME}/euclid-wmrc; else install -b -m600 euclid-wm.conf.sample ${HOME}/.config/euclid-wm.conf && install -b -m700 euclidrc ${HOME}/.config/euclid-wmrc; fi
 
 uninstall:
 	rm -f ${DESTDIR}/${BINDIR}/euclid-wm
