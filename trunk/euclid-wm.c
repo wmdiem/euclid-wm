@@ -187,6 +187,8 @@ Window stackid;
 Atom wm_del_win;
 Atom wm_take_focus;
 Atom wm_prot;
+Atom wm_change_state;
+Atom wm_fullscreen;
 char *dmcmd[2] = {"dmenu_run",NULL};
 char *tcmd[2] = {"xterm",NULL};
 int res_top = 0;
@@ -521,15 +523,23 @@ void commit_bindings() {
 /*fixes bugs in dumb programs that assume a reparenting wm
  taken from scrotwm, which took it from wmname
  */
-void work_around() {
+void set_atoms() {
 	
-	Atom netwmcheck, netwmname, utf8_string;
-	
-	netwmcheck = XInternAtom(dpy,"_NET_SUPPORTING_WM_CHECK",False);
-	netwmname = XInternAtom(dpy,"_NET_WM_NAME",False);
-	utf8_string = XInternAtom(dpy,"UTF8_STRING",False);
-	XChangeProperty(dpy,root,netwmcheck,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
-	XChangeProperty(dpy,root,netwmname,utf8_string,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
+	//get the delwin atom
+	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",False);
+	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",False);
+	//do we actually use this one? should we?
+	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
+	wm_change_state = XInternAtom(dpy,"_NET_WM_STATE",False);
+	wm_fullscreen = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+	Atom wm_supported = XInternAtom(dpy,"_NET_SUPPORTED",False);
+	Atom wm_check = XInternAtom(dpy,"_NET_SUPPORTING_WM_CHECK",False);
+	Atom wm_name = XInternAtom(dpy,"_NET_WM_NAME",False);
+	Atom utf8 = XInternAtom(dpy,"UTF8_STRING",False);
+	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen};
+	XChangeProperty(dpy,root,wm_check,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
+	XChangeProperty(dpy,root,wm_name,utf8,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
+	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,4);
 	XSync(dpy,False);
 }
 
@@ -2119,6 +2129,22 @@ int event_loop() {
 			} else {
 				forget_win(ev.xreparent.window);	
 			};
+		
+		} else if (ev.type == ClientMessage) {
+			if (ev.xclient.message_type == wm_change_state) {
+				if (ev.xclient.data.l[1] == wm_fullscreen) {
+					struct cont *wc = id_to_cont(ev.xclient.window);
+					if (wc != NULL) {
+						if (ev.xclient.data.l[0] == 1) { //go into full screen
+							printf("going into fullscreen\n");
+							wc->track->view->fs = true;
+							redraw = true;
+						} else { // exit fullscreen
+							;
+						};
+					};
+				};
+			};
 			
 		} else if (ev.type == DestroyNotify ) {
 			forget_win(ev.xdestroywindow.window);
@@ -2159,6 +2185,25 @@ int event_loop() {
 			
 		} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
 			add_win(ev.xcreatewindow.window);
+
+		} else if (ev.type == ConfigureNotify) {
+		//if a window tries to manage itself we are going to play rough
+			struct cont *wc = id_to_cont(ev.xconfigure.window);
+			if (wc != NULL) {
+				if (wc->track->view == cv) {
+					if (wc->track->view->orientv == true) {
+						//we are going to be niave and just check the w and h
+						//w =track size
+						if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
+							redraw = true;
+						};
+					} else {
+						if (wc->track->size != ev.xconfigure.height || wc->size != ev.xconfigure.width) {
+							redraw = true;
+						};
+					};
+				};
+			};
 		};
 	
 	} while (XPending(dpy)); 
@@ -2236,13 +2281,10 @@ int main() {
 	load_conf();
 	commit_bindings();
 
-	//get the delwin atom
-	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",True);
-	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",True);
-	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
+
 
 	//to compensate for dumb programs
-	work_around();
+	set_atoms();
 	int i;
 	 
 	cv = make_view();
