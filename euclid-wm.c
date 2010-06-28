@@ -2136,11 +2136,11 @@ int event_loop() {
 					struct cont *wc = id_to_cont(ev.xclient.window);
 					if (wc != NULL) {
 						if (ev.xclient.data.l[0] == 1) { //go into full screen
-							printf("going into fullscreen\n");
 							wc->track->view->fs = true;
 							redraw = true;
 						} else { // exit fullscreen
-							;
+							wc->track->view->fs = false;
+							redraw = true;
 						};
 					};
 				};
