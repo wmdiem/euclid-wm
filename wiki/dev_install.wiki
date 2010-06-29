@@ -12,19 +12,17 @@ svn checkout http://euclid-wm.googlecode.com/svn/trunk/ euclid-wm-read-only
 
   * Compile:
 {{{
-chmod +x compile
-./compile
-}}}
-  * Check the installation locations (note that if you change these you should also change the uninstall script--hopefully I'll get around to making a proper makefile before long): 
-{{{
-editor install
+make clean
+make
 }}}
 
   * Install:
 {{{
-chmod +x install
 su
-./install
+make install
+suspend
+make install_conf
+
 }}}
 
   * Read the man page *before* trying it out:
