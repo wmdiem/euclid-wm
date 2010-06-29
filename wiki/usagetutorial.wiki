@@ -28,7 +28,7 @@ So let's start an xterm:
         `<alt> + <shift> + <enter>`
 
 
-Now your whole screen will be a single xterm (or whaterver terminal is set to x-terminal-emulator). euclid always expands windows to take up as much space as is available.
+Now your whole screen will be a single xterm (or whaterver terminal is set in ~/.config/euclid/euclid-wm.cong). euclid always expands windows to take up as much space as is available.
 
 Note the single pixel, blue border, this indicates that that window has focus. Of course since there is only one window it doesn't tell you much; So let's start another:
 
@@ -68,34 +68,36 @@ Now we, are done with the middle window in the left column, and wish to hid it f
 
 It should now be hidden, with the other two windows in the collumn taking up the extra space.
 
-Don't worry though, it didn't go far. We can see it with:
+Now it should be in the stack. You can toggle the stack's visibility with:
 
         `<alt> + <shift> + <space>` 
 
-This combination toggles the stack. (You might not actually see the title right after you bring the stack up, there is something of a bug in this.) We can add another window to the stack too:
+We can add another window to the stack too:
 
 
         `<alt> + .`
 
-The blue one has the "stack focus". You can change stack focus by using
+You can change stack focus by using
 
         `<alt> + ;`
 
-or
+to go up or
 
         `<alt> + '`
+
+to go down. 
 
 Bring one of them back:
 
         `<alt> + ,`
 
-(Notice, , and . controle putting things in and out of the stack.)
+(Notice, , and . control putting windows into and out of the stack.)
 
 One last thing before moving on to view:
 
         `<alt> + <tab>`
 
-will flip the orientation of the layout: a veritcal layout becomes horizontal.
+will flip the orientation of the layout: a vertical layout becomes horizontal.
 
 Okay, now about views. They are actually really simple. Views are just euclid's version of virtual desktops.
 
@@ -116,7 +118,7 @@ Now send a window to 3:
 
         `<alt> + <shift> + 3`
 
-Whichever window was focused should have just disappeard, but it didn't go far, don't worry:
+Whichever window was focused should have just disappeared, but it didn't go far, don't worry:
 
         `<alt> + 3`
 
@@ -142,6 +144,7 @@ takes us to the next view, which is now 2. Do it again to see 3:
 etc.
 
 You can read all the keybindings on the man page. 
+You can configure them (and lot's of other things) in euclid-wm.conf. 
 
 
                                                                                     
