@@ -433,6 +433,42 @@ void load_conf() {
 				};
 				bind_keys();
 				bound_keys = true;
+
+			} else if (key[0] == 'c' && key[2] == 'l' && key[4] == 'r') { 
+			/* here we set colors:
+			 *color_main_focus
+			 *color_stack_focus
+			 *color_stack_unfocus
+			 *color_main_unfocus
+			 *color_stack_background
+			 */
+				//main_focus
+				XColor color;
+				if (XParseColor(dpy,DefaultColormap(dpy,0),v,&color) != 0) {
+					XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+			
+					if (key[6] == 'm' && key[11] == 'f') {
+						focus_pix = color.pixel;
+					//main_unfocus
+					} else if (key[6] == 'm' && key[11] == 'u') {
+						unfocus_pix = color.pixel;
+					//stack_focus
+					} else if (key[6] == 's' && key[12] == 'f') {
+						stack_focus_pix = color.pixel;
+					//stack_unfocus 
+					} else if (key[6] == 's' && key[12] == 'u') {
+						stack_unfocus_pix = color.pixel;
+					//stack_background
+					} else if (key[6] == 's' && key[12] == 'b') {
+						stack_background_pix = color.pixel;
+					} else {
+	
+						printf("unknown color key in config: %s\n",key);
+					};
+				} else {
+					printf("unparsable color: %s\n",v);
+				};
+
 			/*
 			 *Actual bindings, format
 			 *bind_$ACT = mod keyname

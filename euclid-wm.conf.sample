@@ -5,6 +5,8 @@
 
 #SYNTAX
 #The parser is quite simple, so take note of case and spaces (including trailing whitespace)
+#There are no quotation marks used. 
+#Comments cannot be appended to a line, the # marker must be the first character.
 #The order of some of settings does matter: if modkey is to be set, it *MUST* be set before the
 #first keybinding 
 #the general format is 
@@ -12,6 +14,15 @@
 #or
 #KEY = VALUE
 #
+
+#COLORS
+#these get parsed by X, any colorname X recognizes will work
+
+color_main_focus = #00000000ffff
+color_stack_focus = #ffffffffffff
+color_main_unfocus = #400040004000
+color_stack_unfocus = #400040004000
+colro_stack_background = #010001000100
 
 #EXTERNAL COMMANDS
 #note, currently these can only be a single argument long (i.e., just the command name)
