@@ -3,6 +3,13 @@ SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
 
+ifdef ${XDG_CONFIG_HOME} 
+CONF_DIR=${XDG_CONFIG_HOME}/euclid-wm
+else 
+XDG_CONFIG_HOME=${HOME}/.config
+endif
+CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
+
 CC = cc -pedantic -Wall
 CFLAGS = -O2 -g -std=c99
 LDFLAGS = -lX11
@@ -20,8 +27,8 @@ install: all
 	@install -m644 euclid.1 -D ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 
 install_conf:
-	@if [ ${XDG_CONFIG_HOME} ]; then install -b -m600 euclid-wm.conf.sample ${XDG_CONFIG_HOME}/euclid-wm.conf; else install -b -m600 euclid-wm.conf.sample ${HOME}/.config/euclid-wm.conf; fi
-
+	@install -b -D -m600 euclid-wm.conf.sample ${CONFDIR}/euclid-wm.conf
+	@install -b -D -m700 euclidrc ${CONFDIR}/euclidrc
 uninstall:
 	rm -f ${DESTDIR}/${BINDIR}/euclid-wm
 	rm -f ${DESTDIR}/${SHAREDIR}/xsessions/euclid.desktop

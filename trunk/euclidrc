@@ -1,0 +1,12 @@
+#! /bin/sh
+
+#This gets run by euclid-wm at startup
+
+#uncomment this to get a nice pointer immediately after euclid comes up
+#xsetroot -cursor_name left_ptr &
+
+#If you use dzen you should define the reserverd_top or  _bottom  keywords in euclid-wm.conf
+#as it stands all this line will do is tell you when you started euclid. 
+#date | dzen2 -p &
+
+#xterm &
