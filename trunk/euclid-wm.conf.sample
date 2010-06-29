@@ -96,7 +96,7 @@ bind_stack_focus_up = M semicolon
 bind_stack_focus_down = M apostrophe
 
 #flip the tracks of the current view 
-bind_toggle_orientation = MS Tab
+bind_toggle_orientation = M Tab
 
 #close and kill windows
 bind_close_win = M Escape
