@@ -307,6 +307,19 @@ void bind_keys() {
 
 }
 
+void spawn(char **arg) {
+	if (fork() == 0) {
+		if (dpy != NULL) {
+			close(ConnectionNumber(dpy));
+			setsid();
+			execvp(arg[0],arg);
+			exit(1);
+		};
+	} else {
+		return;
+	};
+}
+
 void split(char *in, char *out1, char *out2, char delim) {
 	int i = 0;
 	while (*in != '\0' && *in != delim) {
@@ -323,6 +336,7 @@ void load_conf() {
 	FILE *conf;
 	char confdir[512];
 	char conffile[512];
+	char rcfile[512];
 	memset(confdir, '\0', sizeof(confdir));
 	confdir[0] = '\0';
 	char *xdgconf = getenv("XDG_CONFIG_HOME");
@@ -335,7 +349,18 @@ void load_conf() {
 	} else { 
 		strcat(confdir,xdgconf);
 	};
+	strcat(confdir,"/euclid-wm");
 	//at this point confdir is pointing at xdgconf, if it exists, now we see whether there is a file in it 
+	//start rc
+	strcpy(rcfile,confdir);
+	strcat(rcfile,"/euclidrc");
+	char *rc[3];
+	char shell[36];
+	strcpy(shell,getenv("SHELL"));
+	rc[0] = shell;
+	rc[1] = rcfile;
+	rc[2] = NULL;
+	spawn(rc);
 	strcpy(conffile,confdir);
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
@@ -543,18 +568,6 @@ void set_atoms() {
 	XSync(dpy,False);
 }
 
-void spawn(char **arg) {
-	if (fork() == 0) {
-		if (dpy != NULL) {
-			close(ConnectionNumber(dpy));
-			setsid();
-			execvp(arg[0],arg);
-			exit(1);
-		};
-	} else {
-		return;
-	};
-}
 
 /*Makes a new view*/
 struct view * make_view() {
@@ -897,7 +910,7 @@ void move_to_main() {
 
 void shift_stack_focus (bool dir) {
 	//true up, false, down
-	if (cv->sfocus == NULL) { return;};
+	if (cv->sfocus == NULL) {return;};
 	if (dir && cv->sfocus->prev != NULL) {
 		cv->sfocus = cv->sfocus->prev;
 	} else if (!dir && cv->sfocus->next != NULL) {
