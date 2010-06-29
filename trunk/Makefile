@@ -3,9 +3,7 @@ SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
 
-ifdef ${XDG_CONFIG_HOME} 
-CONF_DIR=${XDG_CONFIG_HOME}/euclid-wm
-else 
+ifndef ${XDG_CONFIG_HOME}
 XDG_CONFIG_HOME=${HOME}/.config
 endif
 CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
