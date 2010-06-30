@@ -1,4 +1,4 @@
-.TH EUCLID 1 26-6-2010
+.TH EUCLID 1 30-6-2010
 .SH NAME
 euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
 .SH SYNOPSIS
@@ -96,25 +96,32 @@ The first view, created when euclid starts, is view 1; Going to the previous vie
 .B M + Q 
 \- quit euclid.  
 .SH FILES
+.IP
 On startup euclid will look for 
-.I $XDG_CONFIG_HOME/euclid-wm.conf 
+.I $XDG_CONFIG_HOME/euclid-wm/euclid-wm.conf 
 If $XDG_CONFIG_HOME is not defined it will look for 
-.I $HOME/.config/euclid-wm.conf
-If euclid-wm.conf if found, euclid will override its default settings with those found in the file. 
+.I $HOME/.config/euclid-wm/euclid-wm.conf
+If euclid-wm.conf is found, euclid will override its default settings with those found in the file. 
 A sample config file 
 .I euclid-wm.conf.sample 
-should have come with euclid. 
+should have come with euclid and can be installed by the makefile by running 
+.I make install_conf 
+as a regular user. 
+At startup euclid will also (try to) run the script
+.I euclidrc
+in the same directory. This is meant as a place for the user to add any commands he would like run at startup.  
   
 .SH BUGS (AND TODO AND MISSING FEATURES)
 .SS TODO:
 .IP 
-Add fullscreen awareness so if a window tries to make itself fullscreen, euclid will switch to fs mode. (You can work around this for the moment by switching euclid to fullscreen mode before switching the app to full screen mode.)
+Improve fullscreen awareness. Fullscreen is mostly working. However, windows that start in fullscreen (as opposed to switching to fullscreen once mapped) will not be automatically switched to fullscreen (e.g., flashplayer). The work-around at the moment is to put the view into fullscreen mode before launching the fullscreen window. 
+
+Applications that have seperate fullscreen UIs, may continue to display their fullscreen UI if they are taken out of fullscreen by using the euclid keybinding instead of their own native mechanism for switching. (This can be worked around by just using their native mechanism.) 
 
 .SS MISSING FEATURES (may or may not be implemented):
 .IP 
 Multiscreen awareness. 
 
-Status bar.
 
 .SS CURRENT issues and reporting: 
 .IP
