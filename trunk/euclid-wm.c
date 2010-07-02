@@ -24,9 +24,11 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-scrotwm < http://www.scrotwm.org/ > was used as a model for some parts
+scrotwm < http://www.scrotwm.org/ > and dwm < http://dwm.suckless.org/ > 
+were used as a model for some parts.
 Thus the one or more of the following notices may apply to some sections:
-  
+
+* scrotwm: 
 * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
 * Copyright (c) 2009 Ryan McBride <mcbride@countersiege.com>
 * Copyright (c) 2009 Darrin Chandler <dwchandler@stilyagin.com>
@@ -43,9 +45,8 @@ Thus the one or more of the following notices may apply to some sections:
 * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-* Much code and ideas taken from dwm under the following license:
-* MIT/X Consortium License
 *
+* dwm:
 * 2006-2008 Anselm R Garbe <garbeam at gmail dot com>
 * 2006-2007 Sander van Dijk <a dot h dot vandijk at gmail dot com>
 * 2006-2007 Jukka Salmi <jukka at salmi dot ch>
@@ -141,7 +142,8 @@ struct  win {
 	struct win *next;
 	bool del_win;	
 	bool take_focus;
-	Window id; //window id
+	bool fullscreen;
+	Window id; 
 };
 
 /*The STACK ITEM
@@ -1666,7 +1668,7 @@ void layout() {
 			h += 2;
 		};
 		h -= stackheight;
-		
+	
 		XMoveResizeWindow(dpy,cv->mfocus->win->id,(-1),(-1),(w),(h));
 		XRaiseWindow(dpy,cv->mfocus->win->id);
 		//shoudl we use wm_take_focus?
@@ -1782,7 +1784,13 @@ void layout() {
 			offsetc = 0;
 			curc = curt->c;
 			while (curc != NULL) {
-				//draw curc
+				//make sure we tell windows that think they are fs that they aren't	
+				if (curc->win->fullscreen == true) {
+					curc->win->fullscreen = false;
+					XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
+				};
+
+
 				//set border:
 				if (curc == cv->mfocus) {
 				//check whether it already has focus?
@@ -2188,10 +2196,12 @@ int event_loop() {
 						if (ev.xclient.data.l[0] == 1) { //go into full screen
 							wc->track->view->fs = true;
 							redraw = true;
+							wc->win->fullscreen = true;
 							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
 						} else { // exit fullscreen
 							wc->track->view->fs = false;
 							redraw = true;
+							wc->win->fullscreen = false;
 							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 
 						};
