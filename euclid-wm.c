@@ -1351,62 +1351,78 @@ void shift_main_focus(short int dir) {
 	dir = convert_to_internal_dir(dir);
 
 	if (dir == 1) {
-
-		if (cv->mfocus->next != NULL) {
-			cv->mfocus =  cv->mfocus->next;
+		if (cv->fs == false) {
+			if (cv->mfocus->next != NULL) {
+				cv->mfocus =  cv->mfocus->next;
+			};
+		} else {
+			if (cv->mfocus->next != NULL) {
+				cv->mfocus = cv->mfocus->next;
+			} else if (cv->mfocus->track->next != NULL) {
+				cv->mfocus = cv->mfocus->track->next->c;
+			};
 		};
 	} else if (dir == 2) { 
-	
-		if (cv->mfocus->prev != NULL) {
-			cv->mfocus = cv->mfocus->prev;
+		if (cv->fs == false) {
+			if (cv->mfocus->prev != NULL) {
+				cv->mfocus = cv->mfocus->prev;
+			};
+		} else {
+			if (cv->mfocus->prev != NULL) {
+				cv->mfocus = cv->mfocus->prev;
+			} else if (cv->mfocus->track->prev != NULL ) {
+				cv->mfocus = cv->mfocus->track->prev->c;
+			};
 		};
 	} else if (dir == 3 && cv->mfocus->track->next != NULL) {
-		
-		struct cont *p;
-			p = cv->mfocus->prev;
-			int s = 0;
-			int t = 0;
-
-			while (p != NULL) {
-				s += p->size;
-				p = p->prev;
+		if (cv->fs == false) {
+			struct cont *p;
+				p = cv->mfocus->prev;
+				int s = 0;
+				int t = 0;
 	
-			};
-			
-			s += (cv->mfocus->size / 2);
-			
-			p = cv->mfocus->track->next->c;
-			
-			while (p->next != NULL) {
-				t += p->size;
-				if (t >= s) {break;};
-				p = p->next;
-			};
-			
-			cv->mfocus = p;
+				while (p != NULL) {
+					s += p->size;
+					p = p->prev;
 		
+				};
+				
+				s += (cv->mfocus->size / 2);
+				
+				p = cv->mfocus->track->next->c;
+				
+				while (p->next != NULL) {
+					t += p->size;
+					if (t >= s) {break;};
+					p = p->next;
+				};
+				
+				cv->mfocus = p;
+		};
 	} else if (dir == 4 && cv->mfocus->track->prev != NULL) {
-		struct cont *p;
-			p = cv->mfocus->prev;
-			int s = 0;
-			int t = 0;
-
-			while (p != NULL) {
-				s += p->size;
-				p = p->prev;
-
-			};
-			
-			s += (cv->mfocus->size / 2);
-			
-			p = cv->mfocus->track->prev->c;
-			
-			while (p->next != NULL) {
-				t += p->size;
-				if (t >= s) {break;};
-				p = p->next;
-			};
-			cv->mfocus = p;
+		if (cv->fs == false) {
+			struct cont *p;
+				p = cv->mfocus->prev;
+				int s = 0;
+				int t = 0;
+	
+				while (p != NULL) {
+					s += p->size;
+					p = p->prev;
+	
+				};
+				
+				s += (cv->mfocus->size / 2);
+				
+				p = cv->mfocus->track->prev->c;
+				
+				while (p->next != NULL) {
+					t += p->size;
+					if (t >= s) {break;};
+					p = p->next;
+				};
+				cv->mfocus = p;
+		};
 	};
 }
 
@@ -1663,7 +1679,6 @@ void layout() {
 			gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
 			
 			XTextProperty wmname;
-			gxerror = false;
 			XGetWMName(dpy,si->win->id,&wmname);
 			//added cast to appease gcc
 			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
@@ -1867,9 +1882,8 @@ int xerror(Display *d, XErrorEvent *e) {
 	char buff[256];
 
 	XGetErrorText(dpy, e->error_code, buff, 256);
-	printf("X error: %s",buff);
+	printf("X error: %s\n",buff);
 	if (e->error_code == BadWindow) {
-		printf("dropping window %lu\n",e->resourceid);	
 		forget_win((Window) e->resourceid);
 	};
 	gxerror = true;
