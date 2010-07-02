@@ -761,7 +761,6 @@ void forget_win (Window id) {
 	}; 
 	
 	if (w == NULL) { return;};
-	
 	//we have the win struct stored in w;
 
 	struct view *v = fv;
@@ -801,9 +800,6 @@ void forget_win (Window id) {
 							if (c->track == c->track->view->ft) {
 								//is track only?
 								if (c->track->next == NULL) {
-									//TODO, c is the only container in the view
-									//what do we do?
-									
 									c->track->c = NULL;
 									free(c);
 								} else {
@@ -822,9 +818,6 @@ void forget_win (Window id) {
 								free (c->track);
 								free(c);
 							}; 
-							
-							
-						
 						} else {//its just first
 							c->track->c = c->next;
 							c->next->prev = NULL;
@@ -839,8 +832,6 @@ void forget_win (Window id) {
 						free(c);
 					};
 					
-					
-					
 				};
 				c = c->next;
 			};
@@ -848,6 +839,39 @@ void forget_win (Window id) {
 		};
 		v = v->next;
 	};
+
+	//we also need to check the stacks:
+	v = fv;
+	struct stack_item *s = NULL;
+	while (v != NULL) {
+		s = v->stack;
+		while (s != NULL) {
+			if (s->win == w) {
+				if (s == v->stack) {
+					v->stack = s->next;
+				};
+				if (s == v->sfocus) {
+					if (s->next != NULL) {
+						v->sfocus = s->next;
+					} else {
+						v->sfocus = s->prev;
+					};
+				};
+				if (s->next != NULL) {
+					s->next->prev = s->prev;
+				};
+				if (s->prev != NULL) {
+					s->prev->next = s->next;
+				};
+				free(s);
+			};
+			s = s->next;
+			
+		};
+		v = v->next;
+	};
+
+
 	//remove w
 	//is it first?
 	//is it last?
@@ -855,8 +879,6 @@ void forget_win (Window id) {
 		first_win = w->next;
 	};
 	w2->next = w->next;
-	
-	
 	free(w);
 	
 }
@@ -1641,7 +1663,8 @@ void layout() {
 			gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
 			
 			XTextProperty wmname;
-			XGetWMName(dpy,si->win->id,&wmname);	
+			gxerror = false;
+			XGetWMName(dpy,si->win->id,&wmname);
 			//added cast to appease gcc
 			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
 			
@@ -1844,9 +1867,9 @@ int xerror(Display *d, XErrorEvent *e) {
 	char buff[256];
 
 	XGetErrorText(dpy, e->error_code, buff, 256);
-
+	printf("X error: %s",buff);
 	if (e->error_code == BadWindow) {
-	
+		printf("dropping window %lu\n",e->resourceid);	
 		forget_win((Window) e->resourceid);
 	};
 	gxerror = true;
