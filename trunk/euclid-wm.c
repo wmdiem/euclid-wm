@@ -884,6 +884,29 @@ void forget_win (Window id) {
 }
 
 void add_client_to_view (struct win *p, struct view *v) {
+	//first make sure it is not already in the target view:
+	struct track *tp = v->ft;
+	struct cont *cp = NULL;
+	while (tp != NULL) {
+
+		while (cp != NULL) {
+			
+			if (cp->win->id == p->id) {
+				return;
+			};
+			cp = cp->next;
+		};
+		tp = tp->next;
+	};
+
+	struct stack_item *si = v->stack;
+	while (si != NULL) {
+		if (si->win->id == p->id) {
+			return;
+		};
+		si = si->next;
+	};
+
 	//make a cont for it
 	struct cont *c = (struct cont *) malloc  (sizeof(struct cont));
 	//no we need to test all these
