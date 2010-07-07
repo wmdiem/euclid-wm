@@ -116,7 +116,6 @@ struct view {
 	int idx;
 	bool showstack;
 	bool fs; //fullscreen?
-	//Window stackid; //window to display the stack
 };
 
 struct track {
@@ -127,7 +126,6 @@ struct track {
 	int size;
 };
 
-//cont = a container for a window
 struct cont {
 	struct track *track;
 	struct cont *next;
@@ -137,7 +135,6 @@ struct cont {
 
 };
 
-//we keep a chain of all wins 
 struct  win {
 	struct win *next;
 	bool del_win;	
@@ -145,11 +142,6 @@ struct  win {
 	bool fullscreen;
 	Window id; 
 };
-
-/*The STACK ITEM
- *the stack item is just a title and a win id
- *A chain of these creates the stack
- */
 
 struct stack_item {
 	struct win *win;
@@ -167,7 +159,7 @@ struct binding {
  *GLOBAL VARIABLES
  */
 
-struct view *fv = NULL;
+struct view *fv = NULL; //first view
 struct view *cv = NULL; //current view
 struct win *first_win = NULL;
 
@@ -179,7 +171,7 @@ bool sloppy_focus = true;
 struct binding bindings[50];
 Display *dpy;
 Window root;
-unsigned long focus_pix; //border colors
+unsigned long focus_pix; 
 unsigned long unfocus_pix;
 unsigned long stack_background_pix;
 unsigned long stack_focus_pix;
@@ -197,8 +189,7 @@ int res_top = 0;
 int res_bot = 0;
 int resize_inc = 15;
 
-//actually registers an individual keybinding with X
-//and records the keycode in appropriate array
+//records the keycode in appropriate array
 void bind_key(char s[12], unsigned int m, struct binding *b) {
 	//char is the name of the key, e.g. 'a' 'period' 'return' 'F2' etc. 
 	//m is a copy of one of the two global keymask variables: mod or mods
@@ -208,16 +199,10 @@ void bind_key(char s[12], unsigned int m, struct binding *b) {
 	//recored the binding internally so we can detect it later:
 	b->keycode = code;
 	b->mask = m;
-	//register the binding with X
-	//this should be delayed, to avoid issues with getting getting bindings we don't want
-//	XGrabKey(dpy,code,m,root,True,GrabModeAsync,GrabModeAsync);
-
 }
 
 
-//handles binding the keys
-//it will eventually load them from a config file
-//for now its hard coded
+//handles binding the default keys
 void bind_keys() {
 					
 	//note that the array index is significant
@@ -265,9 +250,7 @@ void bind_keys() {
 	bind_key("k",mods,&bindings[30]);
 	bind_key("l",mods,&bindings[31]);
 
-	//show stack				1	32
-	//bind_key("s",mod,&bindings[32]);
-	//toggle stack
+	//toggle stack				1	32
 	bind_key("space",mod,&bindings[32]);
 
 	//move to stack				1	33
@@ -402,14 +385,6 @@ void load_conf() {
 				tcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(tcmd[0],v);
 				tcmd[1] = NULL;
-				//with keybindings, we need to know the mod key before we define them
-				//the basic sequence is: 
-				//define mod (from file or default)
-				//then call bind_keys
-				//then overwrite defaults with any custom bindings
-				//then commit them
-			//template:
-			//}} else if (strcmp(key,"") == 0) { 
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
@@ -471,6 +446,7 @@ void load_conf() {
 					printf("unparsable color: %s\n",v);
 				};
 
+			
 			/*
 			 *Actual bindings, format
 			 *bind_$ACT = mod keyname
@@ -588,7 +564,6 @@ void commit_bindings() {
  */
 void set_atoms() {
 	
-	//get the delwin atom
 	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",False);
 	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",False);
 	//do we actually use this one? should we?
@@ -606,31 +581,19 @@ void set_atoms() {
 	XSync(dpy,False);
 }
 
-
-/*Makes a new view*/
 struct view * make_view() {
-	//make the view
 	struct view *ptr = (struct view *) malloc(sizeof(struct view));
-	
-	//it is obviously the last since we just made it
 	ptr->next = NULL;
 	ptr->prev = NULL;
 	ptr->mfocus = NULL;
 	ptr->sfocus = NULL;
-
-	
 	ptr->idx = 0;
-	
-	
 	ptr->ft = (struct track *) malloc(sizeof(struct track)); 
-	
-	//define variables for track:
 	ptr->ft->view = ptr;
 	ptr->ft->next = NULL;
 	ptr->ft->prev = NULL;
 	ptr->ft->c = NULL;
 	ptr->ft->size = scrn_w;
-	
 	ptr->orientv = true;
 	ptr->stack = NULL;
 	ptr->showstack = true;
@@ -641,9 +604,7 @@ struct view * make_view() {
  }
 
 void remove_cont(struct cont *c) {
-	
 	//reset focus if necessary
-				
 	if (c->next != NULL) {
 		c->track->view->mfocus = c->next;
 	} else if (c->prev != NULL) {
@@ -655,16 +616,12 @@ void remove_cont(struct cont *c) {
 	} else {
 		c->track->view->mfocus = NULL;
 	};
-
-					
 	//remove c and clean up
-					
 	//is c first in the track?
 	if (c->track->c == c) {
 		//is it only in track?
 		if (c->next == NULL) {
 			//is track first?
-			
 			if (c->track == c->track->view->ft) {
 				//is track only?
 				if (c->track->next == NULL) {
@@ -722,10 +679,7 @@ struct win * add_win(Window  id) {
 	Atom *prot = NULL;
 	Atom *pp;
 	int n, j;
-	//the following line causes a fatal X error, X_configure_request, bad property, at startup
-	//this should not be creating any such  request
 	if (XGetWMProtocols(dpy, id, &prot, &n)) {
-	
 		for (j = 0, pp = prot; j < n; j++, pp++) {
 			if (*pp == wm_del_win) {
 				p->del_win = true;		
@@ -745,15 +699,11 @@ struct win * add_win(Window  id) {
 
 void forget_win (Window id) {
 	//first see whether we have a record of it
-	
 	if (first_win == NULL) {return;};
-	
 	struct win * w = first_win;
 	struct win * w2 = first_win;
-	
 	if (w->id != id) {
 		while (w->next != NULL && w->next->id != id) {
-	
 			w = w->next;
 		};
 		w2 = w; //this should be the win struct before the one we are deleting
@@ -762,14 +712,11 @@ void forget_win (Window id) {
 	
 	if (w == NULL) { return;};
 	//we have the win struct stored in w;
-
 	struct view *v = fv;
 	struct track *t;
 	struct cont *c;
-	
 	while (v != NULL) {
 		t = v->ft;
-		
 		while (t != NULL) {
 			c = t->c;
 			while (c != NULL) {
@@ -788,12 +735,9 @@ void forget_win (Window id) {
 							v->mfocus = NULL;
 						};
 					};
-					
 					//remove c and clean up
-					
 					//is c first in the track?
 					if (c->track->c == c) {
-							
 						//is it only in track?
 						if (c->next == NULL) {//remove track
 							//is track first?
@@ -823,7 +767,6 @@ void forget_win (Window id) {
 							c->next->prev = NULL;
 							free(c);				
 						};
-						
 					} else { //there a prev 
 						c->prev->next = c->next;
 						if (c->next != NULL) {
@@ -831,7 +774,6 @@ void forget_win (Window id) {
 						};
 						free(c);
 					};
-					
 				};
 				c = c->next;
 			};
@@ -839,7 +781,6 @@ void forget_win (Window id) {
 		};
 		v = v->next;
 	};
-
 	//we also need to check the stacks:
 	v = fv;
 	struct stack_item *s = NULL;
@@ -866,11 +807,9 @@ void forget_win (Window id) {
 				free(s);
 			};
 			s = s->next;
-			
 		};
 		v = v->next;
 	};
-
 
 	//remove w
 	//is it first?
@@ -888,9 +827,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 	struct track *tp = v->ft;
 	struct cont *cp = NULL;
 	while (tp != NULL) {
-
 		while (cp != NULL) {
-			
 			if (cp->win->id == p->id) {
 				return;
 			};
@@ -921,7 +858,6 @@ void add_client_to_view (struct win *p, struct view *v) {
 		c->size = v->mfocus->size;
 	} else {
 		//first client in view
-		
 		c->next = NULL;
 		c->prev = NULL;
 		c->track = v->ft;
@@ -937,57 +873,41 @@ void add_client_to_view (struct win *p, struct view *v) {
 }
 
 void move_to_stack(struct cont *c) {
-	//insert in stack
-	
-	
-	
 	struct stack_item *s = (struct stack_item *) malloc (sizeof(struct stack_item));
 	struct stack_item *p = cv->stack;
 	s->win = c->win;
 	s->next = p;
 	s->prev = NULL;
-	
 	cv->stack = s;
 	cv->sfocus = s;
 	if (p != NULL) {
 		p->prev = s;
 	};
-	
 	remove_cont(c);
-	
 }
 
 void move_to_main() {
 	//just add whatever has stack focus to the layout
 	if (cv->sfocus == NULL) {return;};
 	add_client_to_view(cv->sfocus->win, cv);
-	
 	//remove it from the stack:
-	
 	struct stack_item *p = cv->sfocus;
-	
 	//reset sfocus
 	cv->sfocus = NULL;
-	//what if p is NULL?
 	if (p->prev != NULL) {
 		cv->sfocus = p->prev;
 		p->prev->next = p->next;
 	};
-	
 	if (p->next != NULL) {
 		p->next->prev = p->prev;
 		if (cv->sfocus == NULL) {
 			cv->sfocus = p->next;
 			cv->stack = p->next;
 		};
-
-		
 	};
-	
 	if (cv->sfocus == NULL) {
 		cv->stack = NULL;
 	};
-	
 	free(p);
 }
 
@@ -999,18 +919,13 @@ void shift_stack_focus (bool dir) {
 	} else if (!dir && cv->sfocus->next != NULL) {
 		cv->sfocus = cv->sfocus->next;
 	};
-	
 }
 
 bool is_top_level(Window id) {
-
-
 	Window r; //root return;
 	Window p; //parent return;
 	Window *c; //children;
 	unsigned int nc; //number of children 
-	//XQueryTree(dpy,id,&r,&p,&c,&nc);
-	//if (p == root) {return(true);} else {return(false);};
 	gxerror = false;
 	XQueryTree(dpy,root,&r,&p,&c,&nc);
 	if (gxerror) {
@@ -1020,7 +935,6 @@ bool is_top_level(Window id) {
 	int i;
 	for (i = 0; i < nc; i++) {
 		if (c[i] == id) {
-	   		
 			XWindowAttributes wa;
 			XGetWindowAttributes(dpy,id,&wa);
 			if (gxerror == true) {
@@ -1035,12 +949,10 @@ bool is_top_level(Window id) {
 				XFree(c);
 				return(true);
 			};
-	
 		};
 	};
 	XFree(c);
 	return(false);
-
 }
 
 short int convert_to_internal_dir(short int dir) {/*four possibilities: 
@@ -1090,9 +1002,7 @@ void shift_window(short int dir) {
 	dir = convert_to_internal_dir(dir);
 	if (dir == 1 && cv->mfocus->next != NULL) { //down in the track;
 		//get a direct reference to all four nodes
-		
 		//make sure that we are also updating track->c if necessary 
-		
 		struct cont *tmpa;
 		struct cont *tmpb;
 		struct cont *tmpc;
@@ -1108,8 +1018,6 @@ void shift_window(short int dir) {
 		} else { //a is null, b is track->c
 			cv->mfocus->track->c = tmpc;
 		};
-		
-		
 		if (tmpd != NULL) {
 			tmpd->prev = tmpb;
 		};
@@ -1119,13 +1027,11 @@ void shift_window(short int dir) {
 		};
 		tmpb->prev = tmpc;
 		tmpb->next = tmpd;
-		
 	} else if (dir == 2 && cv->mfocus->prev != NULL) {
 		struct cont *tmpa;
 		struct cont *tmpb;
 		struct cont *tmpc;
 		struct cont *tmpd;
-		
 		if (cv->mfocus->prev != NULL) {
 			tmpa = cv->mfocus->prev->prev;
 		} else {
@@ -1134,83 +1040,62 @@ void shift_window(short int dir) {
 		tmpb = cv->mfocus->prev;
 		tmpc = cv->mfocus;
 		tmpd = cv->mfocus->next;
-		
 		if (tmpa != NULL) {
 			tmpa->next = tmpc;
 		};
 		if (cv->mfocus->track->c == tmpb) {
 			cv->mfocus->track->c = tmpc;
 		};
-		
 		if (tmpb != NULL) {
-			
 			tmpb->prev = tmpc;
 			tmpb->next = tmpd;	
 		};
-
 		if (tmpd != NULL) {
 			tmpd->prev = tmpb;
 		};
 		tmpc->prev = tmpa;
 		tmpc->next = tmpb;
-		
 	} else if (dir == 3) {
 		//check for track->next
 		if (cv->mfocus->track->next != NULL) {
-			
 			//find position in it
 			//find the midpoint of the current cont
 			struct cont *p;
 			p = cv->mfocus->prev;
 			int s = 0;
 			int t = 0;
-			
 			while (p != NULL) {
 				s += p->size;
 				p = p->prev;
-				
 			};
-			
 			s += (cv->mfocus->size / 2);
 			p = cv->mfocus->track->next->c;
-			
 			while (p->next != NULL) {
 				t += p->size;
 				if (t >= s) {break;};
 				p = p->next;
 			};
-			
 			if (p != NULL) {//it never should
-		
 				if (cv->mfocus->prev != NULL) {
-			
 					cv->mfocus->prev->next = cv->mfocus->next;
 				} else { //it's first 
-	
 					if (cv->mfocus->next != NULL) {
-			
 						cv->mfocus->track->c = cv->mfocus->next;
 					} else {
-			
 						//only one in the track
 						//remove the old track
 						if (cv->ft == cv->mfocus->track) {
-		
 							cv->ft = p->track;
 						} else {
-						
-							cv->mfocus->track->prev->next = p->track;}; 
-		
+							cv->mfocus->track->prev->next = p->track;
+						}; 
 						p->track->prev = cv->mfocus->track->prev;
 						free(cv->mfocus->track);
 					};
 				};
-				//wheew, now we can proceed:
-				//and here
 				if (cv->mfocus->next != NULL) {
 					cv->mfocus->next->prev = cv->mfocus->prev;
 				};
-			
 				//put it behind p
 				struct cont *b = p->next;
 				if (b != NULL) {
@@ -1220,23 +1105,19 @@ void shift_window(short int dir) {
 				cv->mfocus->prev = p;
 				cv->mfocus->next = b;
 				cv->mfocus->track = p->track;
-			
 			};
-			
-						
 		}else{ //make a track for it
 			if (cv->mfocus->track->c == cv->mfocus) { 
 				if (cv->mfocus->next != NULL) {
 						cv->mfocus->track->c = cv->mfocus->next;
 					} else if (cv->mfocus->prev != NULL) {
 						cv->mfocus->track->c = cv->mfocus->prev;
-					} else {return; //premature return, because movign the window that direction doesn't make any sense
+					} else {
+						return; //premature return, because movign the window that direction doesn't make any sense
 					};
 				};
 			struct track *ptr = (struct track *) malloc (sizeof(struct track));
 			cv->mfocus->track->next = ptr;
-			
-
 			//update all the other links
 			ptr->view = cv;
 			ptr->next = NULL;
@@ -1244,8 +1125,6 @@ void shift_window(short int dir) {
 			ptr->c = cv->mfocus;
 			ptr->size = cv->mfocus->track->size;
 			cv->mfocus->track = ptr;
-			
-			
 			//patch up the hole in mfocus->track
 			if (cv->mfocus->prev != NULL) 
 				cv->mfocus->prev->next = cv->mfocus->next;
@@ -1253,67 +1132,45 @@ void shift_window(short int dir) {
 				cv->mfocus->next->prev = cv->mfocus->prev;
 			cv->mfocus->next = NULL;
 			cv->mfocus->prev = NULL;
-			
-			
-			
 		};
-
 	} else if (dir == 4) { //4
 		if (cv->mfocus->track->prev != NULL) {
-	
 			//find position in it
 			//find the midpoint of the current cont
 			struct cont *p;
 			p = cv->mfocus->prev;
 			int s = 0;
 			int t = 0;
-		
 			while (p != NULL) {
 				s += p->size;
 				p = p->prev;
-	
 			};
-			
 			s += (cv->mfocus->size / 2);
-	
 			p = cv->mfocus->track->prev->c;
-			
 			while (p->next != NULL) {
 				t += p->size;
 				if (t >= s) {break;};
 				p = p->next;
 			};
-			
 			if (p != NULL) {//it never should
-			//we are getting circular prevs, not sure how this is happening
-		
 				if (cv->mfocus->prev != NULL) {
-					
 					cv->mfocus->prev->next = cv->mfocus->next;
 				} else { //it's first in the track
-				
 					if (cv->mfocus->next != NULL) {
-				
 						cv->mfocus->track->c = cv->mfocus->next;
 					} else {
-				
 						//only one in the track
 						//remove the old track
-											
 						if (cv->mfocus->track->next != NULL) {
 							cv->mfocus->track->next->prev = p->track;
 						}; 
-				
 						p->track->next = cv->mfocus->track->next;
 						free(cv->mfocus->track);
 					};
 				};
-				//wheew, now we can proceed:
 				if (cv->mfocus->next != NULL) {
-					//is this causing all the harm?
 					cv->mfocus->next->prev = cv->mfocus->prev;
 				};
-			
 				//put it behind p
 				struct cont *b = p->next;
 				if (b != NULL) {
@@ -1323,7 +1180,6 @@ void shift_window(short int dir) {
 				cv->mfocus->prev = p;
 				cv->mfocus->next = b;
 				cv->mfocus->track = p->track;
-			
 			};	
 		}else{ //make a track for it
 			if (cv->mfocus->track->c == cv->mfocus) { 
@@ -1331,14 +1187,13 @@ void shift_window(short int dir) {
 						cv->mfocus->track->c = cv->mfocus->next;
 					} else if (cv->mfocus->prev != NULL) {
 						cv->mfocus->track->c = cv->mfocus->prev;
-					} else {return; //premature return, because movign the window that direction doesn't make any sense
+					} else {
+						return; //premature return, because movign the window that direction doesn't make any sense
 					};
 				};
 			struct track *ptr = (struct track *) malloc (sizeof(struct track));
 			cv->mfocus->track->prev = ptr;
 			cv->ft = ptr;
-			
-
 			//update all the other links
 			ptr->view = cv;
 			ptr->next = cv->mfocus->track;
@@ -1346,33 +1201,25 @@ void shift_window(short int dir) {
 			ptr->c = cv->mfocus;
 			ptr->size = cv->mfocus->track->size;
 			cv->mfocus->track = ptr;
-			
-			
 			//patch up the hole in mfocus->track
 			if (cv->mfocus->prev != NULL) 
 				cv->mfocus->prev->next = cv->mfocus->next;
 			if (cv->mfocus->next != NULL)
 				cv->mfocus->next->prev = cv->mfocus->prev;
-						
 			cv->mfocus->prev = NULL;
 			cv->mfocus->next = NULL;
-								
 		};
-				
 	};
 	if (cv->mfocus->prev != NULL) {
 		cv->mfocus->size = cv->mfocus->prev->size;
 	} else if (cv->mfocus->next != NULL) {
 		cv->mfocus->size = cv->mfocus->next->size;
 	};
-			
 }
 
 void shift_main_focus(short int dir) {
 	if (cv->mfocus == NULL) {return;};
-
 	dir = convert_to_internal_dir(dir);
-
 	if (dir == 1) {
 		if (cv->fs == false) {
 			if (cv->mfocus->next != NULL) {
@@ -1403,23 +1250,17 @@ void shift_main_focus(short int dir) {
 				p = cv->mfocus->prev;
 				int s = 0;
 				int t = 0;
-	
 				while (p != NULL) {
 					s += p->size;
 					p = p->prev;
-		
 				};
-				
 				s += (cv->mfocus->size / 2);
-				
 				p = cv->mfocus->track->next->c;
-				
 				while (p->next != NULL) {
 					t += p->size;
 					if (t >= s) {break;};
 					p = p->next;
 				};
-				
 				cv->mfocus = p;
 		};
 	} else if (dir == 4 && cv->mfocus->track->prev != NULL) {
@@ -1428,17 +1269,12 @@ void shift_main_focus(short int dir) {
 				p = cv->mfocus->prev;
 				int s = 0;
 				int t = 0;
-	
 				while (p != NULL) {
 					s += p->size;
 					p = p->prev;
-	
 				};
-				
 				s += (cv->mfocus->size / 2);
-				
 				p = cv->mfocus->track->prev->c;
-				
 				while (p->next != NULL) {
 					t += p->size;
 					if (t >= s) {break;};
@@ -1449,18 +1285,12 @@ void shift_main_focus(short int dir) {
 	};
 }
 
-
 struct view * find_view (int i) {
 	//this will return a pointer to a give view
 	//even if it must first create it
-	
-	//we have a dblly linked list of views
 	//some views get a numbered index
-		
 	//i -2 means move forward -3 means backward
-	
 	struct view *v = NULL;
-	
 	if (i == -2) {
 		//move forward
 		if (cv->next != NULL) {
@@ -1471,10 +1301,6 @@ struct view * find_view (int i) {
 			cv->next = v;
 			v->prev = cv;
 			v->idx = (cv->idx + 1);
-			
-		//since there is no prev, it is obviously first
-		
-			
 		};
 	} else if (i == -3) {
 		//move backward
@@ -1489,35 +1315,23 @@ struct view * find_view (int i) {
 			fv = v;
 		};
 	} else if (i <= 9 && i >= 1) {
-		
 			v = fv;
-			
-			//the 2nd time i go to view 2 it returns v 1
-			
-			
 			while (v->next != NULL && v->next->idx < i) {
 				v = v->next;
 			};
-			
 			if (v->next == NULL) {
-				
 				//we overshot, and ran out of views: make the view
 				//or we are looking for fv
 				if (i == v->idx) {
-	
 					return(v);
 				};
-
 				v->next = make_view();
 				v->next->idx = i;
 				v->next->prev = v;
 				v = v->next;
-				
 			} else if (v->next->idx > i && v->idx < i) {
-				
 				//we overshot, but there are higher indexed views
 				//make a view in front of v
-	
 				//store v->next
 				struct view *v2 = v->next;
 				v->next = make_view();
@@ -1526,26 +1340,18 @@ struct view * find_view (int i) {
 				v->next->next = v2;
 				v2->prev = v->next;
 				v = v->next;
-				
-			} else if (v->idx == i){
-				;
 			} else if (v->next->idx == i) {
 				v = v->next;
 			};
-			
 	};
-
 	return(v);
-	
 }
 
 void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
 	//sets cv
 	//and maps the windows of the new cv
-	
 	if (v == NULL || v == cv) {return;};
-	
 	struct track *t = cv->ft;
 	struct cont *c;
 	while (t != NULL) {
@@ -1557,7 +1363,6 @@ void goto_view(struct view *v) {
 		t = t->next;
 	};
 	if (cv->mfocus == NULL && cv->sfocus == NULL) {
-		//current view should be empty, let's free it
 		if (cv->prev != NULL) {
 			cv->prev->next = cv->next;
 		};
@@ -1567,11 +1372,10 @@ void goto_view(struct view *v) {
 		if (cv == fv) {
 			fv = cv->next;
 		};
+		free(cv);
 	};
-	
 	cv = v;
 	t = v->ft;
-	
 	while (t != NULL) {
 		c = t->c;
 		while (c != NULL) {
@@ -1585,22 +1389,16 @@ void goto_view(struct view *v) {
 
 void move_to_view(struct view *v) {
 	//move currenlty focused item
-	
 	if (v == NULL || v == cv || cv->mfocus == NULL) {return;};
-	
 	//remove it from the current view
 	struct win *w = cv->mfocus->win;
 	XUnmapWindow(dpy,w->id);
 	remove_cont(cv->mfocus);
-	
 	//add it to the new view
 	add_client_to_view(w, v);
 }
 
-//this is a quick simple version, may well need to be reworked
-
 struct cont * id_to_cont(Window w) {
-
 	struct track *t = cv->ft;
 	struct cont *c;
 	while (t != NULL) {
@@ -1614,11 +1412,9 @@ struct cont * id_to_cont(Window w) {
 		t = t->next;
 	};
 	return (NULL);
- 
 }
 
 void resize (int dir) {
-	
 	if (cv->orientv == true) {
 		switch (dir) {
 			case 1:
@@ -1634,8 +1430,6 @@ void resize (int dir) {
 				cv->mfocus->track->size -= resize_inc;
 			break;
 		};
-		
-	
 	} else {
 		switch (dir) {
 			case 1:
@@ -1651,21 +1445,14 @@ void resize (int dir) {
 				cv->mfocus->size -= resize_inc;
 			break;
 		};
-		
-	}
-	
-	
+	};
 }
 
 void layout() {
-	//what mode are we in?
-	
-	//rather than do all this stack crap later, lets just set a variable stackh upfront, 0 if its hidden
 	int stackheight;
 	if (cv->showstack == false || cv->fs == true) {
 		stackheight = 0;
 	} else {
-		//count items in stack
 		struct stack_item *si = cv->stack;
 		int i = 0;
 		while (si != NULL) {
@@ -1677,35 +1464,26 @@ void layout() {
 			stackheight = 8; //this gives the user a visial clue that the stack is visible, but it is just empty. 
 		};
 	};
-	
 	//draw the stack 
-	
 	XClearWindow(dpy,stackid);
 	if (stackheight != 0) {
-		
 		XMoveResizeWindow(dpy,stackid,0,((scrn_h - res_bot) - (stackheight)),scrn_w,(stackheight));
 		XRaiseWindow(dpy,stackid);
-		XSync(dpy,false);
-		
+		XSync(dpy,false);//important!
 		struct stack_item *si = cv->stack;
 		int i = 15;
 		GC gc;
 		XGCValues xgcv;
-
 		while (si != NULL) {
 			if (si == cv->sfocus) {
 				xgcv.foreground = stack_focus_pix;
 			} else {
 				xgcv.foreground = stack_unfocus_pix;
 			}; 
-			
 			gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
-			
 			XTextProperty wmname;
 			XGetWMName(dpy,si->win->id,&wmname);
-			//added cast to appease gcc
 			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
-			
 			si = si->next;
 			i += 20;
 		}; 
@@ -1713,14 +1491,11 @@ void layout() {
 			XMoveResizeWindow(dpy,stackid,0,(scrn_h ),scrn_w,10);
 	};
 	XSync(dpy,false);
-	
 	if (cv->mfocus == NULL) {
 		XSetInputFocus(dpy,root,None,CurrentTime);
 	};
-	
 	if (cv->fs == true && cv->mfocus != NULL && cv->mfocus->win != NULL) {
 		//draw mf fullscreen
-		//make sure height is less stackheight
 		int w = scrn_w + 2;
 		int h = scrn_h;
 		if (cv->showstack == true) {
@@ -1729,22 +1504,17 @@ void layout() {
 			h += 2;
 		};
 		h -= stackheight;
-	
 		XMoveResizeWindow(dpy,cv->mfocus->win->id,(-1),(-1),(w),(h));
 		XRaiseWindow(dpy,cv->mfocus->win->id);
 		//shoudl we use wm_take_focus?
 		XSetInputFocus(dpy,cv->mfocus->win->id,None,CurrentTime);
 		XSync(dpy,false);
-		
-		
 	} else {
-		
 		//first check that the tracks layout:
 		struct track *curt = cv->ft;
 		struct cont *curc = NULL;
 		int target;
 		int tot = 0;
-		
 		if (cv->orientv == true) {
 			target = scrn_w;
 		} else {
@@ -1768,22 +1538,16 @@ void layout() {
 		//compare tot to target, if they match go on 
 		if (tot != target) {
 			signed int delta = target - tot;
-			 
 			delta /= nooftracks;
-
 			curt = cv->ft;
 			while (curt != NULL) {
-				
 				curt->size += delta;
 				curt = curt->next;
 			};
 		};
 		//else calculate the difference, and adjust all tracks
-			
-		
 		//second check that within each track the containers fit
 		curt = cv->ft;
-		
 		if (cv->orientv != true) {
 			target = scrn_w;
 		} else {
@@ -1793,7 +1557,6 @@ void layout() {
 				target = (scrn_h - (res_top + res_bot));
 			};
 		}; 
-		
 		while (curt != NULL) {
 			curc = curt->c;
 			int tot = 0;	
@@ -1803,10 +1566,8 @@ void layout() {
 				if (curc->size <= 5) {
 					curc->size += 40;
 				};
-				
 				noofconts ++;	
 				tot += curc->size;
-	
 				curc = curc->next;
 			};
 			//if tot == target, do nothing
@@ -1818,20 +1579,14 @@ void layout() {
 				} else {
 					delta = 0;
 				};
-		
-			
 				curc = curt->c;
 				while (curc != NULL) {
-		
 					curc->size += delta;
 					curc = curc->next;
 				};
 			};
-			
 			curt = curt->next;
 		};
-		
-		
 		//walk and draw
 		curt = cv->ft; //first track of view
 		int x;
@@ -1840,7 +1595,6 @@ void layout() {
 		int w;
 		int offsett = 0;
 		int offsetc = 0;
-		
 		while (curt != NULL) {
 			offsetc = 0;
 			curc = curt->c;
@@ -1850,11 +1604,8 @@ void layout() {
 					curc->win->fullscreen = false;
 					XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 				};
-
-
 				//set border:
 				if (curc == cv->mfocus) {
-				//check whether it already has focus?
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
 					if (cv->mfocus->win->take_focus == true) {
@@ -1888,7 +1639,6 @@ void layout() {
 					w = curc->size - 2;
 					h = curt->size - 2;
 				};
-			
 				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w),(h));
 				offsetc += curc->size;
 				curc = curc->next;
@@ -1897,13 +1647,11 @@ void layout() {
 			curt = curt->next;
 		};
 	};
-	
 }
 
 int xerror(Display *d, XErrorEvent *e) {
 	//get and print the error description for diagnostics:
 	char buff[256];
-
 	XGetErrorText(dpy, e->error_code, buff, 256);
 	printf("X error: %s\n",buff);
 	if (e->error_code == BadWindow) {
@@ -1913,270 +1661,239 @@ int xerror(Display *d, XErrorEvent *e) {
 	return(0);
 }
 
-
 int event_loop() {
-
 	bool redraw;
-
 	layout();
 	XEvent ev;
 	for (;;) {
-
 		redraw = false; //this will get set to true if something gets changed onscreen
-	do {
-		XNextEvent(dpy, &ev);
-	
-		if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
-			if (cv->mfocus->win->id != ev.xmotion.window) {
-				struct cont *f = id_to_cont(ev.xmotion.window);
-				if (f != NULL) {
-					cv->mfocus = f;
-					redraw = true;
-				};
-			}; 
-			
-		} else if (ev.type == KeyPress) {
-			
-			//first find the keypress index from bindings[]
-			int i = 0;
-			
-			//TODO this once appeared to cause a segfault
-			
-			while (((i < 50 && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
-				i++;
-			};
-		
-
-			switch (i) {
-			
-				//resize
-				case 0:
-					resize(4);
-					redraw = true;
-					break;
-				case 1:
-					resize(3);
-					redraw = true;
-					break;
-				case 2:
-					resize(1);
-					redraw = true;
-					break;
-				case 3:
-					resize(2);
-					redraw = true;
-					break;
-				
-				//move win to view 1-0 n m
-				case 4:
-					move_to_view(find_view(1));
-					redraw = true;
-					break;
-				case 5:
-					move_to_view(find_view(2));
-					redraw = true;
-					break;
-				case 6:
-					move_to_view(find_view(3));
-					redraw = true;
-					break;
-				case 7:
-					move_to_view(find_view(4));
-					redraw = true;
-					break;
-				case 8:
-					move_to_view(find_view(5));
-					redraw = true;
-					break;
-				case 9:
-					move_to_view(find_view(6));
-					redraw = true;
-					break;
-				case 10:
-					move_to_view(find_view(7));
-					redraw = true;
-					break;
-				case 11:
-					move_to_view(find_view(8));
-					redraw = true;
-					break;
-				case 12:
-					move_to_view(find_view(9));
-					redraw = true;
-					break;
-				case 13:
-				//	move_to_view(-3);
-					redraw = true;
-
-					break;
-				case 14:
-				//	move_to_view(-2);
-					move_to_view(find_view(-3));
-					redraw = true;
-
-					break;
-				case 15:
-				//	move_to_view(-1);
-					move_to_view(find_view(-2));
-					redraw = true;
-
-					break;
-				//change view
-				//internally views are 0 index
-				//userside 1 indexed, w/0 pointing to the last
-				case 16: //1 pressed, view 0
-					goto_view(find_view(1));
-					redraw = true;
-					break;
-				case 17:
-					goto_view(find_view(2));
-					redraw = true;
-					break;
-				case 18:
-					goto_view(find_view(3));
-					redraw = true;
-
-					break;
-				case 19:
-					goto_view(find_view(4));
-					redraw = true;
-
-				break;
-				case 20:
-					goto_view(find_view(5));
-					redraw = true;
-
-				break;
-				case 21:
-					goto_view(find_view(6));
-					redraw = true;
-
-				break;
-				case 22:
-					goto_view(find_view(7));
-					redraw = true;
-
-				break;
-				case 23:
-					goto_view(find_view(8));
-					redraw = true;
-
-				break;
-				case 24:
-					goto_view(find_view(9));
-					redraw = true;
-
-				break;
-				//goto last:
-				case 25:
-				//	goto_view(-3);
-					redraw = true;
-
-				break;
-				//goto next/prev
-				case 26:
-					goto_view(find_view(-3));
-					redraw = true;
-
-				break;
-				case 27:
-					goto_view(find_view(-2));
-					redraw = true;
-				break;
-				//shift window
-				case 28:
-					shift_window(4);
-					redraw = true;
-					break;
-				case 29:
-					shift_window(3);
-					redraw = true;
-					break;
-				case 30:
-					shift_window(1);
-					redraw = true;
-					break;
-				case 31:
-					shift_window(2);
-					redraw = true;
-					break;
-				//toggle stack
-				case 32:
-					
-					if (cv->fs == false) {
-						if (cv->showstack == true) {
-							cv->showstack = false;
-						} else {
-							cv->showstack = true;
-								};
-					
+		do {
+			XNextEvent(dpy, &ev);
+			if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
+				if (cv->mfocus->win->id != ev.xmotion.window) {
+					struct cont *f = id_to_cont(ev.xmotion.window);
+					if (f != NULL) {
+						cv->mfocus = f;
 						redraw = true;
 					};
-					break;
-				//move to stack
-				case 33:
-					if (cv->mfocus == NULL) {break;};
-					XUnmapWindow(dpy,cv->mfocus->win->id);	
-					move_to_stack(cv->mfocus);
-					
-					redraw = true;
-					break;
-				//move to main
-				case 34:
-					move_to_main();
-					if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
-						XMapWindow(dpy,cv->mfocus->win->id);
-					};
-				
-					redraw = true;
-					break;
-				//flip the layout
-				case 35:
-					if (cv->orientv == true) {
-						cv->orientv = false;
-					} else {
-						cv->orientv = true;
-					};
-					redraw = true;
-					break;
-				//swap stack up/down
-				case 36:
-					break;
-				case 37:
-					break;
-				
-				//shift main focus udrl
-				case 38:
-					shift_main_focus(4);
-					redraw = true;
-					break;
-				case 39:
-					shift_main_focus(3);
-					redraw = true;
-					break;
-				case 40:
-					shift_main_focus(1);
-					redraw = true;
-					break;
-				case 41:
-					shift_main_focus(2);
-					redraw = true;
-					break;
-				//shift stack focus up down	
-				case 42:
-					shift_stack_focus(true);
-					redraw = true;
-					break;
-				case 43:
-					shift_stack_focus(false);
-					redraw = true;
-					break;
-				//close win soft or hard
-				case 44:
-					if (cv->mfocus == NULL || cv->mfocus->win == NULL) {
+				}; 
+			} else if (ev.type == KeyPress) {
+			//first find the keypress index from bindings[]
+				int i = 0;
+				while (((i < 50 && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
+					i++;
+				};
+				switch (i) {
+				//resize
+					case 0:
+						resize(4);
+						redraw = true;
 						break;
-					};
-					if (cv->mfocus->win->del_win == true) {
+					case 1:
+						resize(3);
+						redraw = true;
+						break;
+					case 2:
+						resize(1);
+						redraw = true;
+						break;
+					case 3:
+						resize(2);
+						redraw = true;
+						break;
+					//move win to view 1-0 n m
+					case 4:
+						move_to_view(find_view(1));
+						redraw = true;
+						break;
+					case 5:
+						move_to_view(find_view(2));
+						redraw = true;
+						break;
+					case 6:
+						move_to_view(find_view(3));
+						redraw = true;
+						break;
+					case 7:
+						move_to_view(find_view(4));
+						redraw = true;
+						break;
+					case 8:
+						move_to_view(find_view(5));
+						redraw = true;
+						break;
+					case 9:
+						move_to_view(find_view(6));
+						redraw = true;
+						break;
+					case 10:
+						move_to_view(find_view(7));
+						redraw = true;
+						break;
+					case 11:
+						move_to_view(find_view(8));
+						redraw = true;
+						break;
+					case 12:
+						move_to_view(find_view(9));
+						redraw = true;
+						break;
+					case 13:
+					//	move_to_view(-3);
+						redraw = true;
+						break;
+					case 14:
+					//	move_to_view(-2);
+						move_to_view(find_view(-3));
+						redraw = true;
+						break;
+					case 15:
+					//	move_to_view(-1);
+						move_to_view(find_view(-2));
+						redraw = true;
+						break;
+					//change view
+					//internally views are 0 index
+					//userside 1 indexed, w/0 pointing to the last
+					case 16: //1 pressed, view 0
+						goto_view(find_view(1));
+						redraw = true;
+						break;
+					case 17:
+						goto_view(find_view(2));
+						redraw = true;
+						break;
+					case 18:
+						goto_view(find_view(3));
+						redraw = true;
+						break;
+					case 19:
+						goto_view(find_view(4));
+						redraw = true;
+						break;
+					case 20:
+						goto_view(find_view(5));
+						redraw = true;
+						break;
+					case 21:
+						goto_view(find_view(6));
+						redraw = true;
+						break;
+					case 22:
+						goto_view(find_view(7));
+						redraw = true;
+						break;
+					case 23:
+						goto_view(find_view(8));
+						redraw = true;
+						break;
+					case 24:
+						goto_view(find_view(9));
+						redraw = true;
+						break;
+					//goto last:
+					case 25:
+					//	goto_view(-3);
+						redraw = true;
+						break;
+					//goto next/prev
+					case 26:
+						goto_view(find_view(-3));
+						redraw = true;
+						break;
+					case 27:
+						goto_view(find_view(-2));
+						redraw = true;
+						break;
+					//shift window
+					case 28:
+						shift_window(4);
+						redraw = true;
+						break;
+					case 29:
+						shift_window(3);
+						redraw = true;
+						break;
+					case 30:
+						shift_window(1);
+						redraw = true;
+						break;
+					case 31:
+						shift_window(2);
+						redraw = true;
+						break;
+					//toggle stack
+					case 32:
+						if (cv->fs == false) {
+							if (cv->showstack == true) {
+								cv->showstack = false;
+							} else {
+								cv->showstack = true;
+							};
+							redraw = true;
+						};
+						break;
+					//move to stack
+					case 33:
+						if (cv->mfocus == NULL) {break;};
+						XUnmapWindow(dpy,cv->mfocus->win->id);	
+						move_to_stack(cv->mfocus);
+						redraw = true;
+						break;
+					//move to main
+					case 34:
+						move_to_main();
+						if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
+							XMapWindow(dpy,cv->mfocus->win->id);
+						};
+						redraw = true;
+						break;
+					//flip the layout
+					case 35:
+						if (cv->orientv == true) {
+							cv->orientv = false;
+						} else {
+							cv->orientv = true;
+						};
+						redraw = true;
+						break;
+					//swap stack up/down
+					case 36:
+						break;
+					case 37:
+						break;
+					//shift main focus udrl
+					case 38:
+						shift_main_focus(4);
+						redraw = true;
+						break;
+					case 39:
+						shift_main_focus(3);
+						redraw = true;
+						break;
+					case 40:
+						shift_main_focus(1);
+						redraw = true;
+						break;
+					case 41:
+						shift_main_focus(2);
+						redraw = true;
+						break;
+					//shift stack focus up down	
+					case 42:
+						shift_stack_focus(true);
+						redraw = true;
+						break;
+					case 43:
+						shift_stack_focus(false);
+						redraw = true;
+						break;
+					//close win soft or hard
+					case 44:
+						if (cv->mfocus == NULL || cv->mfocus->win == NULL) {
+							break;
+						};
+						if (cv->mfocus->win->del_win == true) {
 							XClientMessageEvent	cm;
 							memset(&cm,'\0', sizeof cm);
 							cm.type = ClientMessage;
@@ -2189,157 +1906,140 @@ int event_loop() {
 						} else {
 							XDestroyWindow(dpy,cv->mfocus->win->id);
 						};
-					break;
-				case 45:
-					if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
-						XKillClient(dpy,cv->mfocus->win->id);
-					};
-					break;
-				//run menu/xterm
-				case 46:
-					spawn(dmcmd);
-					//system("dmenu_run &");
-					break;
-				case 47:
-					//spawn xterm
-					spawn(tcmd);
-					//system("x-terminal-emulator &");
-					break;
-				//fullscreen:
-				case 48:
-					if (cv->fs == true) {
-						cv->fs = false;
-					} else { 
-						cv->fs = true;
-					};
-					redraw = true;
-					break;
-				//quit	
-				case 49:
-					return(0);				
-					break;
-					
-			};
-			
+						break;
+					case 45:
+						if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
+							XKillClient(dpy,cv->mfocus->win->id);
+						};
+						break;
+					//run menu/xterm
+					case 46:
+						spawn(dmcmd);
+						break;
+					case 47:
+						//spawn xterm
+						spawn(tcmd);
+						break;
+					//fullscreen:
+					case 48:
+						if (cv->fs == true) {
+							cv->fs = false;
+						} else { 
+							cv->fs = true;
+						};
+						redraw = true;
+						break;
+					//quit	
+					case 49:
+						return(0);				
+						break;
+				};
 	
-		//for this to ever get called we need to have asked for an EnterNotify on the window
-		} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false && cv->fs == false) {
-			//set focus
-			struct cont *f;
-			f = id_to_cont(ev.xcrossing.window);
-			if (f != NULL) {
-				cv->mfocus = f;
-				redraw = true;
-			}; 
-		} else if (ev.type == ReparentNotify) {
-			if (ev.xreparent.parent == root) {
-
-				if (is_top_level(ev.xreparent.window) == true) {
-					struct win *t;
-					t = add_win(ev.xreparent.window);
-					XWindowAttributes att;
-					XGetWindowAttributes (dpy,ev.xreparent.window,&att);
+			//for this to ever get called we need to have asked for an EnterNotify on the window
+			} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false && cv->fs == false) {
+				//set focus
+				struct cont *f;
+				f = id_to_cont(ev.xcrossing.window);
+				if (f != NULL) {
+					cv->mfocus = f;
+					redraw = true;
+				}; 
+			} else if (ev.type == ReparentNotify) {
+				if (ev.xreparent.parent == root) {
+					if (is_top_level(ev.xreparent.window) == true) {
+						struct win *t;
+						t = add_win(ev.xreparent.window);
+						XWindowAttributes att;
+						XGetWindowAttributes (dpy,ev.xreparent.window,&att);
 						if (att.map_state != IsUnmapped) {
 							add_client_to_view(t,cv);
 							redraw = true;
 						};
+					};
+				} else {
+					forget_win(ev.xreparent.window);	
 				};
-			} else {
-				forget_win(ev.xreparent.window);	
-			};
 		
-		} else if (ev.type == ClientMessage) {
-			if (ev.xclient.message_type == wm_change_state) {
-				if (ev.xclient.data.l[1] == wm_fullscreen) {
-					struct cont *wc = id_to_cont(ev.xclient.window);
-					if (wc != NULL) {
-						if (ev.xclient.data.l[0] == 1) { //go into full screen
-							wc->track->view->fs = true;
-							redraw = true;
-							wc->win->fullscreen = true;
-							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
-						} else { // exit fullscreen
-							wc->track->view->fs = false;
-							redraw = true;
-							wc->win->fullscreen = false;
-							XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
-
+			} else if (ev.type == ClientMessage) {
+				if (ev.xclient.message_type == wm_change_state) {
+					if (ev.xclient.data.l[1] == wm_fullscreen) {
+						struct cont *wc = id_to_cont(ev.xclient.window);
+						if (wc != NULL) {
+							if (ev.xclient.data.l[0] == 1) { //go into full screen
+								wc->track->view->fs = true;
+								redraw = true;
+								wc->win->fullscreen = true;
+								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
+							} else { // exit fullscreen
+								wc->track->view->fs = false;
+								redraw = true;
+								wc->win->fullscreen = false;
+								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
+							};
 						};
 					};
 				};
-			};
-			
-		} else if (ev.type == DestroyNotify ) {
-			forget_win(ev.xdestroywindow.window);
-			//the following should be unnecessary, if it was mapped, we should first have gotten an unmap notify
-			//this is taken out because it appears to have been responsible for the google-chrome bug (no.5)
-			//redraw = true;
-				
-		} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
-			//check whether it's in the layout, if not add it
-			if (id_to_cont(ev.xmap.window) != NULL) {
-				 //it's a dup
-			} else {
-				//see whether we know about the window
-				struct win *w;
-				w = first_win;
-			
-				while (w != NULL && w->id != ev.xmap.window) {
-					w = w->next;
+			} else if (ev.type == DestroyNotify ) {
+				forget_win(ev.xdestroywindow.window);
+				//the following should be unnecessary, if it was mapped, we should first have gotten an unmap notify
+				//this is taken out because it appears to have been responsible for the google-chrome bug (no.5)
+				//redraw = true;
+			} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
+				//check whether it's in the layout, if not add it
+				if (id_to_cont(ev.xmap.window) != NULL) {
+					 //it's a dup
+				} else {
+					//see whether we know about the window
+					struct win *w;
+					w = first_win;
+					while (w != NULL && w->id != ev.xmap.window) {
+						w = w->next;
+					};
+					if (w == NULL) { //we don't have a record of it
+						w = add_win(ev.xmap.window);
+					};
+					//finally add to layout
+					add_client_to_view(w,cv);
+					redraw = true;
 				};
-				if (w == NULL) { //we don't have a record of it
-					w = add_win(ev.xmap.window);
-				};
-				//finally add to layout
-				add_client_to_view(w,cv);
-				redraw = true;
-			};
-		
-		} else if (ev.type == UnmapNotify ) {
-			struct cont *s;
-			s = id_to_cont(ev.xunmap.window);
-			if (s != NULL ) {
+			} else if (ev.type == UnmapNotify ) {
+				struct cont *s;
+				s = id_to_cont(ev.xunmap.window);
+				if (s != NULL ) {
 					remove_cont(s);	
-				//unless we caused this, we should check the window's original state 
-				//before setting this
-				
-				redraw = true;
-			};
-			
-		} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
-			add_win(ev.xcreatewindow.window);
-
-		} else if (ev.type == ConfigureNotify) {
-		//if a window tries to manage itself we are going to play rough
-			struct cont *wc = id_to_cont(ev.xconfigure.window);
-			if (wc != NULL) {
-				if (wc->track->view == cv) {
-					if (wc->track->view->orientv == true) {
-						//we are going to be niave and just check the w and h
-						//w =track size
-						if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
-							redraw = true;
-						};
-					} else {
-						if (wc->track->size != ev.xconfigure.height || wc->size != ev.xconfigure.width) {
-							redraw = true;
+					//unless we caused this, we should check the window's original state 
+					//before setting this
+					redraw = true;
+				};
+			} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
+				add_win(ev.xcreatewindow.window);
+			} else if (ev.type == ConfigureNotify) {
+				//if a window tries to manage itself we are going to play rough
+				struct cont *wc = id_to_cont(ev.xconfigure.window);
+				if (wc != NULL) {
+					if (wc->track->view == cv) {
+						if (wc->track->view->orientv == true) {
+							//we are going to be niave and just check the w and h
+							//w =track size
+							if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
+								redraw = true;
+							};
+						} else {
+							if (wc->track->size != ev.xconfigure.height || wc->size != ev.xconfigure.width) {
+								redraw = true;
+							};
 						};
 					};
 				};
 			};
+	
+		} while (XPending(dpy)); 
+	
+		if (redraw == true) {
+			layout();
 		};
-	
-	} while (XPending(dpy)); 
-	
-	if (redraw == true) {
-
-		layout();
-	};
 	}; //end infinite loop
-
-
 }
-
 
 int main() {
 	printf("\nRunning\n");
@@ -2349,7 +2049,6 @@ int main() {
 	scrn_h = DisplayHeight(dpy,DefaultScreen(dpy));
 	scrn_w = DisplayWidth(dpy,DefaultScreen(dpy));
 	printf("Sreen dimensions: %d %d\n",scrn_h, scrn_w);
-
 	//set some stuff
 	if ((root = DefaultRootWindow(dpy))) {
 		printf("root is %6.0lx\n",root);
@@ -2357,10 +2056,8 @@ int main() {
 		printf("faild to find root window\n");
 		return(0);
 	};
-	
-	//set colors:
+	//set colors, these get overridden by the config file
 	XColor color;
-	//0 is screen number:
 	//these values are shorts, 0 - 65535
 	//focus color:
 	color.red = 0;
@@ -2398,22 +2095,16 @@ int main() {
 	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
 	stack_focus_pix = color.pixel;
 	
-	
 	//we have to do this after we get root
 	memset(bindings, '\0', sizeof(bindings));
 	load_conf();
 	commit_bindings();
 
-
-
-	//to compensate for dumb programs
 	set_atoms();
 	int i;
-	 
 	cv = make_view();
 	fv = cv;
 	cv->idx = 1;
-
 
 	//now we also need to get all already exisiting windows
 	Window d1, d2, *wins = NULL;
@@ -2422,22 +2113,14 @@ int main() {
 	struct win *t;
 	printf("%d windows\n",no);
 	for (i = 0 ; i<no; i++) {
-		
-		//we must make sure all these window are mapped 
-		//before adding them to the first view
-	//needs to be coded
-
 		if (is_top_level(wins[i])) {
 			t = add_win(wins[i]);
 			XWindowAttributes att;
 			XGetWindowAttributes(dpy,wins[i],&att);
 			if (att.map_state != IsUnmapped) {
-			//addendum
-			
 				add_client_to_view(t,cv);
 			};
 		};
-
 	};
 	
 	//and set an event on root to get new ones
@@ -2458,6 +2141,6 @@ int main() {
 	XSync(dpy,False);
 
 	layout();
-	//code:
+	
 	return (event_loop());
 }
