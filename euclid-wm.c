@@ -836,14 +836,6 @@ void add_client_to_view (struct win *p, struct view *v) {
 		tp = tp->next;
 	};
 
-	struct stack_item *si = v->stack;
-	while (si != NULL) {
-		if (si->win->id == p->id) {
-			return;
-		};
-		si = si->next;
-	};
-
 	//make a cont for it
 	struct cont *c = (struct cont *) malloc  (sizeof(struct cont));
 	//no we need to test all these
@@ -874,15 +866,20 @@ void add_client_to_view (struct win *p, struct view *v) {
 
 void move_to_stack(struct cont *c) {
 	struct stack_item *s = (struct stack_item *) malloc (sizeof(struct stack_item));
-	struct stack_item *p = cv->stack;
+	struct stack_item *p = cv->sfocus;
 	s->win = c->win;
-	s->next = p;
-	s->prev = NULL;
-	cv->stack = s;
-	cv->sfocus = s;
 	if (p != NULL) {
-		p->prev = s;
+		s->next = p->next;
+		if (p->next != NULL) {
+			p->next->prev = s;
+		};
+		p->next = s;
+	} else {
+		cv->stack = s;
+		s->next = NULL;
 	};
+	s->prev = p;
+	cv->sfocus = s;
 	remove_cont(c);
 }
 
