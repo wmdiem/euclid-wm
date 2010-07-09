@@ -90,6 +90,7 @@ bind_toggle_stack = M space
 #move windows to and from the stack (minimize and restore)
 bind_move_to_stack = M period
 bind_move_to_main = M comma
+bind_swap_stack_and_main = M slash
 
 #move the stack focus
 bind_stack_focus_up = M semicolon
