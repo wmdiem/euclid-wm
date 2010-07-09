@@ -87,7 +87,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include<X11/Xutil.h>
 #include<X11/Xatom.h>
 
-
+#define BINDINGS 51 
 /*BASIC VARIABLE TYPES*/
 
 /*
@@ -168,7 +168,7 @@ int scrn_h = 860;
 unsigned int mod = Mod1Mask;
 unsigned int mods = Mod1Mask | ShiftMask;
 bool sloppy_focus = true;
-struct binding bindings[50];
+struct binding bindings[BINDINGS];
 Display *dpy;
 Window root;
 unsigned long focus_pix; 
@@ -260,7 +260,7 @@ void bind_keys() {
 	bind_key("comma",mod,&bindings[34]);
 
 	//swap stack and main			1	35
-	bind_key("Tab",mod,&bindings[35]);
+	bind_key("slash",mod,&bindings[35]);
 
 	//swap stack up down			2	36-37
 	bind_key("semicolon",mods,&bindings[36]);
@@ -289,6 +289,10 @@ void bind_keys() {
 
 	//quit					1	49
 	bind_key("Delete",mods,&bindings[49]);
+	
+	//toggle orientation
+	bind_key("Tab",mod,&bindings[50]);
+
 
 }
 
@@ -488,7 +492,7 @@ void load_conf() {
 					bindx = 33;
 				} else if (strcmp(key,"bind_move_to_main") == 0) {
 					bindx = 34;
-				} else if (strcmp(key,"bind_toggle_orientation") == 0) {
+				} else if (strcmp(key,"bind_swap_stack_and_main") == 0) {
 					bindx = 35;
 			/*	} else if (strcmp(key,"bind_stack_focus_up") == 0) {
 					bindx = 36;
@@ -518,6 +522,9 @@ void load_conf() {
 					bindx = 48;
 				} else if (strcmp(key,"bind_quit") == 0) {
 					bindx = 49;
+				} else if (strcmp(key,"bind_toggle_orientation") == 0) {
+					bindx = 50;
+
 				} else {
 					printf("ERROR: uknown binding in config: \"%s\"",key),
 					known = false;
@@ -547,7 +554,7 @@ void load_conf() {
 
 void commit_bindings() {
 	int i;
-	for (i = 0; i < 50; i++) {
+	for (i = 0; i < BINDINGS; i++) {
 		//need to check whether the binding has been set before sending garbage to X
 		if (bindings[i].keycode != 0) {
 			XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
@@ -1677,7 +1684,7 @@ int event_loop() {
 			} else if (ev.type == KeyPress) {
 			//first find the keypress index from bindings[]
 				int i = 0;
-				while (((i < 50 && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
+				while (((i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
 					i++;
 				};
 				switch (i) {
@@ -1847,12 +1854,16 @@ int event_loop() {
 						break;
 					//flip the layout
 					case 35:
-						if (cv->orientv == true) {
-							cv->orientv = false;
-						} else {
-							cv->orientv = true;
+						if (cv->sfocus != NULL && cv->mfocus != NULL) {
+							struct win *m = cv->mfocus->win;
+							struct win *s = cv->sfocus->win;
+							cv->mfocus->win = s;
+							cv->sfocus->win = m;
+							XMapWindow(dpy,cv->mfocus->win->id);
+							XUnmapWindow(dpy,cv->sfocus->win->id);
+							XSync(dpy,False);
+							redraw = true;
 						};
-						redraw = true;
 						break;
 					//swap stack up/down
 					case 36:
@@ -1930,6 +1941,15 @@ int event_loop() {
 					case 49:
 						return(0);				
 						break;
+					case 50:	
+						if (cv->orientv == true) {
+							cv->orientv = false;
+						} else {
+							cv->orientv = true;
+						};
+						redraw = true;
+						break;
+
 				};
 	
 			//for this to ever get called we need to have asked for an EnterNotify on the window
