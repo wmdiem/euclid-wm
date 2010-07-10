@@ -1,6 +1,6 @@
 Questions and Answers
 
-
+<wiki:toc max_depth="2" />
 
 = Why a tiling window manager? =
 There are two basic arguments in support of tiling window managers:
