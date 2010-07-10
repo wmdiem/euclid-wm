@@ -1,5 +1,7 @@
 #Some things that should go without saying on submiting feature requests, bug reports, and patches
 
+<wiki:toc max_depth="2" />
+
 = Feature requests, bug reports, and patches =
 I deeply value the feedback that I've gotten so far. It has been invaluable to me in finding problems and mapping out my plans for euclid. So a heartfelt "thank you" to all the testers and users who have taken time to help me improve euclid. 
 
