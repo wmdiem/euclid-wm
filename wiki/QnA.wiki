@@ -38,3 +38,9 @@ As to the advantages of XCB. I didn't need low-level access to the X protocol. I
 
 I'm not sorry for this decision: euclid, has no issues at all with not being responsive, and trying to implement it in XCB might well have kept me from finishing it. 
 
+= Why no multihead support? =
+I don't have a multihead setup. Thus I lack both the motivation and means to implement such support.
+If you want multiscreen support you have three options:
+  # Donate  a multihead setup to me. 
+  # Write a (good) patch yourself and submit it.
+  # Offer to work with me to develop a good patch (I have a pretty good idea of what would need to be done to get it working). 
