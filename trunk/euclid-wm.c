@@ -1761,9 +1761,10 @@ int event_loop() {
 			} else if (ev.type == KeyPress) {
 			//first find the keypress index from bindings[]
 				int i = 0;
-				while (((i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode)) || (bindings[i].mask != ev.xkey.state))) {
+				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || bindings[i].mask != ev.xkey.state)) {
 					i++;
 				};
+  
 				switch (i) {
 				//resize
 					case 0:
