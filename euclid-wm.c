@@ -87,7 +87,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include<X11/Xutil.h>
 #include<X11/Xatom.h>
 
-#define BINDINGS 51 
+#define BINDINGS 61 
 /*BASIC VARIABLE TYPES*/
 
 /*
@@ -185,6 +185,16 @@ Atom wm_change_state;
 Atom wm_fullscreen;
 char *dmcmd[2] = {"dmenu_run",NULL};
 char *tcmd[2] = {"xterm",NULL};
+char *ccmd01[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd02[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd03[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd04[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd05[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd06[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd07[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd08[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd09[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+char *ccmd10[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
 int res_top = 0;
 int res_bot = 0;
 int resize_inc = 15;
@@ -317,8 +327,12 @@ void split(char *in, char *out1, char *out2, char delim) {
 		i++;
 	};
 	out1[i] = '\0';
-	in++;
-	strcpy (out2,in);
+	if (*in == delim) {
+		in++;
+		strcpy (out2,in);
+	} else {
+		out2 = '\0';
+	};
 }
 
 void load_conf() {
@@ -450,6 +464,50 @@ void load_conf() {
 					printf("unparsable color: %s\n",v);
 				};
 
+			//custom commands
+			//custom_command_01 = cmd arg1 arg2
+			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
+				char **ccmd = NULL;
+				if (key[15] == '0' && key[16] == '1') {
+					//we will set ccmd to point to the appropriate array, 
+					//here we are taking v and copying it into ccmd
+					ccmd = ccmd01;
+ 				} else if (key[15] == '0' && key[16] == '2') {
+					ccmd = ccmd02;
+				} else if (key[15] == '0' && key[16] == '3') {
+					ccmd = ccmd03;
+				} else if (key[15] == '0' && key[16] == '4') {
+					ccmd = ccmd04;
+				} else if (key[15] == '0' && key[16] == '5') {
+					ccmd = ccmd05;
+				} else if (key[15] == '0' && key[16] == '6') {
+					ccmd = ccmd06;
+				} else if (key[15] == '0' && key[16] == '7') {
+					ccmd = ccmd07;
+				} else if (key[15] == '0' && key[16] == '8') {
+					ccmd = ccmd08;
+				} else if (key[15] == '0' && key[16] == '9') {
+					ccmd =ccmd09;
+				} else if (key[15] == '1' && key[16] == '0') {
+					ccmd = ccmd10;
+				};
+				int i;
+				char out1[64], out2[256], in[256];
+				strcpy(in, v);
+ 				out2[0] ='\0';
+				i = 0;
+				while (i < 7 ) {
+					split(in, out1, out2,' ');
+					if (strcmp(out1,"") == 0) {
+						ccmd = NULL;
+					} else {
+						*ccmd = (char *) malloc(strlen(out1) * sizeof(char));
+						strcpy(*ccmd,out1);
+						strcpy(in,out2);
+					};
+					ccmd ++;
+					i++;
+				};
 			
 			/*
 			 *Actual bindings, format
@@ -524,7 +582,26 @@ void load_conf() {
 					bindx = 49;
 				} else if (strcmp(key,"bind_toggle_orientation") == 0) {
 					bindx = 50;
-
+				} else if (strcmp(key,"bind_custom_01") == 0) {
+  					bindx = 51;
+  				} else if (strcmp(key,"bind_custom_02") == 0) {
+					bindx = 52;
+				} else if (strcmp(key,"bind_custom_03") == 0) {
+					bindx = 53;
+				} else if (strcmp(key,"bind_custom_04") == 0) {
+					bindx = 54;
+				} else if (strcmp(key,"bind_custom_05") == 0) {
+					bindx = 55;
+				} else if (strcmp(key,"bind_custom_06") == 0) {
+					bindx = 56;
+				} else if (strcmp(key,"bind_custom_07") == 0) {
+					bindx = 57;
+				} else if (strcmp(key,"bind_custom_08") == 0) {
+					bindx = 58;
+				} else if (strcmp(key,"bind_custom_09") == 0) {
+					bindx = 59;	
+				} else if (strcmp(key,"bind_custom_10") == 0) {
+					bindx = 60;
 				} else {
 					printf("ERROR: uknown binding in config: \"%s\"",key),
 					known = false;
@@ -1950,6 +2027,37 @@ int event_loop() {
 						redraw = true;
 						break;
 
+					case 51:
+						spawn(ccmd01);
+						break;
+					case 52:
+						spawn(ccmd02);
+						break;
+
+					case 53:
+						spawn(ccmd03);
+						break;
+					case 54:
+						spawn(ccmd04);
+						break;
+					case 55:
+						spawn(ccmd05);
+						break;
+					case 56:
+						spawn(ccmd06);
+						break;
+					case 57:
+						spawn(ccmd07);
+						break;
+					case 58:
+						spawn(ccmd08);
+						break;
+					case 59:
+						spawn(ccmd09);
+						break;
+					case 60:
+						spawn(ccmd10);
+						break;
 				};
 	
 			//for this to ever get called we need to have asked for an EnterNotify on the window
