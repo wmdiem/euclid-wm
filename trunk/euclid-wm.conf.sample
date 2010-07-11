@@ -108,3 +108,14 @@ bind_toggle_fullscreen = MS space
 
 #quit the session
 bind_quit = MS q
+
+#CUSTOM HOTKEYS
+#euclid supports up to ten hotkeys, bound to external commands
+#these commands can take up to 5 arguments each (in addition to the command itself). 
+#the format for the binding is: bind_custom_[01-10] = [M | MS] [keyname] (just like normal bindings
+#the format for the associated commands is: custom_command_[01-10] = [command] [arg1 - arg5]
+#e.g., 
+#bind_custom_01 = M Print
+#custom_command_01 = shutter
+
+
