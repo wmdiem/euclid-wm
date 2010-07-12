@@ -1774,13 +1774,12 @@ int event_loop() {
 						redraw = true;
 					};
 				}; 
-			}else if (ev.type == EnterNotify) { 
+			} else if (ev.type == EnterNotify) { 
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
-				int usec = ctime.tv_usec - last_redraw.tv_usec;
-				int sec = ctime.tv_sec - last_redraw.tv_sec;
-				
-				if ( sec > 1 || (sec ==1 && usec <= 15000)) { 
+				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
+				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
+				if ( sec > 1 || (sec == 0 && usec >= 20000) || (sec == 1 && usec <= -20000)) { 
 					if (cv->mfocus->win->id != ev.xcrossing.window) {
 						struct cont *f = id_to_cont(ev.xmotion.window);
 						if (f != NULL) {
