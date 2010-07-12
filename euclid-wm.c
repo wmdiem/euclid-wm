@@ -888,6 +888,9 @@ void forget_win (Window id) {
 				if (s->prev != NULL) {
 					s->prev->next = s->next;
 				};
+				if (s == v->stack) {
+					v->stack = s->next;
+				};
 				free(s);
 			};
 			s = s->next;
