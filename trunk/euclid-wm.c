@@ -83,6 +83,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <sys/time.h>
 #include <X11/Xlib.h>
 #include<X11/Xutil.h>
 #include<X11/Xatom.h>
@@ -603,7 +604,7 @@ void load_conf() {
 				} else if (strcmp(key,"bind_custom_10") == 0) {
 					bindx = 60;
 				} else {
-					printf("ERROR: uknown binding in config: \"%s\"",key),
+					printf("ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
 				};
 
@@ -645,12 +646,12 @@ void commit_bindings() {
 
 /*fixes bugs in dumb programs that assume a reparenting wm
  taken from scrotwm, which took it from wmname
+ now it also does general atom stuff
  */
 void set_atoms() {
 	
 	wm_del_win = XInternAtom(dpy,"WM_DELETE_WINDOW",False);
 	wm_take_focus = XInternAtom(dpy,"WM_TAKE_FOCUS",False);
-	//do we actually use this one? should we?
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wm_change_state = XInternAtom(dpy,"_NET_WM_STATE",False);
 	wm_fullscreen = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
@@ -741,19 +742,12 @@ void remove_cont(struct cont *c) {
 		};
 		free(c);
 	};
-	if (c != NULL) {
-	};
-	
 }
 
 
 struct win * add_win(Window  id) {
-
-//Here is the problem: EnterWindowMask gives us exactly what we want most of the time
-//but it also gets sent when we move a window under the cursor which is very bad for 
-//usability
 	if (sloppy_focus == true) {
-		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask);
+		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
 
@@ -851,7 +845,7 @@ void forget_win (Window id) {
 							c->next->prev = NULL;
 							free(c);				
 						};
-					} else { //there a prev 
+					} else { //there's a prev 
 						c->prev->next = c->next;
 						if (c->next != NULL) {
 							c->next->prev = c->prev;
@@ -1374,6 +1368,7 @@ struct view * find_view (int i) {
 	//even if it must first create it
 	//some views get a numbered index
 	//i -2 means move forward -3 means backward
+	//-1 means last
 	struct view *v = NULL;
 	if (i == -2) {
 		//move forward
@@ -1397,6 +1392,11 @@ struct view * find_view (int i) {
 			cv->prev = v;
 			v->idx = (cv->idx - 1);
 			fv = v;
+		};
+	} else if (i == -1) {
+		v = cv;
+		while (v->next != NULL) {
+			v = v->next;
 		};
 	} else if (i <= 9 && i >= 1) {
 			v = fv;
@@ -1582,15 +1582,26 @@ void layout() {
 		//draw mf fullscreen
 		int w = scrn_w + 2;
 		int h = scrn_h;
-		if (cv->showstack == true) {
+/*		if (cv->showstack == true) {
 			h += 1;
 		} else {
 			h += 2;
 		};
+These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
+*/
 		h -= stackheight;
 		XMoveResizeWindow(dpy,cv->mfocus->win->id,(-1),(-1),(w),(h));
 		XRaiseWindow(dpy,cv->mfocus->win->id);
-		//shoudl we use wm_take_focus?
+		if (cv->mfocus->win->take_focus == true) {
+			XClientMessageEvent cm;
+			memset (&cm,'\0', sizeof(cm));
+			cm.type = ClientMessage;
+			cm.window = cv->mfocus->win->id;
+			cm.message_type = wm_prot;
+			cm.format = 32;
+			cm.data.l[0] = wm_take_focus;
+			cm.data.l[1] = CurrentTime;
+		};
 		XSetInputFocus(dpy,cv->mfocus->win->id,None,CurrentTime);
 		XSync(dpy,false);
 	} else {
@@ -1603,7 +1614,7 @@ void layout() {
 			target = scrn_w;
 		} else {
 			if (cv->showstack == true) {
-				//stackheight subtract from sreen_h and set target
+				//stackheight subtract from screen_h and set target
 				target = (scrn_h - (res_top + res_bot)) - stackheight;
 			} else {
 				target = scrn_h - (res_top + res_bot);
@@ -1711,7 +1722,6 @@ void layout() {
 					XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
 				};
 				//place window
-				//where do x, y, h, w come from?
 				if (cv->orientv == true) {
 					x = offsett;
 					y = offsetc + res_top;
@@ -1747,6 +1757,9 @@ int xerror(Display *d, XErrorEvent *e) {
 
 int event_loop() {
 	bool redraw;
+	struct timeval last_redraw;
+	last_redraw.tv_sec = 0;
+	last_redraw.tv_usec = 0;
 	layout();
 	XEvent ev;
 	for (;;) {
@@ -1761,6 +1774,21 @@ int event_loop() {
 						redraw = true;
 					};
 				}; 
+			}else if (ev.type == EnterNotify) { 
+				struct timeval ctime;
+				gettimeofday(&ctime,0);
+				int usec = ctime.tv_usec - last_redraw.tv_usec;
+				int sec = ctime.tv_sec - last_redraw.tv_sec;
+				
+				if ( sec > 1 || (sec ==1 && usec <= 15000)) { 
+					if (cv->mfocus->win->id != ev.xcrossing.window) {
+						struct cont *f = id_to_cont(ev.xmotion.window);
+						if (f != NULL) {
+							cv->mfocus = f;
+							redraw = true;
+						};
+					};
+				};
 			} else if (ev.type == KeyPress) {
 			//first find the keypress index from bindings[]
 				int i = 0;
@@ -1824,16 +1852,14 @@ int event_loop() {
 						redraw = true;
 						break;
 					case 13:
-					//	move_to_view(-3);
+						move_to_view(find_view(-1));
 						redraw = true;
 						break;
 					case 14:
-					//	move_to_view(-2);
 						move_to_view(find_view(-3));
 						redraw = true;
 						break;
 					case 15:
-					//	move_to_view(-1);
 						move_to_view(find_view(-2));
 						redraw = true;
 						break;
@@ -1878,7 +1904,7 @@ int event_loop() {
 						break;
 					//goto last:
 					case 25:
-					//	goto_view(-3);
+						goto_view(find_view(-1));
 						redraw = true;
 						break;
 					//goto next/prev
@@ -2115,9 +2141,7 @@ int event_loop() {
 				//redraw = true;
 			} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
 				//check whether it's in the layout, if not add it
-				if (id_to_cont(ev.xmap.window) != NULL) {
-					 //it's a dup
-				} else {
+				if (id_to_cont(ev.xmap.window) == NULL) {
 					//see whether we know about the window
 					struct win *w;
 					w = first_win;
@@ -2166,6 +2190,7 @@ int event_loop() {
 	
 		if (redraw == true) {
 			layout();
+			gettimeofday(&last_redraw,0);
 		};
 	}; //end infinite loop
 }
