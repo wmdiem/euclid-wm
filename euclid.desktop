@@ -1,5 +1,5 @@
 [Desktop Entry]
 Name=Euclid WM
 Comment=Keyboard-driven, tiling window manager. 
-Exec=euclid-wm
+Exec=start-euclid
 Type=XSession
