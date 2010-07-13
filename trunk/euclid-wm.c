@@ -557,11 +557,11 @@ void load_conf() {
 					bindx = 34;
 				} else if (strcmp(key,"bind_swap_stack_and_main") == 0) {
 					bindx = 35;
-			/*	} else if (strcmp(key,"bind_stack_focus_up") == 0) {
+				} else if (strcmp(key,"bind_swap_stack_up") == 0) {
 					bindx = 36;
-				} else if (strcmp(key,"bind_stack_focus_down") == 0) {
+				} else if (strcmp(key,"bind_swap_stack_down") == 0) {
 					bindx = 37;
-			*/	} else if (strcmp(key,"bind_focus_left") == 0) {
+				} else if (strcmp(key,"bind_focus_left") == 0) {
 					bindx = 38;
 				} else if (strcmp(key,"bind_focus_down") == 0) {
 					bindx = 39;
@@ -715,6 +715,9 @@ void remove_cont(struct cont *c) {
 				//is track only?
 				if (c->track->next == NULL) {
 					c->track->c = NULL;
+					//if we are in fs we need to show the stack now
+					c->track->view->fs = false;
+					c->track->view->showstack = true;
 					free(c);
 					//set focus to root so we still get keys!
 					XSetInputFocus(dpy,root,None,CurrentTime);
@@ -1951,12 +1954,14 @@ int event_loop() {
 					//move to stack
 					case 33:
 						if (cv->mfocus == NULL) {break;};
+						if (cv->fs == true) {break;};
 						XUnmapWindow(dpy,cv->mfocus->win->id);	
 						move_to_stack(cv->mfocus);
 						redraw = true;
 						break;
 					//move to main
 					case 34:
+						if (cv->fs == true) {break;};
 						move_to_main();
 						if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
 							XMapWindow(dpy,cv->mfocus->win->id);
@@ -1965,6 +1970,7 @@ int event_loop() {
 						break;
 					//flip the layout
 					case 35:
+						if (cv->fs == true) {break;};
 						if (cv->sfocus != NULL && cv->mfocus != NULL) {
 							struct win *m = cv->mfocus->win;
 							struct win *s = cv->sfocus->win;
@@ -1978,8 +1984,48 @@ int event_loop() {
 						break;
 					//swap stack up/down
 					case 36:
+						if (cv->sfocus != NULL && cv->sfocus->prev != NULL) {
+							struct stack_item *tmpa, *tmpb, *tmpc, *tmpd;
+							tmpa = cv->sfocus->prev->prev;
+							tmpb = cv->sfocus->prev;
+							tmpc = cv->sfocus;
+							tmpd =cv->sfocus->next;
+							if (tmpa != NULL) {
+								tmpa->next = tmpc;
+							} else {
+								cv->stack = tmpc;
+							};
+							if (tmpd != NULL) {
+								tmpd->prev = tmpb;
+							};
+							tmpc->prev = tmpa;
+							tmpc->next = tmpb;
+							tmpb->prev = tmpc;
+							tmpb->next = tmpd;
+						};
+						redraw = true;
 						break;
 					case 37:
+						if (cv->sfocus != NULL && cv->sfocus->next != NULL) {
+							struct stack_item *tmpa, *tmpb, *tmpc, *tmpd;
+							tmpa = cv->sfocus->prev;
+							tmpb = cv->sfocus;
+							tmpc = cv->sfocus->next;
+							tmpd =cv->sfocus->next->next;
+							if (tmpa != NULL) {
+								tmpa->next = tmpc;
+							} else {
+								cv->stack = tmpc;
+							};
+							if (tmpd != NULL) {
+								tmpd->prev = tmpb;
+							};
+							tmpc->prev = tmpa;
+							tmpc->next = tmpb;
+							tmpb->prev = tmpc;
+							tmpb->next = tmpd;
+						};
+						redraw = true;
 						break;
 					//shift main focus udrl
 					case 38:
