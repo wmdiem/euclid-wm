@@ -342,7 +342,7 @@ void load_conf() {
 	FILE *conf;
 	char confdir[512];
 	char conffile[512];
-	char rcfile[512];
+	//char rcfile[512];
 	memset(confdir, '\0', sizeof(confdir));
 	confdir[0] = '\0';
 	char *xdgconf = getenv("XDG_CONFIG_HOME");
@@ -358,7 +358,8 @@ void load_conf() {
 	strcat(confdir,"/euclid-wm");
 	//at this point confdir is pointing at xdgconf, if it exists, now we see whether there is a file in it 
 	//start rc
-	strcpy(rcfile,confdir);
+	//rc is now run by start-euclid
+/*	strcpy(rcfile,confdir);
 	strcat(rcfile,"/euclidrc");
 	char *rc[3];
 	char shell[36];
@@ -367,6 +368,7 @@ void load_conf() {
 	rc[1] = rcfile;
 	rc[2] = NULL;
 	spawn(rc);
+*/
 	strcpy(conffile,confdir);
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
@@ -801,6 +803,9 @@ void forget_win (Window id) {
 			c = t->c;
 			while (c != NULL) {
 				if (c->win == w) {
+					//if it is the main focus on a fullscreen desktop
+					//take the desktop out of fs
+					c->track->view->fs = false;
 					//reset focus if necessary
 					if (v->mfocus == c) {
 						if (c->next != NULL) {
@@ -2158,6 +2163,10 @@ int event_loop() {
 				struct cont *s;
 				s = id_to_cont(ev.xunmap.window);
 				if (s != NULL ) {
+					
+					if (s->track->view == cv) {
+						cv->fs = false;
+					};
 					remove_cont(s);	
 					//unless we caused this, we should check the window's original state 
 					//before setting this
