@@ -177,6 +177,8 @@ unsigned long unfocus_pix;
 unsigned long stack_background_pix;
 unsigned long stack_focus_pix;
 unsigned long stack_unfocus_pix;
+GC focus_gc = NULL;
+GC unfocus_gc = NULL;
 bool gxerror = false;
 Window stackid;
 Atom wm_del_win;
@@ -755,7 +757,7 @@ struct win * add_win(Window  id) {
 	p->take_focus = false;
 	p->del_win = false;
 	Atom *prot = NULL;
-	Atom *pp;
+	Atom *pp = NULL;
 	int n, j;
 	if (XGetWMProtocols(dpy, id, &prot, &n)) {
 		for (j = 0, pp = prot; j < n; j++, pp++) {
@@ -1556,15 +1558,13 @@ void layout() {
 		XSync(dpy,false);//important!
 		struct stack_item *si = cv->stack;
 		int i = 15;
-		GC gc;
-		XGCValues xgcv;
 		while (si != NULL) {
+			GC gc;
 			if (si == cv->sfocus) {
-				xgcv.foreground = stack_focus_pix;
+				gc = focus_gc;
 			} else {
-				xgcv.foreground = stack_unfocus_pix;
-			}; 
-			gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+				gc = unfocus_gc;
+			};
 			XTextProperty wmname;
 			XGetWMName(dpy,si->win->id,&wmname);
 			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
@@ -2253,6 +2253,7 @@ int main() {
 	load_conf();
 	commit_bindings();
 
+	
 	set_atoms();
 	int i;
 	cv = make_view();
@@ -2292,6 +2293,12 @@ int main() {
 	XChangeWindowAttributes(dpy,stackid,CWOverrideRedirect,&att);
 	XMapWindow(dpy,stackid);
 	XSync(dpy,False);
+	
+	XGCValues xgcv;
+	xgcv.foreground = stack_focus_pix;
+	focus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+	xgcv.foreground = stack_unfocus_pix;
+	unfocus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
 
 	layout();
 	
