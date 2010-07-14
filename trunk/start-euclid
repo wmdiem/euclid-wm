@@ -1,11 +1,10 @@
 #! /bin/bash
 
-#find XDG_CONFIG_HOME
-if [ -n `echo -n $XDG_CONFIG_HOME` ]; then
-	echo "not def"
+if [ -n  "${XDG_CONFIG_HOME:=1}" ]; then
+	
 	CONFDIR=$HOME/.config/euclid-wm
+	export XDG_CONFIG_HOME=$HOME/.config
 else 
-	echo "Def"
 	CONFDIR=$XDG_CONFIG_HOME/euclid-wm
 fi
 
