@@ -18,4 +18,4 @@ fi
 
 #$CONFDIR/euclidrc 
 
-euclid-wm
+exec euclid-wm
