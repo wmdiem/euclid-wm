@@ -217,7 +217,7 @@ void bind_key(char s[12], unsigned int m, struct binding *b) {
 
 
 //handles binding the default keys
-void bind_keys() {
+void load_defaults() {
 					
 	//note that the array index is significant
 	//it is the key that the event loop will use
@@ -378,7 +378,7 @@ void load_conf() {
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
 	if (conf == NULL) {
-		bind_keys();
+		load_defaults();
 		return;
 	};
 	printf("conf file opened successfully: %s\n",conffile);
@@ -436,7 +436,7 @@ void load_conf() {
 					mod = Mod5Mask;
 					mods = Mod5Mask | ShiftMask;
 				};
-				bind_keys();
+				load_defaults();
 				bound_keys = true;
 
 			} else if (key[0] == 'c' && key[2] == 'l' && key[4] == 'r') { 
@@ -621,7 +621,7 @@ void load_conf() {
 
 				if (known == true) {
 					if (bound_keys == false) {
-						bind_keys();
+						load_defaults();
 						bound_keys = true;
 					};
 					//get the name of the key, and the modifier
@@ -2177,10 +2177,17 @@ int event_loop() {
 								i++;
 							};
 							//call bind keys
-							bind_keys();
+							load_defaults();
 							//call load_config
 							load_conf();
 							commit_bindings();
+							XFreeGC(dpy,focus_gc);
+							XFreeGC(dpy,unfocus_gc);
+							XGCValues xgcv;
+							xgcv.foreground = stack_focus_pix;
+							focus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+							xgcv.foreground = stack_unfocus_pix;
+							unfocus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
 						};
 				};
 	
