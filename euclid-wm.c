@@ -89,7 +89,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xatom.h>
 #include <errno.h>
 
-#define BINDINGS 61 
+#define BINDINGS 62 
 /*BASIC VARIABLE TYPES*/
 
 /*
@@ -306,6 +306,13 @@ void bind_keys() {
 	
 	//toggle orientation
 	bind_key("Tab",mod,&bindings[50]);
+	
+	// user defined -60
+
+	bind_key("r",mod,&bindings[61]);
+
+
+
 
 
 }
@@ -605,6 +612,8 @@ void load_conf() {
 					bindx = 59;	
 				} else if (strcmp(key,"bind_custom_10") == 0) {
 					bindx = 60;
+				} else if (strcmp(key,"bind_reload_config") == 0) {
+					bindx = 61;
 				} else {
 					printf("ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
@@ -2136,6 +2145,43 @@ int event_loop() {
 					case 60:
 						spawn(ccmd10);
 						break;
+					case 61:
+						//reload configs:
+						//XFreeGC()
+						//free commands
+						#define FREEARGS(P) p = P;\
+							while (*p != NULL) {\
+							printf("%s\n",*p);\
+							free(*p);\
+							p++;\
+						};
+						if (true) {
+							char **p;
+							FREEARGS(tcmd);
+							FREEARGS(dmcmd);
+							FREEARGS(ccmd01);
+							FREEARGS(ccmd02);
+							FREEARGS(ccmd03);
+							FREEARGS(ccmd04);
+							FREEARGS(ccmd05);
+							FREEARGS(ccmd06);
+							FREEARGS(ccmd07);
+							FREEARGS(ccmd08);
+							FREEARGS(ccmd09);
+							FREEARGS(ccmd10);
+						
+							//Unbind keys
+							int i = 0;
+							while (i < BINDINGS) {
+								XUngrabKey(dpy,bindings[i].keycode,bindings[i].mask,root);
+								i++;
+							};
+							//call bind keys
+							bind_keys();
+							//call load_config
+							load_conf();
+							commit_bindings();
+						};
 				};
 	
 			//for this to ever get called we need to have asked for an EnterNotify on the window

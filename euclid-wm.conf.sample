@@ -109,6 +109,9 @@ bind_toggle_fullscreen = MS space
 #quit the session
 bind_quit = MS q
 
+#relead configs: note that at the moment this also runs the rc file again
+bind_reload_config = M r
+
 #CUSTOM HOTKEYS
 #euclid supports up to ten hotkeys, bound to external commands
 #these commands can take up to 5 arguments each (in addition to the command itself). 
