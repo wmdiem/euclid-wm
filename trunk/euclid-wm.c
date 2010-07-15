@@ -85,8 +85,9 @@ Thus the one or more of the following notices may apply to some sections:
 #include <string.h>
 #include <sys/time.h>
 #include <X11/Xlib.h>
-#include<X11/Xutil.h>
-#include<X11/Xatom.h>
+#include <X11/Xutil.h>
+#include <X11/Xatom.h>
+#include <errno.h>
 
 #define BINDINGS 61 
 /*BASIC VARIABLE TYPES*/
@@ -313,10 +314,11 @@ void spawn(char **arg) {
 	if (fork() == 0) {
 		if (dpy != NULL) {
 			close(ConnectionNumber(dpy));
-			setsid();
-			execvp(arg[0],arg);
-			exit(1);
 		};
+		setsid();
+		execvp(arg[0],arg);
+		printf("Error spawning %s: %d\n",arg[0],errno);
+		exit(1);
 	} else {
 		return;
 	};
@@ -360,12 +362,9 @@ void load_conf() {
 	//start rc
 	strcpy(rcfile,confdir);
 	strcat(rcfile,"/euclidrc");
-	char *rc[3];
-	char shell[36];
-	strcpy(shell,getenv("SHELL"));
-	rc[0] = shell;
-	rc[1] = rcfile;
-	rc[2] = NULL;
+	char *rc[2];
+	rc[0] = rcfile;
+	rc[1] = NULL;
 	spawn(rc);
 
 	strcpy(conffile,confdir);
