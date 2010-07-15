@@ -16,6 +16,6 @@ if [ ! -e $CONFDIR/euclidrc ]; then
 	install -m700 -D /usr/share/euclid-wm/euclidrc $CONFDIR/euclidrc
 fi
 
-$CONFDIR/euclidrc 
+#$CONFDIR/euclidrc 
 
 euclid-wm
