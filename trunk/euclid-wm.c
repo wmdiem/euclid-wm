@@ -925,6 +925,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 	struct track *tp = v->ft;
 	struct cont *cp = NULL;
 	while (tp != NULL) {
+		cp = tp->c;
 		while (cp != NULL) {
 			if (cp->win->id == p->id) {
 				return;
