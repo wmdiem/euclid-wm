@@ -139,7 +139,7 @@ struct cont {
 
 struct  win {
 	struct win *next;
-	bool del_win;	
+	bool del_win;
 	bool take_focus;
 	bool fullscreen;
 	Window id; 
@@ -232,7 +232,7 @@ void load_defaults() {
 	
 	//move win to view next prev 1-0	12	4-15
 	bind_key("1",mods,&bindings[4]);
-	bind_key("2",mods,&bindings[5]);		
+	bind_key("2",mods,&bindings[5]);
 	bind_key("3",mods,&bindings[6]);
 	bind_key("4",mods,&bindings[7]);
 	bind_key("5",mods,&bindings[8]);
@@ -249,7 +249,7 @@ void load_defaults() {
 	bind_key("2",mod,&bindings[17]);
 	bind_key("3",mod,&bindings[18]);
 	bind_key("4",mod,&bindings[19]);
-	bind_key("5",mod,&bindings[20]);		
+	bind_key("5",mod,&bindings[20]);
 	bind_key("6",mod,&bindings[21]);
 	bind_key("7",mod,&bindings[22]);
 	bind_key("8",mod,&bindings[23]);
@@ -282,7 +282,7 @@ void load_defaults() {
 
 	//shift main focus up down left right	4	38-41
 	bind_key("h",mod,&bindings[38]);
-	bind_key("j",mod,&bindings[39]);		
+	bind_key("j",mod,&bindings[39]);
 	bind_key("k",mod,&bindings[40]);
 	bind_key("l",mod,&bindings[41]);
 
@@ -609,7 +609,7 @@ void load_conf() {
 				} else if (strcmp(key,"bind_custom_08") == 0) {
 					bindx = 58;
 				} else if (strcmp(key,"bind_custom_09") == 0) {
-					bindx = 59;	
+					bindx = 59;
 				} else if (strcmp(key,"bind_custom_10") == 0) {
 					bindx = 60;
 				} else if (strcmp(key,"bind_reload_config") == 0) {
@@ -734,7 +734,7 @@ void remove_cont(struct cont *c) {
 					c->track->next->prev = NULL;
 					free (c->track);
 					free (c);
-				};	
+				};
 			} else { //not first track 
 				//delete it 
 				c->track->prev->next = c->track->next;
@@ -747,7 +747,7 @@ void remove_cont(struct cont *c) {
 		} else {//its just first
 			c->track->c = c->next;
 			c->next->prev = NULL;
-			free(c);				
+			free(c);
 		};
 	} else { // is there a prev 
 		c->prev->next = c->next;
@@ -774,12 +774,12 @@ struct win * add_win(Window  id) {
 	if (XGetWMProtocols(dpy, id, &prot, &n)) {
 		for (j = 0, pp = prot; j < n; j++, pp++) {
 			if (*pp == wm_del_win) {
-				p->del_win = true;		
+				p->del_win = true;
 			} else if (*pp == wm_take_focus) {
 				p->take_focus = true;
-			};	
+			};
 		};
- 	};	
+ 	};
 	if (prot) {
 		XFree(prot);
 	};
@@ -787,7 +787,7 @@ struct win * add_win(Window  id) {
 	first_win = p;
 	p->id = id;
 	return p;
-}	
+}
 
 void forget_win (Window id) {
 	//first see whether we have a record of it
@@ -847,7 +847,7 @@ void forget_win (Window id) {
 									c->track->next->prev = NULL;
 									free (c->track);
 									free (c);
-								};	
+								};
 							} else { //not first track 
 								//delete it 
 								c->track->prev->next = c->track->next;
@@ -860,7 +860,7 @@ void forget_win (Window id) {
 						} else {//its just first
 							c->track->c = c->next;
 							c->next->prev = NULL;
-							free(c);				
+							free(c);
 						};
 					} else { //there's a prev 
 						c->prev->next = c->next;
@@ -1083,7 +1083,7 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 		case 3:
 			dir = 3;
 			break;
-		case 4:	
+		case 4:
 			dir = 2;
 			break;
 		};
@@ -1144,7 +1144,7 @@ void shift_window(short int dir) {
 		};
 		if (tmpb != NULL) {
 			tmpb->prev = tmpc;
-			tmpb->next = tmpd;	
+			tmpb->next = tmpd;
 		};
 		if (tmpd != NULL) {
 			tmpd->prev = tmpb;
@@ -1276,7 +1276,7 @@ void shift_window(short int dir) {
 				cv->mfocus->prev = p;
 				cv->mfocus->next = b;
 				cv->mfocus->track = p->track;
-			};	
+			};
 		}else{ //make a track for it
 			if (cv->mfocus->track->c == cv->mfocus) { 
 				if (cv->mfocus->next != NULL) {
@@ -1583,7 +1583,7 @@ void layout() {
 			};
 			XTextProperty wmname;
 			XGetWMName(dpy,si->win->id,&wmname);
-			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);	
+			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);
 			si = si->next;
 			i += 20;
 		}; 
@@ -1670,14 +1670,14 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 		}; 
 		while (curt != NULL) {
 			curc = curt->c;
-			int tot = 0;	
+			int tot = 0;
 			int noofconts = 0;
 			while (curc != NULL) {
 				//check for cont with negligable size and resize if necessary
 				if (curc->size <= 5) {
 					curc->size += 40;
 				};
-				noofconts ++;	
+				noofconts ++;
 				tot += curc->size;
 				curc = curc->next;
 			};
@@ -1710,7 +1710,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 			offsetc = 0;
 			curc = curt->c;
 			while (curc != NULL) {
-				//make sure we tell windows that think they are fs that they aren't	
+				//make sure we tell windows that think they are fs that they aren't
 				if (curc->win->fullscreen == true) {
 					curc->win->fullscreen = false;
 					XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
@@ -1732,8 +1732,8 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 					//we intentionally do this even if the event was sent, the
 					//event alone does not suffice to get focus on the window
 					XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
-					
-				
+
+
 				} else {
 					XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
 				};
@@ -1963,7 +1963,7 @@ int event_loop() {
 					case 33:
 						if (cv->mfocus == NULL) {break;};
 						if (cv->fs == true) {break;};
-						XUnmapWindow(dpy,cv->mfocus->win->id);	
+						XUnmapWindow(dpy,cv->mfocus->win->id);
 						move_to_stack(cv->mfocus);
 						redraw = true;
 						break;
@@ -2052,7 +2052,7 @@ int event_loop() {
 						shift_main_focus(2);
 						redraw = true;
 						break;
-					//shift stack focus up down	
+					//shift stack focus up down
 					case 42:
 						shift_stack_focus(true);
 						redraw = true;
@@ -2102,11 +2102,11 @@ int event_loop() {
 						};
 						redraw = true;
 						break;
-					//quit	
+					//quit
 					case 49:
-						return(0);				
+						return(0);
 						break;
-					case 50:	
+					case 50:
 						if (cv->orientv == true) {
 							cv->orientv = false;
 						} else {
@@ -2170,7 +2170,7 @@ int event_loop() {
 							FREEARGS(ccmd08);
 							FREEARGS(ccmd09);
 							FREEARGS(ccmd10);
-						
+
 							//Unbind keys
 							int i = 0;
 							while (i < BINDINGS) {
@@ -2214,7 +2214,7 @@ int event_loop() {
 						};
 					};
 				} else {
-					forget_win(ev.xreparent.window);	
+					forget_win(ev.xreparent.window);
 				};
 		
 			} else if (ev.type == ClientMessage) {
@@ -2265,7 +2265,7 @@ int event_loop() {
 					if (s->track->view == cv) {
 						cv->fs = false;
 					};
-					remove_cont(s);	
+					remove_cont(s);
 					//unless we caused this, we should check the window's original state 
 					//before setting this
 					redraw = true;
