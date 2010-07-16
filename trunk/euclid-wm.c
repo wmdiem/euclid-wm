@@ -1790,7 +1790,7 @@ int event_loop() {
 						redraw = true;
 					};
 				}; 
-			} else if (ev.type == EnterNotify) { 
+			} else if (ev.type == EnterNotify && cv->fs == false && ev.xcrossing.focus == false && sloppy_focus == true) { 
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
@@ -2192,15 +2192,6 @@ int event_loop() {
 						};
 				};
 	
-			//for this to ever get called we need to have asked for an EnterNotify on the window
-			} else if (ev.type == EnterNotify && sloppy_focus == true && ev.xcrossing.focus == false && cv->fs == false) {
-				//set focus
-				struct cont *f;
-				f = id_to_cont(ev.xcrossing.window);
-				if (f != NULL) {
-					cv->mfocus = f;
-					redraw = true;
-				}; 
 			} else if (ev.type == ReparentNotify) {
 				if (ev.xreparent.parent == root) {
 					if (is_top_level(ev.xreparent.window) == true) {
