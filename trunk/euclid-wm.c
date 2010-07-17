@@ -315,7 +315,6 @@ void load_defaults() {
 
 void spawn(char *cmd) {
 	//system(cmd);
-	printf("spawning: %s\n",cmd);
 	if (fork() == 0) {
 		if (dpy != NULL) {
 			close(ConnectionNumber(dpy));
