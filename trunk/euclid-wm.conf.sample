@@ -5,10 +5,8 @@
 
 #SYNTAX
 #The parser is quite simple, so take note of case and spaces (including trailing whitespace)
-#There are no quotation marks used. 
+#There are no quotation marks used (unless you want to send quote an argument being sent to an external app). 
 #Comments cannot be appended to a line, the # marker must be the first character.
-#The order of some of settings does matter: if modkey is to be set, it *MUST* be set before the
-#first keybinding 
 #the general format is 
 #KEY = VALUE1 VALUE2
 #or
@@ -24,12 +22,7 @@ color_main_unfocus = #400040004000
 color_stack_unfocus = #400040004000
 colro_stack_background = #010001000100
 
-#EXTERNAL COMMANDS
-#note, currently these can only be a single argument long (i.e., just the command name)
-#if you need to pass arguments call a script instead. 
 
-dmenu = dmenu_run
-term = xterm
 
 #RESERVED SPACE
 #space can be reserved at the top or bottom of the screen, for example to allow dzen to be displayed, 
@@ -37,15 +30,16 @@ term = xterm
 
 reserved_top = 0
 reserved_bottom = 0
+reserved_left = 0
+reserved_right = 0
 
 #RESIZE INCREMENT
-#the incremental change for each resize keypress
+#the incremental change for each resize keypress (kinda)
 
 resize_increment = 30 
 
 #MODKEY
 #This is just a number
-#It must be defined prior to setting any bindings
 
 modkey = 1
 
@@ -54,9 +48,12 @@ modkey = 1
 #values of mod are M or MS (mod or mod + shift)
 #KEY is an X Keyname
 
-#spawn terminal or menu (which term  and  menu are defined above)
+#spawn terminal or menu 
+#the second line of each pair is defining the command to send to /bin/sh
 bind_spawn_menu = M Return
+dmenu = dmenu_run
 bind_spawn_term = MS Return
+term = xterm
 
 #goto view, as in look at it
 bind_goto_next_view = M m
@@ -109,16 +106,20 @@ bind_toggle_fullscreen = MS space
 #quit the session
 bind_quit = MS q
 
+#reload these settings
+bind_reload_config = M r
+
 #relead configs: note that at the moment this also runs the rc file again
 bind_reload_config = M r
 
 #CUSTOM HOTKEYS
 #euclid supports up to ten hotkeys, bound to external commands
-#these commands can take up to 5 arguments each (in addition to the command itself). 
 #the format for the binding is: bind_custom_[01-10] = [M | MS] [keyname] (just like normal bindings
-#the format for the associated commands is: custom_command_[01-10] = [command] [arg1 - arg5]
+#the format for the associated commands is: custom_command_[01-10] = [command to pass to shell]
 #e.g., 
 #bind_custom_01 = M Print
 #custom_command_01 = shutter
+#bind_custom_02 = M x
+#custom_command_02 = xscreensaver-command -lock
 
 

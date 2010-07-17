@@ -1,8 +1,11 @@
-.TH EUCLID 1 30-6-2010
+.TH EUCLID 1 17-7-2010
 .SH NAME
 euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
 .SH SYNOPSIS
-.B euclid-wm
+.B start-euclid
+
+.B euclid-wm 
+(started directly euclid will not check for config files.)
 .SH DESCRIPTION
 .B euclid  
 .I (euclid-wm)
@@ -24,7 +27,7 @@ are either rows or collumns (the orientation can be toggled at runtime), that co
 .B stack
 is a set of minimized windows, associated with a view, which can be viewed at the bottom of the screen in the form of a box containing their titles.
 
-All bindings are prefaced by Meta (M, generally alt).
+All bindings are prefaced by a mod ("M", defaults to mod1, i.e., alt).
 
 .SS Starting Programs
 .IP
@@ -62,9 +65,15 @@ The stack maintins its own focus; The currently focused item can be identified b
 .IP
 .B M + ,
 \- Move the currently focused stack item to the main area (i.e., restore it)
+.IP 
+.B M + /
+\- Swap currently focused stack item and currently focused main item.
 .IP
 .B M + ;/'
 \ - Move stack focus up/down
+.IP
+.B M + <shift> + ;/'
+\ - Shift the stack item up/down in the stack
 
 .SS Manipulating Views
 .IP
@@ -88,13 +97,18 @@ The first view, created when euclid starts, is view 1; Going to the previous vie
 .SS Other 
 .IP
 .B M + <shift> + <space>
-\- Change to fullscreen mode
+\- Change to fullscreen mode. 
+
+Notes on fullscreen mode: In fullscreen mode the stack is disabled, widows cannot be added or taken out. j/k will cycle through all windows on the view in a linear way. If the view is in fullscreen mode and the current window closes, euclid will switch back to its normal tiled layout. 
 .IP 
 .B M + <tab> 
 \- toggle the orientation of the tracks (vertical or horizontal layout)
 .IP 
 .B M + Q 
 \- quit euclid.  
+.IP
+.B M + r
+\- reload config file in place. 
 .SH FILES
 .IP
 On startup euclid will look for 
@@ -106,22 +120,22 @@ A sample config file
 .I euclid-wm.conf.sample 
 should have come with euclid and can be installed by the makefile by running 
 .I make install_conf 
-as a regular user. 
+as the user for whom you whish to install these files. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
 At startup euclid will also (try to) run the script
 .I euclidrc
-in the same directory. This is meant as a place for the user to add any commands he would like run at startup.  
+in the same directory (e.g., ~/.config/euclid-wm/euclidrc). This is meant as a place for the user to add any commands he would like run at startup.  A default is stored in /usr/share/euclid-wm/
   
 .SH BUGS (AND TODO AND MISSING FEATURES)
 .SS TODO:
 .IP 
-Improve fullscreen awareness. Fullscreen is mostly working. However, windows that start in fullscreen (as opposed to switching to fullscreen once mapped) will not be automatically switched to fullscreen (e.g., flashplayer). The work-around at the moment is to put the view into fullscreen mode before launching the fullscreen window. 
+Improve fullscreen awareness. Fullscreen is mostly working. However, some windows will not be automatically switched to fullscreen (e.g., flashplayer, oowriter) when they request it. The work-around at the moment is to put the view into fullscreen mode (e.g., M + <shift> + Space) before launching the fullscreen window, or telling the window to enter fullscreen. 
 
-Applications that have seperate fullscreen UIs, may continue to display their fullscreen UI if they are taken out of fullscreen by using the euclid keybinding instead of their own native mechanism for switching. (This can be worked around by just using their native mechanism.) 
 
 .SS MISSING FEATURES (may or may not be implemented):
 .IP 
 Multiscreen awareness. 
 
+Search for window function.
 
 .SS CURRENT issues and reporting: 
 .IP
