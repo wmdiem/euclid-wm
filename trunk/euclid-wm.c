@@ -153,7 +153,7 @@ struct stack_item {
 
 struct binding {
 	unsigned int keycode;
-	unsigned int mask;
+	unsigned int *mask;
 };
 
 
@@ -187,26 +187,27 @@ Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
-char *dmcmd[2] = {"dmenu_run",NULL};
-char *tcmd[2] = {"xterm",NULL};
-char *ccmd01[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd02[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd03[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd04[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd05[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd06[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd07[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd08[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd09[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
-char *ccmd10[7] = {NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+
+char *dcmd = NULL;
+char *tcmd = NULL;
+char *ccmd01 = NULL;
+char *ccmd02 = NULL;
+char *ccmd03 = NULL;
+char *ccmd04 = NULL;
+char *ccmd05 = NULL;
+char *ccmd06 = NULL;
+char *ccmd07 = NULL;
+char *ccmd08 = NULL;
+char *ccmd09 = NULL;
+char *ccmd10 = NULL;
 int res_top = 0;
 int res_bot = 0;
 int resize_inc = 15;
 
 //records the keycode in appropriate array
-void bind_key(char s[12], unsigned int m, struct binding *b) {
+void bind_key(char s[12], unsigned int *m, struct binding *b) {
 	//char is the name of the key, e.g. 'a' 'period' 'return' 'F2' etc. 
-	//m is a copy of one of the two global keymask variables: mod or mods
+	//m is a pointer to  of the two global keymask variables: mod or mods
 	//binding is the index of the global binding array
 	unsigned int code;
 	code = XKeysymToKeycode(dpy,XStringToKeysym(s));
@@ -225,106 +226,103 @@ void load_defaults() {
 
 
 	//resize up down left right		4	0-3
-	bind_key("y",mod,&bindings[0]);
-	bind_key("u",mod,&bindings[1]);
-	bind_key("i",mod,&bindings[2]);
-	bind_key("o",mod,&bindings[3]);
+	bind_key("y",&mod,&bindings[0]);
+	bind_key("u",&mod,&bindings[1]);
+	bind_key("i",&mod,&bindings[2]);
+	bind_key("o",&mod,&bindings[3]);
 	
 	//move win to view next prev 1-0	12	4-15
-	bind_key("1",mods,&bindings[4]);
-	bind_key("2",mods,&bindings[5]);
-	bind_key("3",mods,&bindings[6]);
-	bind_key("4",mods,&bindings[7]);
-	bind_key("5",mods,&bindings[8]);
-	bind_key("6",mods,&bindings[9]);
-	bind_key("7",mods,&bindings[10]);
-	bind_key("8",mods,&bindings[11]);
-	bind_key("9",mods,&bindings[12]);
-	bind_key("0",mods,&bindings[13]);
-	bind_key("n",mods,&bindings[14]);
-	bind_key("m",mods,&bindings[15]);
+	bind_key("1",&mods,&bindings[4]);
+	bind_key("2",&mods,&bindings[5]);
+	bind_key("3",&mods,&bindings[6]);
+	bind_key("4",&mods,&bindings[7]);
+	bind_key("5",&mods,&bindings[8]);
+	bind_key("6",&mods,&bindings[9]);
+	bind_key("7",&mods,&bindings[10]);
+	bind_key("8",&mods,&bindings[11]);
+	bind_key("9",&mods,&bindings[12]);
+	bind_key("0",&mods,&bindings[13]);
+	bind_key("n",&mods,&bindings[14]);
+	bind_key("m",&mods,&bindings[15]);
 
 	//change view next prev 1-0		12	16-27
-	bind_key("1",mod,&bindings[16]);
-	bind_key("2",mod,&bindings[17]);
-	bind_key("3",mod,&bindings[18]);
-	bind_key("4",mod,&bindings[19]);
-	bind_key("5",mod,&bindings[20]);
-	bind_key("6",mod,&bindings[21]);
-	bind_key("7",mod,&bindings[22]);
-	bind_key("8",mod,&bindings[23]);
-	bind_key("9",mod,&bindings[24]);
-	bind_key("0",mod,&bindings[25]);
-	bind_key("n",mod,&bindings[26]);
-	bind_key("m",mod,&bindings[27]);
+	bind_key("1",&mod,&bindings[16]);
+	bind_key("2",&mod,&bindings[17]);
+	bind_key("3",&mod,&bindings[18]);
+	bind_key("4",&mod,&bindings[19]);
+	bind_key("5",&mod,&bindings[20]);
+	bind_key("6",&mod,&bindings[21]);
+	bind_key("7",&mod,&bindings[22]);
+	bind_key("8",&mod,&bindings[23]);
+	bind_key("9",&mod,&bindings[24]);
+	bind_key("0",&mod,&bindings[25]);
+	bind_key("n",&mod,&bindings[26]);
+	bind_key("m",&mod,&bindings[27]);
 
 	//shift window u d r l  		4 	28-31
-	bind_key("h",mods,&bindings[28]);
-	bind_key("j",mods,&bindings[29]);
-	bind_key("k",mods,&bindings[30]);
-	bind_key("l",mods,&bindings[31]);
+	bind_key("h",&mods,&bindings[28]);
+	bind_key("j",&mods,&bindings[29]);
+	bind_key("k",&mods,&bindings[30]);
+	bind_key("l",&mods,&bindings[31]);
 
 	//toggle stack				1	32
-	bind_key("space",mod,&bindings[32]);
+	bind_key("space",&mod,&bindings[32]);
 
 	//move to stack				1	33
-	bind_key("period",mod,&bindings[33]);
+	bind_key("period",&mod,&bindings[33]);
 
 	//move to main				1	34
-	bind_key("comma",mod,&bindings[34]);
+	bind_key("comma",&mod,&bindings[34]);
 
 	//swap stack and main			1	35
-	bind_key("slash",mod,&bindings[35]);
+	bind_key("slash",&mod,&bindings[35]);
 
 	//swap stack up down			2	36-37
-	bind_key("semicolon",mods,&bindings[36]);
-	bind_key("apostrophe",mods,&bindings[37]);
+	bind_key("semicolon",&mods,&bindings[36]);
+	bind_key("apostrophe",&mods,&bindings[37]);
 
 	//shift main focus up down left right	4	38-41
-	bind_key("h",mod,&bindings[38]);
-	bind_key("j",mod,&bindings[39]);
-	bind_key("k",mod,&bindings[40]);
-	bind_key("l",mod,&bindings[41]);
+	bind_key("h",&mod,&bindings[38]);
+	bind_key("j",&mod,&bindings[39]);
+	bind_key("k",&mod,&bindings[40]);
+	bind_key("l",&mod,&bindings[41]);
 
 	//shift stack focus up down		2	42-43
-	bind_key("semicolon",mod,&bindings[42]);
-	bind_key("apostrophe",mod,&bindings[43]);
+	bind_key("semicolon",&mod,&bindings[42]);
+	bind_key("apostrophe",&mod,&bindings[43]);
 
 	//close win				2	44-45
-	bind_key("Escape",mod,&bindings[44]);
-	bind_key("Escape",mods,&bindings[45]);
+	bind_key("Escape",&mod,&bindings[44]);
+	bind_key("Escape",&mods,&bindings[45]);
 
 	//run menu term				2	46-47
-	bind_key("Return",mod,&bindings[46]);
-	bind_key("Return",mods,&bindings[47]);
+	bind_key("Return",&mod,&bindings[46]);
+	bind_key("Return",&mods,&bindings[47]);
 
 	//fullscreen				1	48
-	bind_key("space",mods,&bindings[48]);
+	bind_key("space",&mods,&bindings[48]);
 
 	//quit					1	49
-	bind_key("Delete",mods,&bindings[49]);
+	bind_key("Delete",&mods,&bindings[49]);
 	
 	//toggle orientation
-	bind_key("Tab",mod,&bindings[50]);
+	bind_key("Tab",&mod,&bindings[50]);
 	
 	// user defined -60
 
-	bind_key("r",mod,&bindings[61]);
-
-
-
-
-
+	bind_key("r",&mod,&bindings[61]);
 }
 
-void spawn(char **arg) {
+void spawn(char *cmd) {
+	//system(cmd);
+	printf("spawning: %s\n",cmd);
 	if (fork() == 0) {
 		if (dpy != NULL) {
 			close(ConnectionNumber(dpy));
 		};
 		setsid();
-		execvp(arg[0],arg);
-		printf("Error spawning %s: %d\n",arg[0],errno);
+		execl("/bin/sh","/bin/sh","-c",cmd);
+		printf("error spawing: %s\n\tERRNO:%d\n",cmd,errno);
 		exit(1);
 	} else {
 		return;
@@ -343,7 +341,7 @@ void split(char *in, char *out1, char *out2, char delim) {
 		in++;
 		strcpy (out2,in);
 	} else {
-		out2 = '\0';
+		out2[0] = '\0';
 	};
 }
 
@@ -369,9 +367,9 @@ void load_conf() {
 	//start rc
 	strcpy(rcfile,confdir);
 	strcat(rcfile,"/euclidrc");
-	char *rc[2];
-	rc[0] = rcfile;
-	rc[1] = NULL;
+	char *rc;
+	rc = rcfile;
+	//rc[1] = NULL;
 	spawn(rc);
 
 	strcpy(conffile,confdir);
@@ -384,7 +382,7 @@ void load_conf() {
 	printf("conf file opened successfully: %s\n",conffile);
 	//now at long last we can loop through it and set values
 	char line[256];
-	bool bound_keys = false;
+	load_defaults();
 	while (fgets(line, 256, conf) != NULL) {
 		//parse line
 		if (line[0] != '#') {
@@ -405,14 +403,14 @@ void load_conf() {
 			};
 		
 			if (strcmp(key,"dmenu") == 0) {
-				dmcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
-				strcpy(dmcmd[0],v);
-				dmcmd[1] = NULL;
+				dcmd = (char *) malloc(strlen(v) * sizeof(char));
+				strcpy(dcmd,v);
+				//dmcmd[1] = NULL;
 				
 			} else if (strcmp(key,"term") == 0) {
-				tcmd[0] = (char *) malloc(strlen(v) * sizeof(char));
-				strcpy(tcmd[0],v);
-				tcmd[1] = NULL;
+				tcmd = (char *) malloc(strlen(v) * sizeof(char));
+				strcpy(tcmd,v);
+				//tcmd[1] = NULL;
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
@@ -436,8 +434,6 @@ void load_conf() {
 					mod = Mod5Mask;
 					mods = Mod5Mask | ShiftMask;
 				};
-				load_defaults();
-				bound_keys = true;
 
 			} else if (key[0] == 'c' && key[2] == 'l' && key[4] == 'r') { 
 			/* here we set colors:
@@ -477,48 +473,36 @@ void load_conf() {
 			//custom commands
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
-				char **ccmd = NULL;
+					#define ALSTR(P,S)\
+					P = (char *) malloc(strlen(S) * sizeof(char));\
+					strcpy(P,S);
+
 				if (key[15] == '0' && key[16] == '1') {
 					//we will set ccmd to point to the appropriate array, 
 					//here we are taking v and copying it into ccmd
-					ccmd = ccmd01;
+			//		ccmd01 = (char *) malloc(strlen(v) * sizeof(char));
+			//		ccmd = ccmd01;
+					ALSTR(ccmd01,v)
  				} else if (key[15] == '0' && key[16] == '2') {
-					ccmd = ccmd02;
+					ALSTR(ccmd02,v)
 				} else if (key[15] == '0' && key[16] == '3') {
-					ccmd = ccmd03;
+					ALSTR(ccmd03,v)
 				} else if (key[15] == '0' && key[16] == '4') {
-					ccmd = ccmd04;
+					ALSTR(ccmd04,v)
 				} else if (key[15] == '0' && key[16] == '5') {
-					ccmd = ccmd05;
+					ALSTR(ccmd05,v)
 				} else if (key[15] == '0' && key[16] == '6') {
-					ccmd = ccmd06;
+					ALSTR(ccmd06,v)
 				} else if (key[15] == '0' && key[16] == '7') {
-					ccmd = ccmd07;
+					ALSTR(ccmd07,v)
 				} else if (key[15] == '0' && key[16] == '8') {
-					ccmd = ccmd08;
+					ALSTR(ccmd08,v)
 				} else if (key[15] == '0' && key[16] == '9') {
-					ccmd =ccmd09;
+					ALSTR(ccmd09,v)
 				} else if (key[15] == '1' && key[16] == '0') {
-					ccmd = ccmd10;
+					ALSTR(ccmd10,v)
 				};
-				int i;
-				char out1[64], out2[256], in[256];
-				strcpy(in, v);
- 				out2[0] ='\0';
-				i = 0;
-				while (i < 7 ) {
-					split(in, out1, out2,' ');
-					if (strcmp(out1,"") == 0) {
-						ccmd = NULL;
-					} else {
-						*ccmd = (char *) malloc(strlen(out1) * sizeof(char));
-						strcpy(*ccmd,out1);
-						strcpy(in,out2);
-					};
-					ccmd ++;
-					i++;
-				};
-			
+				
 			/*
 			 *Actual bindings, format
 			 *bind_$ACT = mod keyname
@@ -620,18 +604,15 @@ void load_conf() {
 				};
 
 				if (known == true) {
-					if (bound_keys == false) {
-						load_defaults();
-						bound_keys = true;
-					};
+				
 					//get the name of the key, and the modifier
 					char m[3];
 					char xkey[24];
 					split(v,m,xkey,' ');
 					if (m[1] == 'S') {
-						bind_key(xkey,mods,&bindings[bindx]);
+						bind_key(xkey,&mods,&bindings[bindx]);
 					} else {
-						bind_key(xkey,mod,&bindings[bindx]);				
+						bind_key(xkey,&mod,&bindings[bindx]);				
 					};
 				};
 			};	 
@@ -646,7 +627,7 @@ void commit_bindings() {
 	for (i = 0; i < BINDINGS; i++) {
 		//need to check whether the binding has been set before sending garbage to X
 		if (bindings[i].keycode != 0) {
-			XGrabKey(dpy,bindings[i].keycode,bindings[i].mask,root,True,GrabModeAsync,GrabModeAsync);
+			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root,True,GrabModeAsync,GrabModeAsync);
 			if (gxerror == true) {
 				printf("error grabbing key %d\n",bindings[i].keycode);
 				gxerror = false;
@@ -1807,7 +1788,7 @@ int event_loop() {
 			} else if (ev.type == KeyPress) {
 			//first find the keypress index from bindings[]
 				int i = 0;
-				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || bindings[i].mask != ev.xkey.state)) {
+				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != ev.xkey.state)) {
 					i++;
 				};
   
@@ -2087,7 +2068,7 @@ int event_loop() {
 						break;
 					//run menu/xterm
 					case 46:
-						spawn(dmcmd);
+						spawn(dcmd);
 						break;
 					case 47:
 						//spawn xterm
@@ -2150,31 +2131,50 @@ int event_loop() {
 						//reload configs:
 						//XFreeGC()
 						//free commands
-						#define FREEARGS(P) p = P;\
-							while (*p != NULL) {\
-							printf("%s\n",*p);\
-							free(*p);\
-							p++;\
-						};
 						if (true) {
-							char **p;
-							FREEARGS(tcmd);
-							FREEARGS(dmcmd);
-							FREEARGS(ccmd01);
-							FREEARGS(ccmd02);
-							FREEARGS(ccmd03);
-							FREEARGS(ccmd04);
-							FREEARGS(ccmd05);
-							FREEARGS(ccmd06);
-							FREEARGS(ccmd07);
-							FREEARGS(ccmd08);
-							FREEARGS(ccmd09);
-							FREEARGS(ccmd10);
+							if (tcmd != NULL) {
+								free(tcmd);
+							};
+							if (dcmd != NULL) {
+								free(dcmd);
+							};
+							if (ccmd01 != NULL) {
+								free(ccmd01);
+							};
+							if (ccmd02 != NULL) {
+								free(ccmd02);
+							};
+							if (ccmd03 != NULL) {
+								free(ccmd03);
+							};
+							if (ccmd04 != NULL) {
+								free(ccmd04);
+							};
+							if (ccmd05 != NULL) {
+								free(ccmd05);
+							};
+							if (ccmd06 != NULL) {
+								free(ccmd06);
+							};
+							if (ccmd07 != NULL) {
+								free(ccmd07);
+							};
+							if (ccmd08 != NULL) {
+								free(ccmd08);
+							};
+							if (ccmd09 != NULL) {
+								free(ccmd09);
+							};
+							if (ccmd10 != NULL) {
+								free(ccmd10);
+							};
 
 							//Unbind keys
 							int i = 0;
-							while (i < BINDINGS) {
-								XUngrabKey(dpy,bindings[i].keycode,bindings[i].mask,root);
+							while (i < BINDINGS ) {
+								if (bindings[i].mask != NULL) {
+									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root);
+								};
 								i++;
 							};
 							//call bind keys
