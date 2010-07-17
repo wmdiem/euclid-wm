@@ -2,8 +2,8 @@ PREFIX    = usr
 SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
-SVNREV 	  = 108
-VER	  = 0.0.1
+SVNREV 	  = 123
+VER	  = 0.1.0
 DIST	  = euclid-wm-${VER}
 
 
@@ -29,7 +29,7 @@ install: all
 	@install -m644 euclid.1 -D ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 	@install -m644 euclid-wm.conf.sample -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclid-wm.conf
 	@install -m644 euclidrc -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclidrc
-#	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
+	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION 2>/dev/null || echo "SVN: `svn info | grep Revision: | cut -d ' ' -f2`" >${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
 	@sed s_/usr/share_${DESTDIR}/${SHAREDIR}_ <start-euclid >start-euclid-local
 	@install -m755 start-euclid-local -D ${DESTDIR}/${BINDIR}/start-euclid
 
@@ -47,7 +47,7 @@ clean:
 
 dist: 
 	mkdir ${DIST}	
-	svn co http://euclid-wm.googlecode.com/svn/trunk/ ./${DIST}
+	svn co http://euclid-wm.googlecode.com/svn/trunk/ ./${DIST} -r ${SVNREV}
 	echo "${VER} (svn${SVNREV}/`date +%F`)" > ./${DIST}/VERSION
 	rm -rf ${DIST}/.svn
 	tar -cvz ${DIST} -feuclid-wm.${VER}.tar.gz
