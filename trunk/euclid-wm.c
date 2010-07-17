@@ -1044,36 +1044,11 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 	 *  4) we are moving up accross tracks
 	 */
 	if (cv->orientv == true) {
-		switch (dir) {
-		case 1: //up
-			dir = 2;
-			break;
-		case 2: //right
-			dir = 3;
-			break;
-		case 3: //down
-			dir = 1;
-			break;
-		case 4:	//left
-			dir = 4;
-			break;
-		};
+		short swp[] = {0,2,3,1,4};
+		dir = swp[dir];
 	} else {
-		switch (dir) {
-		case 1: 
-			dir = 4;
-			break;
-		case 2:
-			dir = 1;
-			break;
-		case 3:
-			dir = 3;
-			break;
-		case 4:
-			dir = 2;
-			break;
-		};
-	
+		short swp[] = {0,4,1,3,2};
+		dir = swp[dir];
 	};
 	return dir;
 }
