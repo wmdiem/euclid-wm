@@ -200,9 +200,11 @@ char *ccmd07 = NULL;
 char *ccmd08 = NULL;
 char *ccmd09 = NULL;
 char *ccmd10 = NULL;
-int res_top = 0;
-int res_bot = 0;
-int resize_inc = 15;
+unsigned int res_top = 0;
+unsigned int res_bot = 0;
+unsigned int res_left = 0;
+unsigned int res_right = 0;
+unsigned int resize_inc = 15;
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -416,6 +418,10 @@ void load_conf() {
 				res_top = atoi(v);
 			} else if (strcmp(key,"reserved_bottom") == 0) {
 				res_bot = atoi(v);
+			} else if (strcmp(key,"reserved_left") == 0) {
+				res_left = atoi(v);
+			} else if (strcmp(key,"reserved_right") == 0) {
+				res_right = atoi(v);
 			} else if (strcmp(key,"modkey") == 0) {
 				if (strcmp(v,"1") == 0) {
 					mod = Mod1Mask;
@@ -1549,7 +1555,7 @@ void layout() {
 	//draw the stack 
 	XClearWindow(dpy,stackid);
 	if (stackheight != 0) {
-		XMoveResizeWindow(dpy,stackid,0,((scrn_h - res_bot) - (stackheight)),scrn_w,(stackheight));
+		XMoveResizeWindow(dpy,stackid,(res_left),((scrn_h - res_bot) - (stackheight)),(scrn_w - (res_left + res_right)),(stackheight));
 		XRaiseWindow(dpy,stackid);
 		XSync(dpy,false);//important!
 		struct stack_item *si = cv->stack;
@@ -1607,7 +1613,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 		int target;
 		int tot = 0;
 		if (cv->orientv == true) {
-			target = scrn_w;
+			target = scrn_w - (res_left + res_right);
 		} else {
 			if (cv->showstack == true) {
 				//stackheight subtract from screen_h and set target
@@ -1640,7 +1646,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 		//second check that within each track the containers fit
 		curt = cv->ft;
 		if (cv->orientv != true) {
-			target = scrn_w;
+			target = scrn_w - (res_left + res_right);
 		} else {
 			if (cv->showstack == true) {
 				target = (scrn_h - (res_top + res_bot)) - stackheight;
@@ -1719,12 +1725,12 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 				};
 				//place window
 				if (cv->orientv == true) {
-					x = offsett;
+					x = offsett + res_left;
 					y = offsetc + res_top;
 					w = curt->size - 2;
 					h = curc->size - 2 ;
 				} else {
-					x = offsetc;
+					x = offsetc + res_left;
 					y = offsett + res_top;
 					w = curc->size - 2;
 					h = curt->size - 2;
