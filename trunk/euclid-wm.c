@@ -1407,7 +1407,14 @@ struct view * find_view (int i) {
 			while (v->next != NULL && v->next->idx < i) {
 				v = v->next;
 			};
-			if (v->next == NULL) {
+			if (fv->idx > i) { 
+				v = make_view();
+				v->idx = i;
+				v->next = fv;
+				v->prev = NULL;
+				v->next->prev = v;
+				fv = v;
+			} else if (v->next == NULL) {
 				//we overshot, and ran out of views: make the view
 				//or we are looking for fv
 				if (i == v->idx) {
@@ -1439,6 +1446,7 @@ void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
 	//sets cv
 	//and maps the windows of the new cv
+	//it also delets empty views
 	if (v == NULL || v == cv) {return;};
 	struct track *t = cv->ft;
 	struct cont *c;

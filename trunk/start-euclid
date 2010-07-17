@@ -3,7 +3,7 @@
 if [ -n  "${XDG_CONFIG_HOME:=1}" ]; then
 	
 	CONFDIR=$HOME/.config/euclid-wm
-	export XDG_CONFIG_HOME=$HOME/.config
+	XDG_CONFIG_HOME=$HOME/.config
 else 
 	CONFDIR=$XDG_CONFIG_HOME/euclid-wm
 fi
