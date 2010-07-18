@@ -87,7 +87,6 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include <errno.h>
 
 #define BINDINGS 62 
 /*BASIC VARIABLE TYPES*/
@@ -309,18 +308,23 @@ void load_defaults() {
 }
 
 void spawn(char *cmd) {
-	//system(cmd);
-	if (fork() == 0) {
-		if (dpy != NULL) {
-			close(ConnectionNumber(dpy));
-		};
-		setsid();
-		execl("/bin/sh","/bin/sh","-c",cmd);
-		printf("error spawing: %s\n\tERRNO:%d\n",cmd,errno);
-		exit(1);
-	} else {
-		return;
+	int len = strlen(cmd);
+	if (len == 0) {return;};
+	char *p = (char *) malloc((len + 2) * sizeof(char));
+	char *q = p;
+	char *r = cmd;
+	while (*r != '\0') {
+		*q = *r;
+		q++;
+		r++;
 	};
+	*q = ' ';
+	q++;
+	*q = '&';
+	q++;
+	*q = '\0';
+	system(p);
+	free(p);
 }
 
 void split(char *in, char *out1, char *out2, char delim) {
@@ -345,6 +349,8 @@ void load_conf() {
 	char conffile[512];
 	char rcfile[512];
 	memset(confdir, '\0', sizeof(confdir));
+	memset(conffile, '\0',sizeof(conffile));
+	memset(rcfile, '\0',sizeof(rcfile));
 	confdir[0] = '\0';
 	char *xdgconf = getenv("XDG_CONFIG_HOME");
 	if (xdgconf == NULL) {
@@ -361,7 +367,7 @@ void load_conf() {
 	strcat(rcfile,"/euclidrc");
 	char *rc;
 	rc = rcfile;
-	spawn(rc);
+	spawn(rcfile);
 
 	strcpy(conffile,confdir);
 	strcat(conffile,"/euclid-wm.conf");
