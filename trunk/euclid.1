@@ -15,14 +15,14 @@ aims to be a highly flexible tiling window manger, which allows easy management 
 Euclid's state can be described as:
 .IP * A set of 
 .B views.
-These are aranged in a series. Up to 9 of them are numbered. They are composed of a set of visible windows (arranged in 
+These are arranged in a series. Up to 9 of them are numbered. They are composed of a set of visible windows (arranged in 
 .B tracks
 ) and minimized windows (stored in a 
 .B stack
 ).
 .IP * 
 .B tracks
-are either rows or collumns (the orientation can be toggled at runtime), that contain visible windows. 
+are either rows or columns (the orientation can be toggled at runtime), that contain visible windows. 
 .IP * the
 .B stack
 is a set of minimized windows, associated with a view, which can be viewed at the bottom of the screen in the form of a box containing their titles.
@@ -55,7 +55,7 @@ All bindings are prefaced by a mod ("M", defaults to mod1, i.e., alt).
 \- kill window (for unresponsive programs)
 
 .SS The Stack
-The stack maintins its own focus; The currently focused item can be identified by its blue color. 
+The stack maintains its own focus; The currently focused item can be identified by its blue color. 
 .IP 
 .B M + <space>
 \- Toggle the stack's visibility 
@@ -90,7 +90,7 @@ The stack maintins its own focus; The currently focused item can be identified b
 \- Move the currently focused window to the 1-9th view
 
 A note on the order and numbering of views:
-The enumeration is not strictly accurate; View 9 may not be the 9th view. Specifically, once a view is assigned a number it reatins that number regardless of where it actually falls in the list of views. This is so that accessing views based on their number remains consistent. 
+The enumeration is not strictly accurate; View 9 may not be the 9th view. Specifically, once a view is assigned a number it retains that number regardless of where it actually falls in the list of views. This is so that accessing views based on their number remains consistent. 
 
 The first view, created when euclid starts, is view 1; Going to the previous view makes a new view, but view 1 remains the original one, even though by counting it is now actually the second. Likewise, if one starts on view 1, and goes to view 9, view 9 remains view 9, even though it may actually be the second view. However, numbered views are always in order. So if one starts with view 1 and creates view 9, then creates view 8, view 8 will be placed between views 1 and 9.  
 
@@ -120,7 +120,7 @@ A sample config file
 .I euclid-wm.conf.sample 
 should have come with euclid and can be installed by the makefile by running 
 .I make install_conf 
-as the user for whom you whish to install these files. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
+as the user for whom you wish to install these files. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
 At startup euclid will also (try to) run the script
 .I euclidrc
 in the same directory (e.g., ~/.config/euclid-wm/euclidrc). This is meant as a place for the user to add any commands he would like run at startup.  A default is stored in /usr/share/euclid-wm/
@@ -130,8 +130,6 @@ in the same directory (e.g., ~/.config/euclid-wm/euclidrc). This is meant as a p
 .IP 
 Improve fullscreen awareness. Fullscreen is mostly working. However, some windows will not be automatically switched to fullscreen (e.g., flashplayer, oowriter) when they request it. The work-around at the moment is to put the view into fullscreen mode (e.g., M + <shift> + Space) before launching the fullscreen window, or telling the window to enter fullscreen. 
 
-
-.SS MISSING FEATURES (may or may not be implemented):
 .IP 
 Multiscreen awareness. 
 

@@ -20,8 +20,7 @@ color_main_focus = #00000000ffff
 color_stack_focus = #ffffffffffff
 color_main_unfocus = #400040004000
 color_stack_unfocus = #400040004000
-colro_stack_background = #010001000100
-
+color_stack_background = #010001000100
 
 
 #RESERVED SPACE
@@ -39,8 +38,7 @@ reserved_right = 0
 resize_increment = 30 
 
 #MODKEY
-#This is just a number
-
+#This is just a number, e.g, mod2 = 2. 
 modkey = 1
 
 #BINDINGS
@@ -55,7 +53,7 @@ dmenu = dmenu_run
 bind_spawn_term = MS Return
 term = xterm
 
-#goto view, as in look at it
+#goto view, as in as in, show the windows on it
 bind_goto_next_view = M m
 bind_goto_previous_view = M n
 
@@ -93,6 +91,10 @@ bind_swap_stack_and_main = M slash
 bind_stack_focus_up = M semicolon
 bind_stack_focus_down = M apostrophe
 
+#push the item with stack focus up or down in the stack
+bind_swap_stack_up = MS ;
+bind_swap_stack_focus_down = MS '
+
 #flip the tracks of the current view 
 bind_toggle_orientation = M Tab
 
@@ -107,9 +109,6 @@ bind_toggle_fullscreen = MS space
 bind_quit = MS q
 
 #reload these settings
-bind_reload_config = M r
-
-#relead configs: note that at the moment this also runs the rc file again
 bind_reload_config = M r
 
 #CUSTOM HOTKEYS
