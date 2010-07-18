@@ -165,8 +165,8 @@ struct view *fv = NULL; //first view
 struct view *cv = NULL; //current view
 struct win *first_win = NULL;
 
-int scrn_w = 1026;
-int scrn_h = 860; 
+unsigned int scrn_w = 1026;
+unsigned int scrn_h = 860; 
 unsigned int mod = Mod1Mask;
 unsigned int mods = Mod1Mask | ShiftMask;
 bool sloppy_focus = true;
@@ -187,7 +187,6 @@ Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
-
 char *dcmd = NULL;
 char *tcmd = NULL;
 char *ccmd01 = NULL;
@@ -200,20 +199,16 @@ char *ccmd07 = NULL;
 char *ccmd08 = NULL;
 char *ccmd09 = NULL;
 char *ccmd10 = NULL;
-unsigned int res_top = 0;
-unsigned int res_bot = 0;
-unsigned int res_left = 0;
-unsigned int res_right = 0;
-unsigned int resize_inc = 15;
+unsigned short res_top = 0;
+unsigned short res_bot = 0;
+unsigned short res_left = 0;
+unsigned short res_right = 0;
+unsigned short resize_inc = 15;
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
-	//char is the name of the key, e.g. 'a' 'period' 'return' 'F2' etc. 
-	//m is a pointer to  of the two global keymask variables: mod or mods
-	//binding is the index of the global binding array
 	unsigned int code;
 	code = XKeysymToKeycode(dpy,XStringToKeysym(s));
-	//recored the binding internally so we can detect it later:
 	b->keycode = code;
 	b->mask = m;
 }
@@ -221,11 +216,9 @@ void bind_key(char s[12], unsigned int *m, struct binding *b) {
 
 //handles binding the default keys
 void load_defaults() {
-					
 	//note that the array index is significant
-	//it is the key that the event loop will use
-	//to identify the event and handle it 
-
+	//it binds the binding to the relevant code
+	//these would be more readable if we #defined them
 
 	//resize up down left right		4	0-3
 	bind_key("y",&mod,&bindings[0]);
@@ -364,13 +357,10 @@ void load_conf() {
 		strcat(confdir,xdgconf);
 	};
 	strcat(confdir,"/euclid-wm");
-	//at this point confdir is pointing at xdgconf, if it exists, now we see whether there is a file in it 
-	//start rc
 	strcpy(rcfile,confdir);
 	strcat(rcfile,"/euclidrc");
 	char *rc;
 	rc = rcfile;
-	//rc[1] = NULL;
 	spawn(rc);
 
 	strcpy(conffile,confdir);
@@ -381,7 +371,6 @@ void load_conf() {
 		return;
 	};
 	printf("conf file opened successfully: %s\n",conffile);
-	//now at long last we can loop through it and set values
 	char line[256];
 	load_defaults();
 	while (fgets(line, 256, conf) != NULL) {
@@ -406,12 +395,9 @@ void load_conf() {
 			if (strcmp(key,"dmenu") == 0) {
 				dcmd = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(dcmd,v);
-				//dmcmd[1] = NULL;
-				
 			} else if (strcmp(key,"term") == 0) {
 				tcmd = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(tcmd,v);
-				//tcmd[1] = NULL;
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
@@ -448,11 +434,10 @@ void load_conf() {
 			 *color_main_unfocus
 			 *color_stack_background
 			 */
-				//main_focus
 				XColor color;
 				if (XParseColor(dpy,DefaultColormap(dpy,0),v,&color) != 0) {
 					XAllocColor(dpy,DefaultColormap(dpy,0),&color);
-			
+					//main_focus
 					if (key[6] == 'm' && key[11] == 'f') {
 						focus_pix = color.pixel;
 					//main_unfocus
@@ -468,13 +453,11 @@ void load_conf() {
 					} else if (key[6] == 's' && key[12] == 'b') {
 						stack_background_pix = color.pixel;
 					} else {
-	
 						printf("unknown color key in config: %s\n",key);
 					};
 				} else {
 					printf("unparsable color: %s\n",v);
 				};
-
 			//custom commands
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
@@ -483,10 +466,6 @@ void load_conf() {
 					strcpy(P,S);
 
 				if (key[15] == '0' && key[16] == '1') {
-					//we will set ccmd to point to the appropriate array, 
-					//here we are taking v and copying it into ccmd
-			//		ccmd01 = (char *) malloc(strlen(v) * sizeof(char));
-			//		ccmd = ccmd01;
 					ALSTR(ccmd01,v)
  				} else if (key[15] == '0' && key[16] == '2') {
 					ALSTR(ccmd02,v)
@@ -518,7 +497,6 @@ void load_conf() {
 			bool known = true;
 			//select the appropriate index:
 				int bindx = 0;
-
 				if (strcmp(key,"bind_resize_left") == 0) {
 					bindx = 0;
 				} else if (strcmp(key,"bind_resize_down") == 0) {
@@ -624,7 +602,6 @@ void load_conf() {
 		};
 	};
 	fclose(conf);
-	
 }
 
 void commit_bindings() {
@@ -641,7 +618,7 @@ void commit_bindings() {
 	};
 }
 
-/*fixes bugs in dumb programs that assume a reparenting wm
+/*The wmname bit fixes bugs in dumb programs that assume a reparenting wm
  taken from scrotwm, which took it from wmname
  now it also does general atom stuff
  */
@@ -680,9 +657,7 @@ struct view * make_view() {
 	ptr->stack = NULL;
 	ptr->showstack = true;
 	ptr->fs = false;
-
 	return ptr;
-	
  }
 
 void remove_cont(struct cont *c) {
@@ -750,7 +725,6 @@ struct win * add_win(Window  id) {
 		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
 	};
 	XSetWindowBorderWidth(dpy,id,1);
-
 	struct win *p = (struct win *) malloc(sizeof(struct win));
 	p->take_focus = false;
 	p->del_win = false;
@@ -894,16 +868,13 @@ void forget_win (Window id) {
 		};
 		v = v->next;
 	};
-
 	//remove w
 	//is it first?
-	//is it last?
 	if (first_win == w) {
 		first_win = w->next;
 	};
 	w2->next = w->next;
 	free(w);
-	
 }
 
 void add_client_to_view (struct win *p, struct view *v) {
@@ -1343,7 +1314,7 @@ void shift_main_focus(short int dir) {
 }
 
 struct view * find_view (int i) {
-	//this will return a pointer to a give view
+	//this will return a pointer to a given view
 	//even if it must first create it
 	//some views get a numbered index
 	//i -2 means move forward -3 means backward
@@ -1421,7 +1392,7 @@ void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
 	//sets cv
 	//and maps the windows of the new cv
-	//it also delets empty views
+	//it also deletes empty views
 	if (v == NULL || v == cv) {return;};
 	struct track *t = cv->ft;
 	struct cont *c;
@@ -1532,7 +1503,7 @@ void layout() {
 		};
 		stackheight = (i * 20); 
 		if (i == 0) {
-			stackheight = 8; //this gives the user a visial clue that the stack is visible, but it is just empty. 
+			stackheight = 8; 
 		};
 	};
 	//draw the stack 
@@ -1599,7 +1570,6 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 			target = scrn_w - (res_left + res_right);
 		} else {
 			if (cv->showstack == true) {
-				//stackheight subtract from screen_h and set target
 				target = (scrn_h - (res_top + res_bot)) - stackheight;
 			} else {
 				target = scrn_h - (res_top + res_bot);
@@ -1684,7 +1654,6 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 					curc->win->fullscreen = false;
 					XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 				};
-				//set border:
 				if (curc == cv->mfocus) {
 				//set border
 					XSetWindowBorder(dpy,curc->win->id,focus_pix);
@@ -1711,7 +1680,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 					x = offsett + res_left;
 					y = offsetc + res_top;
 					w = curt->size - 2;
-					h = curc->size - 2 ;
+					h = curc->size - 2;
 				} else {
 					x = offsetc + res_left;
 					y = offsett + res_top;
@@ -2217,9 +2186,6 @@ int event_loop() {
 				};
 			} else if (ev.type == DestroyNotify ) {
 				forget_win(ev.xdestroywindow.window);
-				//the following should be unnecessary, if it was mapped, we should first have gotten an unmap notify
-				//this is taken out because it appears to have been responsible for the google-chrome bug (no.5)
-				//redraw = true;
 			} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
 				//check whether it's in the layout, if not add it
 				if (id_to_cont(ev.xmap.window) == NULL) {
