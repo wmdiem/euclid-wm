@@ -2,8 +2,8 @@ PREFIX    = usr
 SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
-SVNREV 	  = 123
-VER	  = 0.1.0
+SVNREV 	  = 134
+VER	  = 0.1-rc1
 DIST	  = euclid-wm-${VER}
 
 
@@ -50,7 +50,7 @@ dist:
 	svn co http://euclid-wm.googlecode.com/svn/trunk/ ./${DIST} -r ${SVNREV}
 	echo "${VER} (svn${SVNREV}/`date +%F`)" > ./${DIST}/VERSION
 	rm -rf ${DIST}/.svn
-	tar -cvz ${DIST} -feuclid-wm.${VER}.tar.gz
+	tar -cvz ${DIST} -f${DIST}.tar.gz
 
 dist_clean: 
 	rm -rf ${DIST}

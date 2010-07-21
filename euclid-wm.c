@@ -110,12 +110,12 @@ struct view {
 	struct view *next;
 	struct view *prev;
 	struct track *ft; //first track
-	bool orientv; //tracks run verically?
 	struct stack_item *stack;
 	struct cont *mfocus; //focus
 	struct stack_item *sfocus;//stackfocus
 	int idx;
 	bool showstack;
+	bool orientv; //tracks run verically?
 	bool fs; //fullscreen?
 };
 
@@ -137,11 +137,11 @@ struct cont {
 };
 
 struct  win {
+	Window id; 
 	struct win *next;
 	bool del_win;
 	bool take_focus;
 	bool fullscreen;
-	Window id; 
 };
 
 struct stack_item {
@@ -151,8 +151,8 @@ struct stack_item {
 };
 
 struct binding {
-	unsigned int keycode;
 	unsigned int *mask;
+	unsigned int keycode;
 };
 
 
