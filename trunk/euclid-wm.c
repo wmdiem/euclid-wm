@@ -376,7 +376,7 @@ void load_conf() {
 		load_defaults();
 		return;
 	};
-	printf("conf file opened successfully: %s\n",conffile);
+	printf("euclid-wm: conf file opened successfully: %s\n",conffile);
 	char line[256];
 	load_defaults();
 	while (fgets(line, 256, conf) != NULL) {
@@ -459,10 +459,10 @@ void load_conf() {
 					} else if (key[6] == 's' && key[12] == 'b') {
 						stack_background_pix = color.pixel;
 					} else {
-						printf("unknown color key in config: %s\n",key);
+						fprintf(stderr,"euclid-wm ERROR: unknown color key in config: %s\n",key);
 					};
 				} else {
-					printf("unparsable color: %s\n",v);
+					fprintf(stderr,"euclid-wm ERROR: unparsable color: %s\n",v);
 				};
 			//custom commands
 			//custom_command_01 = cmd arg1 arg2
@@ -588,7 +588,7 @@ void load_conf() {
 				} else if (strcmp(key,"bind_reload_config") == 0) {
 					bindx = 61;
 				} else {
-					printf("ERROR: uknown binding in config: \"%s\"\n",key),
+					fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
 				};
 
@@ -617,7 +617,7 @@ void commit_bindings() {
 		if (bindings[i].keycode != 0) {
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root,True,GrabModeAsync,GrabModeAsync);
 			if (gxerror == true) {
-				printf("error grabbing key %d\n",bindings[i].keycode);
+				fprintf(stderr,"euclid-wm ERROR: error grabbing key %d\n",bindings[i].keycode);
 				gxerror = false;
 			};
 		};
@@ -1707,7 +1707,7 @@ int xerror(Display *d, XErrorEvent *e) {
 	//get and print the error description for diagnostics:
 	char buff[256];
 	XGetErrorText(dpy, e->error_code, buff, 256);
-	printf("X error: %s\n",buff);
+	fprintf(stderr,"euclid-wm ERROR: X error: %s\n",buff);
 	if (e->error_code == BadWindow) {
 		forget_win((Window) e->resourceid);
 	};
@@ -2253,18 +2253,18 @@ int event_loop() {
 }
 
 int main() {
-	printf("\nRunning\n");
+	printf("\neuclid-wm: running\n");
 	
 	dpy = XOpenDisplay(0);
 	XSetErrorHandler(xerror);
 	scrn_h = DisplayHeight(dpy,DefaultScreen(dpy));
 	scrn_w = DisplayWidth(dpy,DefaultScreen(dpy));
-	printf("Sreen dimensions: %d %d\n",scrn_h, scrn_w);
+	printf("euclid-wm: sreen dimensions: %d %d\n",scrn_h, scrn_w);
 	//set some stuff
 	if ((root = DefaultRootWindow(dpy))) {
-		printf("root is %6.0lx\n",root);
+		printf("euclid-wm: root is %6.0lx\n",root);
 	} else {
-		printf("faild to find root window\n");
+		fprintf(stderr,"euclid-wm ERROR: faild to find root window\n");
 		return(0);
 	};
 	//set colors, these get overridden by the config file
@@ -2323,7 +2323,7 @@ int main() {
 	unsigned int no;
 	XQueryTree(dpy,root,&d1,&d2,&wins,&no);
 	struct win *t;
-	printf("%d windows\n",no);
+	printf("euclid-wm: %d windows\n",no);
 	for (i = 0 ; i<no; i++) {
 		if (is_top_level(wins[i])) {
 			t = add_win(wins[i]);
@@ -2337,9 +2337,9 @@ int main() {
 	
 	//and set an event on root to get new ones
 	if  (XSelectInput(dpy,root,SubstructureNotifyMask )) {
-		printf("Now controlling root\n");
+		printf("euclid-wm: now controlling root\n");
 	} else {
-		printf("Fail to control root, is there already a WM?");
+		fprintf(stderr,"euclid-wm ERROR: fail to control root, is there already a WM?");
 		return(1);
 	};
 	XSync(dpy,False);
