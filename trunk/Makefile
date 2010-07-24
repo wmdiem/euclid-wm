@@ -2,8 +2,8 @@ PREFIX    = usr
 SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
-SVNREV 	  = 141
-VER	  = 0.1.0
+SVNREV 	  = 144
+VER	  = 0.1.1
 DIST	  = euclid-wm-${VER}
 
 
@@ -13,7 +13,7 @@ endif
 CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
 
 CC = cc -pedantic -Wall
-CFLAGS = -O2 -std=c99
+CFLAGS = -O2 -g -std=c99
 LDFLAGS = -lX11
 
 .PHONY: all install install_conf clean uninstall dist dist_clean
