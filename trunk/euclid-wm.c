@@ -373,6 +373,7 @@ void load_conf() {
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
 	if (conf == NULL) {
+		fprintf(stderr,"euclid-wm ERROR: could not open conf file, falling back to internal defaults\n");
 		load_defaults();
 		return;
 	};
@@ -384,7 +385,9 @@ void load_conf() {
 		if (line[0] != '#') {
 			char key[64];
 			char val[256];
-			char *v;
+			char *v = NULL;
+			memset(key,'\0',sizeof(key));
+			memset(val,'\0',sizeof(val));
 			split(line,key,val,'=');
 			if (val[0] == ' ') {
 				v = &val[1];
