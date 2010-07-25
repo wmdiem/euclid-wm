@@ -308,23 +308,6 @@ void load_defaults() {
 }
 
 void spawn(char *cmd) {
-/*	int len = strlen(cmd);
-	if (len == 0) {return;};
-	char *p = (char *) malloc((len + 2) * sizeof(char));
-	char *q = p;
-	char *r = cmd;
-	while (*r != '\0') {
-		*q = *r;
-		q++;
-		r++;
-	};
-	*q = ' ';
-	q++;
-	*q = '&';
-	q++;
-	*q = '\0'; 
-	system(p);
-	free(p);*/
 	system(cmd);
 }
 
