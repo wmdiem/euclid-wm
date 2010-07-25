@@ -308,7 +308,7 @@ void load_defaults() {
 }
 
 void spawn(char *cmd) {
-	int len = strlen(cmd);
+/*	int len = strlen(cmd);
 	if (len == 0) {return;};
 	char *p = (char *) malloc((len + 2) * sizeof(char));
 	char *q = p;
@@ -322,9 +322,10 @@ void spawn(char *cmd) {
 	q++;
 	*q = '&';
 	q++;
-	*q = '\0';
+	*q = '\0'; 
 	system(p);
-	free(p);
+	free(p);*/
+	system(cmd);
 }
 
 void split(char *in, char *out1, char *out2, char delim) {
@@ -364,9 +365,7 @@ void load_conf() {
 	};
 	strcat(confdir,"/euclid-wm");
 	strcpy(rcfile,confdir);
-	strcat(rcfile,"/euclidrc");
-	char *rc;
-	rc = rcfile;
+	strcat(rcfile,"/euclidrc &");
 	spawn(rcfile);
 
 	strcpy(conffile,confdir);
@@ -402,11 +401,12 @@ void load_conf() {
 			};
 		
 			if (strcmp(key,"dmenu") == 0) {
-				dcmd = (char *) malloc(strlen(v) * sizeof(char));
+				dcmd = (char *) malloc((strlen(v) + 2) * sizeof(char));
 				strcpy(dcmd,v);
 			} else if (strcmp(key,"term") == 0) {
-				tcmd = (char *) malloc(strlen(v) * sizeof(char));
+				tcmd = (char *) malloc((strlen(v) + 2) * sizeof(char));
 				strcpy(tcmd,v);
+				strcat(tcmd," &");
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
@@ -471,8 +471,10 @@ void load_conf() {
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
 					#define ALSTR(P,S)\
-					P = (char *) malloc(strlen(S) * sizeof(char));\
-					strcpy(P,S);
+					P = (char *) malloc((strlen(S) + 2) * sizeof(char));\
+					strcpy(P,S);\
+					strcat(P," &");
+					
 
 				if (key[15] == '0' && key[16] == '1') {
 					ALSTR(ccmd01,v)
