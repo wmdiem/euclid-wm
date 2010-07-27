@@ -456,8 +456,8 @@ void load_conf() {
 					#define ALSTR(P,S)\
 					P = (char *) malloc((strlen(S) + 2) * sizeof(char));\
 					strcpy(P,S);\
-					strcat(P," &");
-					
+					strcat(P," &");\
+					printf("euclid-wm: command loaded,  \"%s\"\n",P);
 
 				if (key[15] == '0' && key[16] == '1') {
 					ALSTR(ccmd01,v)
