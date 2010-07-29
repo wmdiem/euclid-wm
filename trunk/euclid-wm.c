@@ -87,6 +87,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <errno.h>
 
 #define BINDINGS 62 
 /*BASIC VARIABLE TYPES*/
@@ -308,7 +309,20 @@ void load_defaults() {
 }
 
 void spawn(char *cmd) {
-	system(cmd);
+	if (cmd == NULL || cmd[0] == '\0') {
+		return;
+	};
+	if (fork() == 0) {
+		if (dpy != NULL) {
+			close(ConnectionNumber(dpy));
+		};
+		setsid();
+		execl("/bin/sh","/bin/sh","-c",cmd,NULL);
+		fprintf(stderr,"error number %d  spawning %s\n",errno,cmd);
+		exit(1);
+	} else {
+		return;
+	};
 }
 
 void split(char *in, char *out1, char *out2, char delim) {
@@ -384,12 +398,11 @@ void load_conf() {
 			};
 		
 			if (strcmp(key,"dmenu") == 0) {
-				dcmd = (char *) malloc((strlen(v) + 2) * sizeof(char));
+				dcmd = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(dcmd,v);
 			} else if (strcmp(key,"term") == 0) {
-				tcmd = (char *) malloc((strlen(v) + 2) * sizeof(char));
+				tcmd = (char *) malloc(strlen(v) * sizeof(char));
 				strcpy(tcmd,v);
-				strcat(tcmd," &");
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
@@ -454,10 +467,8 @@ void load_conf() {
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
 					#define ALSTR(P,S)\
-					P = (char *) malloc((strlen(S) + 2) * sizeof(char));\
-					strcpy(P,S);\
-					strcat(P," &");\
-					printf("euclid-wm: command loaded,  \"%s\"\n",P);
+					P = (char *) malloc(strlen(S)  * sizeof(char));\
+					strcpy(P,S);
 
 				if (key[15] == '0' && key[16] == '1') {
 					ALSTR(ccmd01,v)
