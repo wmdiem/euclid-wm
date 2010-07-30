@@ -2,7 +2,7 @@ PREFIX    = usr
 SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
-SVNREV 	  = 144
+SVNREV 	  = 149
 VER	  = 0.1.1
 DIST	  = euclid-wm-${VER}
 

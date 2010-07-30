@@ -378,7 +378,7 @@ void load_conf() {
 	load_defaults();
 	while (fgets(line, 256, conf) != NULL) {
 		//parse line
-		if (line[0] != '#') {
+		if (line[0] != '#' && line[0] != '\n') {
 			char key[64];
 			char val[256];
 			char *v = NULL;
