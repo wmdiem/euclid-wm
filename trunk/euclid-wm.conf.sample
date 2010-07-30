@@ -117,8 +117,8 @@ bind_reload_config = M r
 #the format for the associated commands is: custom_command_[01-10] = [command to pass to shell]
 #e.g., 
 #bind_custom_01 = M Print
-#custom_command_01 = shutter
+#custom_command_01 = scrot -e 'mv $f ~/screenshots/'
 #bind_custom_02 = M x
-#custom_command_02 = xscreensaver-command -lock
+#custom_command_02 = slock
 
 
