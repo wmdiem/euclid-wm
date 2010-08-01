@@ -111,6 +111,10 @@ bind_quit = MS q
 #reload these settings
 bind_reload_config = M r
 
+#move focus to screen (Previous and Next are the X names for PgUp and PgDown:
+bind_goto_previous_screen = M Previous
+bind_goto_next_screen = M Next
+
 #CUSTOM HOTKEYS
 #euclid supports up to ten hotkeys, bound to external commands
 #the format for the binding is: bind_custom_[01-10] = [M | MS] [keyname] (just like normal bindings
