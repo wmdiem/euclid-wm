@@ -214,6 +214,7 @@ unsigned short res_bot = 0;
 unsigned short res_left = 0;
 unsigned short res_right = 0;
 unsigned short resize_inc = 15;
+unsigned short offscreen = 0;
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -1598,7 +1599,7 @@ void layout() {
 				i += 20;
 			}; 
 		} else { //hide stack
-			XMoveResizeWindow(dpy,s->stackid,0,(s->h ),s->w,10);
+			XMoveResizeWindow(dpy,s->stackid,0,offscreen,s->w,10);
 		};
 		XSync(dpy,false);
 		if (s->v->mfocus == NULL) {
@@ -2359,35 +2360,35 @@ int main() {
 	color.green = 0;
 	color.blue = 65500;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	focus_pix = color.pixel;
 	//unfocus color
 	color.red = 5000;
 	color.green = 5000;
 	color.blue = 5000;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	unfocus_pix = color.pixel;
 	//stack background:
 	color.red = 100;
 	color.green = 100;
 	color.blue = 200;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_background_pix = color.pixel;
 	//stack unfocus text:
 	color.red = 60000;
 	color.green = 60000;
 	color.blue = 60000;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_unfocus_pix = color.pixel;
 	//stack focus text:
 	color.red = 0;
 	color.green = 0;
 	color.blue = 65500;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_focus_pix = color.pixel;
 	
 	//we have to do this after we get root
@@ -2414,7 +2415,7 @@ int main() {
 		};
 	};
 	XFree(scrn_info);
-
+	offscreen = DisplayHeight(dpy,DefaultScreen(dpy));
 //	cs->v = make_view();
 //	fv = cs->v;
 //	cs->v->idx = 1;
