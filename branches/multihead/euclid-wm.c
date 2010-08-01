@@ -690,6 +690,7 @@ void addscreen(short h, short w, short x, short y, short n) {
 		cs = new;
 		new->v = make_view();
 		new->v->idx = 1;
+		fv = new->v;
 	} else {
 		struct screen *s = firstscreen;
 		while (s->next != NULL) {
@@ -1445,7 +1446,12 @@ void goto_view(struct view *v) {
 	//sets cs->v
 	//and maps the windows of the new cs->v
 	//it also deletes empty views
-	if (v == NULL || v == cs->v) {return;};
+	if (v == NULL) {return;};
+	struct screen *s = firstscreen;
+	while (s != NULL) {
+		if (s->v == v) {return;};
+		s = s->next;
+	};
 	struct track *t = cs->v->ft;
 	struct cont *c;
 	while (t != NULL) {
