@@ -1,0 +1,21 @@
+#! /bin/bash
+
+if [ -n  "${XDG_CONFIG_HOME:=1}" ]; then
+	
+	CONFDIR=$HOME/.config/euclid-wm
+	XDG_CONFIG_HOME=$HOME/.config
+else 
+	CONFDIR=$XDG_CONFIG_HOME/euclid-wm
+fi
+
+if [ ! -e $CONFDIR/euclid-wm.conf ]; then
+	install -m600 -D /usr/share/euclid-wm/euclid-wm.conf $CONFDIR/euclid-wm.conf
+fi
+
+if [ ! -e $CONFDIR/euclidrc ]; then
+	install -m700 -D /usr/share/euclid-wm/euclidrc $CONFDIR/euclidrc
+fi
+
+#$CONFDIR/euclidrc 
+
+exec euclid-wm

@@ -1,0 +1,140 @@
+.TH EUCLID 1 17-7-2010
+.SH NAME
+euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
+.SH SYNOPSIS
+.B start-euclid
+
+.B euclid-wm 
+(started directly euclid will not check for config files.)
+.SH DESCRIPTION
+.B euclid  
+.I (euclid-wm)
+aims to be a highly flexible tiling window manger, which allows easy management of large collections of windows entirely from the keyboard.
+.SH USAGE
+.SS Basic Concepts
+Euclid's state can be described as:
+.IP * A set of 
+.B views.
+These are arranged in a series. Up to 9 of them are numbered. They are composed of a set of visible windows (arranged in 
+.B tracks
+) and minimized windows (stored in a 
+.B stack
+).
+.IP * 
+.B tracks
+are either rows or columns (the orientation can be toggled at runtime), that contain visible windows. 
+.IP * the
+.B stack
+is a set of minimized windows, associated with a view, which can be viewed at the bottom of the screen in the form of a box containing their titles.
+
+All bindings are prefaced by a mod ("M", defaults to mod1, i.e., alt).
+
+.SS Starting Programs
+.IP
+.B M + <enter>
+\- start run dialogue (dmenu). NB: this takes keyboard focus as long as it is open; Once it is opened you must either select a command (with enter) or exit the dialog (with esc).
+.IP 
+.B M + <shift> + <enter>
+\- start x-terminal-emulator
+
+.SS Basic Window Manipulation
+.IP  
+.B M + h/j/k/l 
+\- move focus left/down/up/right
+.IP
+.B M + H/J/K/L 
+\- move focused window left/down/up/right
+.IP
+.B M + u/i/o/p
+\- resize window: move lower right corner left/down/up/right
+.IP
+.B M + <esc>
+\- close currently focused window
+.IP
+.B M + <shift> + <esc>
+\- kill window (for unresponsive programs)
+
+.SS The Stack
+The stack maintains its own focus; The currently focused item can be identified by its blue color. 
+.IP 
+.B M + <space>
+\- Toggle the stack's visibility 
+.IP 
+.B M + .
+\- Move the currently focused window to the stack (i.e., minimize it)
+.IP
+.B M + ,
+\- Move the currently focused stack item to the main area (i.e., restore it)
+.IP 
+.B M + /
+\- Swap currently focused stack item and currently focused main item.
+.IP
+.B M + ;/'
+\ - Move stack focus up/down
+.IP
+.B M + <shift> + ;/'
+\ - Shift the stack item up/down in the stack
+
+.SS Manipulating Views
+.IP
+.B M + n/m
+\- Move to the previous/next view
+.IP
+.B M + N/M
+\- Move currently focused window to the previous/next view
+.IP
+.B M + 1-9
+\- Move to the 1-9th view
+.IP
+.B M + <shift> + 1-9
+\- Move the currently focused window to the 1-9th view
+
+A note on the order and numbering of views:
+The enumeration is not strictly accurate; View 9 may not be the 9th view. Specifically, once a view is assigned a number it retains that number regardless of where it actually falls in the list of views. This is so that accessing views based on their number remains consistent. 
+
+The first view, created when euclid starts, is view 1; Going to the previous view makes a new view, but view 1 remains the original one, even though by counting it is now actually the second. Likewise, if one starts on view 1, and goes to view 9, view 9 remains view 9, even though it may actually be the second view. However, numbered views are always in order. So if one starts with view 1 and creates view 9, then creates view 8, view 8 will be placed between views 1 and 9.  
+
+.SS Other 
+.IP
+.B M + <shift> + <space>
+\- Change to fullscreen mode. 
+
+Notes on fullscreen mode: In fullscreen mode the stack is disabled, widows cannot be added or taken out. j/k will cycle through all windows on the view in a linear way. If the view is in fullscreen mode and the current window closes, euclid will switch back to its normal tiled layout. 
+.IP 
+.B M + <tab> 
+\- toggle the orientation of the tracks (vertical or horizontal layout)
+.IP 
+.B M + Q 
+\- quit euclid.  
+.IP
+.B M + r
+\- reload config file in place. 
+.SH FILES
+.IP
+On startup euclid will look for 
+.I $XDG_CONFIG_HOME/euclid-wm/euclid-wm.conf 
+If $XDG_CONFIG_HOME is not defined it will look for 
+.I $HOME/.config/euclid-wm/euclid-wm.conf
+If euclid-wm.conf is found, euclid will override its default settings with those found in the file. 
+A sample config file 
+.I euclid-wm.conf.sample 
+should have come with euclid and can be installed by the makefile by running 
+.I make install_conf 
+as the user for whom you wish to install these files. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
+At startup euclid will also (try to) run the script
+.I euclidrc
+in the same directory (e.g., ~/.config/euclid-wm/euclidrc). This is meant as a place for the user to add any commands he would like run at startup.  A default is stored in /usr/share/euclid-wm/
+  
+.SH BUGS (AND TODO AND MISSING FEATURES)
+.SS TODO:
+.IP 
+Improve fullscreen awareness. Fullscreen is mostly working. However, some windows will not be automatically switched to fullscreen (e.g., flashplayer, oowriter) when they request it. The work-around at the moment is to put the view into fullscreen mode (e.g., M + <shift> + Space) before launching the fullscreen window, or telling the window to enter fullscreen. 
+
+.IP 
+Multiscreen awareness. 
+
+Search for window function.
+
+.SS CURRENT issues and reporting: 
+.IP
+Please go to http://code.google.com/p/euclid-wm/issues/list to see the most recent set of known issues, to report new bugs, or request features. 

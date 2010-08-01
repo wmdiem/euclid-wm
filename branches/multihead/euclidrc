@@ -1,0 +1,16 @@
+#! /bin/sh
+
+#euclidrc
+#this gets run by euclid at startup
+#it must be named $XDG_CONFIG_HOME/euclid-wm/euclidrc or if XDG_CONFIG_HOME is undefined 
+#$HOME/.config/euclid-wm/euclidrd
+
+#if you don't get a cursor at startup, and this bothers you, uncomment this
+#xsetroot -cursor_name left_ptr &
+
+#If you use dzen you should define the reserverd_top or  _bottom  keywords in euclid-wm.conf
+#BTW, dzenscript doesn't actually exist, you have to make your own 
+#~/.config/euclid-wm/dzenscript | dzen2 -p &
+
+#if you use it:
+#xscreensaver &
