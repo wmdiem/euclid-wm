@@ -362,7 +362,8 @@ void load_conf() {
 	};
 	strcat(confdir,"/euclid-wm");
 	strcpy(rcfile,confdir);
-	strcat(rcfile,"/euclidrc &");
+	//why do we have an & ? 
+	strcat(rcfile,"/euclidrc");
 	spawn(rcfile);
 
 	strcpy(conffile,confdir);
@@ -2331,6 +2332,7 @@ int main() {
 			if (att.map_state != IsUnmapped) {
 				add_client_to_view(t,cv);
 			};
+			//to see how to check for iconified windows, look at scrotwm getstate(
 		};
 	};
 	
