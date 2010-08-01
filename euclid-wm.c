@@ -88,7 +88,7 @@ Thus the one or more of the following notices may apply to some sections:
 #include <errno.h>
 #include <X11/extensions/Xinerama.h>
 
-#define BINDINGS 62 
+#define BINDINGS 64 
 /*BASIC VARIABLE TYPES*/
 
 /*
@@ -316,6 +316,10 @@ void load_defaults() {
 	// user defined -60
 
 	bind_key("r",&mod,&bindings[61]);
+
+	//prev/next view
+	bind_key("Prior", &mod,&bindings[62]);
+	bind_key("Next", &mod,  &bindings[63]);
 }
 
 void spawn(char *cmd) {
@@ -596,6 +600,10 @@ void load_conf() {
 					bindx = 60;
 				} else if (strcmp(key,"bind_reload_config") == 0) {
 					bindx = 61;
+				} else if (strcmp(key,"bind_goto_previous_screen") == 0) {
+					bindx = 62;
+				} else if (strcmp(key,"bind_goto_next_screen") == 0) {
+					bindx = 63;
 				} else {
 					fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
@@ -2211,6 +2219,24 @@ int event_loop() {
 							xgcv.foreground = stack_unfocus_pix;
 							unfocus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 						};
+					case 62:
+						//move to previous screen
+						if (cs != firstscreen) {
+							struct screen *s = firstscreen;
+							while (s->next != cs) {
+								s = s->next;
+							};
+							cs = s;
+							redraw = true;
+						};
+						break;
+					case 63:
+						//move to next screen
+						if (cs->next != NULL) {
+							cs = cs->next;
+							redraw = true;
+						};
+						break;
 				};
 	
 			} else if (ev.type == ReparentNotify) {
