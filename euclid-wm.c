@@ -675,6 +675,8 @@ struct view * make_view() {
 	return ptr;
  }
 
+struct view * find_view(int i);
+
 void addscreen(short h, short w, short x, short y, short n) {
 
 	struct screen *new = (struct screen * ) malloc (sizeof(struct screen));
@@ -686,22 +688,21 @@ void addscreen(short h, short w, short x, short y, short n) {
 		//set it as first screen
 		firstscreen = new;
 		cs = new;
+		new->v = make_view();
+		new->v->idx = 1;
 	} else {
 		struct screen *s = firstscreen;
 		while (s->next != NULL) {
 			s = s->next;
 		};
 		s->next = new;
+		new->v = find_view(n + 1);
 	}
 	//define its geomentry
 	new->h = h;
 	new->w = w;
 	new->x = x;
 	new->y = y;
-	//make it a view
-	new->v = make_view();
-	//set view idx
-	new->v->idx = n;
 	//make it a stack window
 	new->stackid = XCreateSimpleWindow(dpy,root,0,((h - 15) + y),(w + x),15,1,stack_unfocus_pix,stack_background_pix);
 	XSetWindowAttributes att;
@@ -709,7 +710,7 @@ void addscreen(short h, short w, short x, short y, short n) {
 	XChangeWindowAttributes(dpy,cs->stackid,CWOverrideRedirect,&att);
 	XMapWindow(dpy,new->stackid);
 	XSync(dpy,False);
-};
+}
 
 void remove_cont(struct cont *c) {
 	//reset focus if necessary
