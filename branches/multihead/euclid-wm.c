@@ -1810,6 +1810,11 @@ int event_loop() {
 					if (cs->v->mfocus->win->id != ev.xcrossing.window) {
 						struct cont *f = id_to_cont(ev.xmotion.window);
 						if (f != NULL) {
+							struct screen *s = firstscreen;
+							while (s->v != f->track->view) {
+								s = s->next;
+							};
+							cs = s;
 							cs->v->mfocus = f;
 							redraw = true;
 						};
