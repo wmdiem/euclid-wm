@@ -1619,17 +1619,19 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 			h -= stackheight;
 			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(-1),(-1),(w),(h));
 			XRaiseWindow(dpy,s->v->mfocus->win->id);
-			if (s->v->mfocus->win->take_focus == true) {
-				XClientMessageEvent cm;
-				memset (&cm,'\0', sizeof(cm));
-				cm.type = ClientMessage;
-				cm.window = s->v->mfocus->win->id;
-				cm.message_type = wm_prot;
-				cm.format = 32;
-				cm.data.l[0] = wm_take_focus;
-				cm.data.l[1] = CurrentTime;
+			if (cs == s) {
+				if (s->v->mfocus->win->take_focus == true) {
+					XClientMessageEvent cm;
+					memset (&cm,'\0', sizeof(cm));
+					cm.type = ClientMessage;
+					cm.window = s->v->mfocus->win->id;
+					cm.message_type = wm_prot;
+					cm.format = 32;
+					cm.data.l[0] = wm_take_focus;
+					cm.data.l[1] = CurrentTime;
+				};
+				XSetInputFocus(dpy,s->v->mfocus->win->id,None,CurrentTime);
 			};
-			XSetInputFocus(dpy,s->v->mfocus->win->id,None,CurrentTime);
 			XSync(dpy,false);
 		} else {
 			//first check that the tracks layout:
@@ -1725,7 +1727,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 						curc->win->fullscreen = false;
 						XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 					};
-					if (curc == s->v->mfocus) {
+					if (s == cs && curc == s->v->mfocus) {
 					//set border
 						XSetWindowBorder(dpy,curc->win->id,focus_pix);
 						if (s->v->mfocus->win->take_focus == true) {
