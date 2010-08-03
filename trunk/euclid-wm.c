@@ -758,7 +758,7 @@ struct win * add_win(Window  id) {
 void forget_win (Window id) {
 	//first see whether we have a record of it
 	if (first_win == NULL) {
-		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n");
+		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n",id);
 		return;
 	};
 	struct win * w = first_win;
