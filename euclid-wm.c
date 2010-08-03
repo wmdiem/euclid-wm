@@ -757,7 +757,10 @@ struct win * add_win(Window  id) {
 
 void forget_win (Window id) {
 	//first see whether we have a record of it
-	if (first_win == NULL) {return;};
+	if (first_win == NULL) {
+		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n");
+		return;
+	};
 	struct win * w = first_win;
 	struct win * w2 = first_win;
 	if (w->id != id) {
@@ -768,7 +771,10 @@ void forget_win (Window id) {
 		w = w->next;
 	}; 
 	
-	if (w == NULL) { return;};
+	if (w == NULL) { 
+		printf("euclid-wm: cannot remove %6.0lx, window is not managed\n",id); 
+		return;
+	};
 	//we have the win struct stored in w;
 	struct view *v = fv;
 	struct track *t;
@@ -881,6 +887,7 @@ void forget_win (Window id) {
 	};
 	w2->next = w->next;
 	free(w);
+	printf("euclid-wm: %6.0lx removed\n",id);
 }
 
 void add_client_to_view (struct win *p, struct view *v) {
