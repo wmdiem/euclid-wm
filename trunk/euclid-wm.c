@@ -829,7 +829,6 @@ void forget_win (Window id) {
 	}; 
 	
 	if (w == NULL) { 
-		printf("euclid-wm: cannot remove %6.0lx, window is not managed\n",id); 
 		return;
 	};
 	//we have the win struct stored in w;
@@ -944,7 +943,6 @@ void forget_win (Window id) {
 	};
 	w2->next = w->next;
 	free(w);
-	printf("euclid-wm: %6.0lx removed\n",id);
 }
 
 void add_client_to_view (struct win *p, struct view *v) {
