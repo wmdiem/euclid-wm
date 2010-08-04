@@ -76,8 +76,6 @@ Thus the one or more of the following notices may apply to some sections:
 * DEALINGS IN THE SOFTWARE.
 
 */
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -88,8 +86,9 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <errno.h>
+#include <X11/extensions/Xinerama.h>
 
-#define BINDINGS 62 
+#define BINDINGS 64 
 /*BASIC VARIABLE TYPES*/
 
 /*
@@ -106,6 +105,15 @@ Thus the one or more of the following notices may apply to some sections:
  */
 
 
+struct screen {
+	struct screen *next;
+	struct view *v;
+	Window stackid;
+	int x;
+	int y;
+	unsigned int w;
+	unsigned int h;
+};
 
 struct view {
 	struct view *next;
@@ -162,11 +170,13 @@ struct binding {
  */
 
 struct view *fv = NULL; //first view
-struct view *cv = NULL; //current view
+//struct view *cs->v = NULL; //current view
+struct screen *cs = NULL;
+struct screen *firstscreen = NULL;
 struct win *first_win = NULL;
 
-unsigned int scrn_w = 1026;
-unsigned int scrn_h = 860; 
+//unsigned int cs->w = 1026;
+//unsigned int cs->h = 860; 
 unsigned int mod = Mod1Mask;
 unsigned int mods = Mod1Mask | ShiftMask;
 bool sloppy_focus = true;
@@ -181,7 +191,7 @@ unsigned long stack_unfocus_pix;
 GC focus_gc = NULL;
 GC unfocus_gc = NULL;
 bool gxerror = false;
-Window stackid;
+//Window cs->stackid;
 Atom wm_del_win;
 Atom wm_take_focus;
 Atom wm_prot;
@@ -204,6 +214,7 @@ unsigned short res_bot = 0;
 unsigned short res_left = 0;
 unsigned short res_right = 0;
 unsigned short resize_inc = 15;
+unsigned short offscreen = 0;
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -306,6 +317,10 @@ void load_defaults() {
 	// user defined -60
 
 	bind_key("r",&mod,&bindings[61]);
+
+	//prev/next view
+	bind_key("Prior", &mod,&bindings[62]);
+	bind_key("Next", &mod,  &bindings[63]);
 }
 
 void spawn(char *cmd) {
@@ -362,7 +377,6 @@ void load_conf() {
 	};
 	strcat(confdir,"/euclid-wm");
 	strcpy(rcfile,confdir);
-	//why do we have an & ? 
 	strcat(rcfile,"/euclidrc");
 	spawn(rcfile);
 
@@ -587,6 +601,10 @@ void load_conf() {
 					bindx = 60;
 				} else if (strcmp(key,"bind_reload_config") == 0) {
 					bindx = 61;
+				} else if (strcmp(key,"bind_goto_previous_screen") == 0) {
+					bindx = 62;
+				} else if (strcmp(key,"bind_goto_next_screen") == 0) {
+					bindx = 63;
 				} else {
 					fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
@@ -658,13 +676,51 @@ struct view * make_view() {
 	ptr->ft->next = NULL;
 	ptr->ft->prev = NULL;
 	ptr->ft->c = NULL;
-	ptr->ft->size = scrn_w;
+	ptr->ft->size = cs->w;
 	ptr->orientv = true;
 	ptr->stack = NULL;
 	ptr->showstack = true;
 	ptr->fs = false;
 	return ptr;
  }
+
+struct view * find_view(int i);
+
+void addscreen(short h, short w, short x, short y, short n) {
+
+	struct screen *new = (struct screen * ) malloc (sizeof(struct screen));
+	//set the pointers
+	
+	
+	new->next = NULL;
+	if (firstscreen == NULL) {
+		//set it as first screen
+		firstscreen = new;
+		cs = new;
+		new->v = make_view();
+		new->v->idx = 1;
+		fv = new->v;
+	} else {
+		struct screen *s = firstscreen;
+		while (s->next != NULL) {
+			s = s->next;
+		};
+		s->next = new;
+		new->v = find_view(n + 1);
+	}
+	//define its geomentry
+	new->h = h;
+	new->w = w;
+	new->x = x;
+	new->y = y;
+	//make it a stack window
+	new->stackid = XCreateSimpleWindow(dpy,root,0,((h - 15) + y),(w + x),15,1,stack_unfocus_pix,stack_background_pix);
+	XSetWindowAttributes att;
+	att.override_redirect = true;
+	XChangeWindowAttributes(dpy,cs->stackid,CWOverrideRedirect,&att);
+	XMapWindow(dpy,new->stackid);
+	XSync(dpy,False);
+}
 
 void remove_cont(struct cont *c) {
 	//reset focus if necessary
@@ -816,7 +872,7 @@ void forget_win (Window id) {
 									free(c);
 								} else {
 									//its the first track, but there is a next
-									cv->ft = c->track->next;
+									cs->v->ft = c->track->next;
 									c->track->next->prev = NULL;
 									free (c->track);
 									free (c);
@@ -925,9 +981,9 @@ void add_client_to_view (struct win *p, struct view *v) {
 		c->track = v->ft;
 		v->ft->c = c;
 		if (v->orientv == true) {
-			c->size = scrn_h;
+			c->size = cs->h;
 		} else {
-			c->size = scrn_w;
+			c->size = cs->w;
 		};
 	};
 	c->win = p;
@@ -936,7 +992,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 
 void move_to_stack(struct cont *c) {
 	struct stack_item *s = (struct stack_item *) malloc (sizeof(struct stack_item));
-	struct stack_item *p = cv->sfocus;
+	struct stack_item *p = cs->v->sfocus;
 	s->win = c->win;
 	if (p != NULL) {
 		s->next = p->next;
@@ -945,46 +1001,46 @@ void move_to_stack(struct cont *c) {
 		};
 		p->next = s;
 	} else {
-		cv->stack = s;
+		cs->v->stack = s;
 		s->next = NULL;
 	};
 	s->prev = p;
-	cv->sfocus = s;
+	cs->v->sfocus = s;
 	remove_cont(c);
 }
 
 void move_to_main() {
 	//just add whatever has stack focus to the layout
-	if (cv->sfocus == NULL) {return;};
-	add_client_to_view(cv->sfocus->win, cv);
+	if (cs->v->sfocus == NULL) {return;};
+	add_client_to_view(cs->v->sfocus->win, cs->v);
 	//remove it from the stack:
-	struct stack_item *p = cv->sfocus;
+	struct stack_item *p = cs->v->sfocus;
 	//reset sfocus
-	cv->sfocus = NULL;
+	cs->v->sfocus = NULL;
 	if (p->prev != NULL) {
-		cv->sfocus = p->prev;
+		cs->v->sfocus = p->prev;
 		p->prev->next = p->next;
 	};
 	if (p->next != NULL) {
 		p->next->prev = p->prev;
-		if (cv->sfocus == NULL) {
-			cv->sfocus = p->next;
-			cv->stack = p->next;
+		if (cs->v->sfocus == NULL) {
+			cs->v->sfocus = p->next;
+			cs->v->stack = p->next;
 		};
 	};
-	if (cv->sfocus == NULL) {
-		cv->stack = NULL;
+	if (cs->v->sfocus == NULL) {
+		cs->v->stack = NULL;
 	};
 	free(p);
 }
 
 void shift_stack_focus (bool dir) {
 	//true up, false, down
-	if (cv->sfocus == NULL) {return;};
-	if (dir && cv->sfocus->prev != NULL) {
-		cv->sfocus = cv->sfocus->prev;
-	} else if (!dir && cv->sfocus->next != NULL) {
-		cv->sfocus = cv->sfocus->next;
+	if (cs->v->sfocus == NULL) {return;};
+	if (dir && cs->v->sfocus->prev != NULL) {
+		cs->v->sfocus = cs->v->sfocus->prev;
+	} else if (!dir && cs->v->sfocus->next != NULL) {
+		cs->v->sfocus = cs->v->sfocus->next;
 	};
 }
 
@@ -1028,7 +1084,7 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 	 *  3) we are moving down accross tracks
 	 *  4) we are moving up accross tracks
 	 */
-	if (cv->orientv == true) {
+	if (cs->v->orientv == true) {
 		short swp[] = {0,2,3,1,4};
 		dir = swp[dir];
 	} else {
@@ -1038,27 +1094,27 @@ short int convert_to_internal_dir(short int dir) {/*four possibilities:
 	return dir;
 }
 void shift_window(short int dir) {
-	if (cv->mfocus == NULL) {
+	if (cs->v->mfocus == NULL) {
 		return;
 	};
 	dir = convert_to_internal_dir(dir);
-	if (dir == 1 && cv->mfocus->next != NULL) { //down in the track;
+	if (dir == 1 && cs->v->mfocus->next != NULL) { //down in the track;
 		//get a direct reference to all four nodes
 		//make sure that we are also updating track->c if necessary 
 		struct cont *tmpa;
 		struct cont *tmpb;
 		struct cont *tmpc;
 		struct cont *tmpd;
-		tmpa = cv->mfocus->prev;
-		tmpb = cv->mfocus;
-		tmpc = cv->mfocus->next;
-		if (cv->mfocus->next != NULL) {
-			tmpd = cv->mfocus->next->next;
+		tmpa = cs->v->mfocus->prev;
+		tmpb = cs->v->mfocus;
+		tmpc = cs->v->mfocus->next;
+		if (cs->v->mfocus->next != NULL) {
+			tmpd = cs->v->mfocus->next->next;
 		} else {tmpd = NULL;};
 		if (tmpa != NULL) {
 			tmpa->next = tmpc;
 		} else { //a is null, b is track->c
-			cv->mfocus->track->c = tmpc;
+			cs->v->mfocus->track->c = tmpc;
 		};
 		if (tmpd != NULL) {
 			tmpd->prev = tmpb;
@@ -1069,24 +1125,24 @@ void shift_window(short int dir) {
 		};
 		tmpb->prev = tmpc;
 		tmpb->next = tmpd;
-	} else if (dir == 2 && cv->mfocus->prev != NULL) {
+	} else if (dir == 2 && cs->v->mfocus->prev != NULL) {
 		struct cont *tmpa;
 		struct cont *tmpb;
 		struct cont *tmpc;
 		struct cont *tmpd;
-		if (cv->mfocus->prev != NULL) {
-			tmpa = cv->mfocus->prev->prev;
+		if (cs->v->mfocus->prev != NULL) {
+			tmpa = cs->v->mfocus->prev->prev;
 		} else {
 			tmpa = NULL;
 		};
-		tmpb = cv->mfocus->prev;
-		tmpc = cv->mfocus;
-		tmpd = cv->mfocus->next;
+		tmpb = cs->v->mfocus->prev;
+		tmpc = cs->v->mfocus;
+		tmpd = cs->v->mfocus->next;
 		if (tmpa != NULL) {
 			tmpa->next = tmpc;
 		};
-		if (cv->mfocus->track->c == tmpb) {
-			cv->mfocus->track->c = tmpc;
+		if (cs->v->mfocus->track->c == tmpb) {
+			cs->v->mfocus->track->c = tmpc;
 		};
 		if (tmpb != NULL) {
 			tmpb->prev = tmpc;
@@ -1099,230 +1155,230 @@ void shift_window(short int dir) {
 		tmpc->next = tmpb;
 	} else if (dir == 3) {
 		//check for track->next
-		if (cv->mfocus->track->next != NULL) {
+		if (cs->v->mfocus->track->next != NULL) {
 			//find position in it
 			//find the midpoint of the current cont
 			struct cont *p;
-			p = cv->mfocus->prev;
+			p = cs->v->mfocus->prev;
 			int s = 0;
 			int t = 0;
 			while (p != NULL) {
 				s += p->size;
 				p = p->prev;
 			};
-			s += (cv->mfocus->size / 2);
-			p = cv->mfocus->track->next->c;
+			s += (cs->v->mfocus->size / 2);
+			p = cs->v->mfocus->track->next->c;
 			while (p->next != NULL) {
 				t += p->size;
 				if (t >= s) {break;};
 				p = p->next;
 			};
 			if (p != NULL) {//it never should
-				if (cv->mfocus->prev != NULL) {
-					cv->mfocus->prev->next = cv->mfocus->next;
+				if (cs->v->mfocus->prev != NULL) {
+					cs->v->mfocus->prev->next = cs->v->mfocus->next;
 				} else { //it's first 
-					if (cv->mfocus->next != NULL) {
-						cv->mfocus->track->c = cv->mfocus->next;
+					if (cs->v->mfocus->next != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->next;
 					} else {
 						//only one in the track
 						//remove the old track
-						if (cv->ft == cv->mfocus->track) {
-							cv->ft = p->track;
+						if (cs->v->ft == cs->v->mfocus->track) {
+							cs->v->ft = p->track;
 						} else {
-							cv->mfocus->track->prev->next = p->track;
+							cs->v->mfocus->track->prev->next = p->track;
 						}; 
-						p->track->prev = cv->mfocus->track->prev;
-						free(cv->mfocus->track);
+						p->track->prev = cs->v->mfocus->track->prev;
+						free(cs->v->mfocus->track);
 					};
 				};
-				if (cv->mfocus->next != NULL) {
-					cv->mfocus->next->prev = cv->mfocus->prev;
+				if (cs->v->mfocus->next != NULL) {
+					cs->v->mfocus->next->prev = cs->v->mfocus->prev;
 				};
 				//put it behind p
 				struct cont *b = p->next;
 				if (b != NULL) {
-					b->prev = cv->mfocus;
+					b->prev = cs->v->mfocus;
 				};
-				p->next = cv->mfocus;
-				cv->mfocus->prev = p;
-				cv->mfocus->next = b;
-				cv->mfocus->track = p->track;
+				p->next = cs->v->mfocus;
+				cs->v->mfocus->prev = p;
+				cs->v->mfocus->next = b;
+				cs->v->mfocus->track = p->track;
 			};
 		}else{ //make a track for it
-			if (cv->mfocus->track->c == cv->mfocus) { 
-				if (cv->mfocus->next != NULL) {
-						cv->mfocus->track->c = cv->mfocus->next;
-					} else if (cv->mfocus->prev != NULL) {
-						cv->mfocus->track->c = cv->mfocus->prev;
+			if (cs->v->mfocus->track->c == cs->v->mfocus) { 
+				if (cs->v->mfocus->next != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->next;
+					} else if (cs->v->mfocus->prev != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->prev;
 					} else {
 						return; //premature return, because movign the window that direction doesn't make any sense
 					};
 				};
 			struct track *ptr = (struct track *) malloc (sizeof(struct track));
-			cv->mfocus->track->next = ptr;
+			cs->v->mfocus->track->next = ptr;
 			//update all the other links
-			ptr->view = cv;
+			ptr->view = cs->v;
 			ptr->next = NULL;
-			ptr->prev = cv->mfocus->track;
-			ptr->c = cv->mfocus;
-			ptr->size = cv->mfocus->track->size;
-			cv->mfocus->track = ptr;
+			ptr->prev = cs->v->mfocus->track;
+			ptr->c = cs->v->mfocus;
+			ptr->size = cs->v->mfocus->track->size;
+			cs->v->mfocus->track = ptr;
 			//patch up the hole in mfocus->track
-			if (cv->mfocus->prev != NULL) 
-				cv->mfocus->prev->next = cv->mfocus->next;
-			if (cv->mfocus->next != NULL)
-				cv->mfocus->next->prev = cv->mfocus->prev;
-			cv->mfocus->next = NULL;
-			cv->mfocus->prev = NULL;
+			if (cs->v->mfocus->prev != NULL) 
+				cs->v->mfocus->prev->next = cs->v->mfocus->next;
+			if (cs->v->mfocus->next != NULL)
+				cs->v->mfocus->next->prev = cs->v->mfocus->prev;
+			cs->v->mfocus->next = NULL;
+			cs->v->mfocus->prev = NULL;
 		};
 	} else if (dir == 4) { //4
-		if (cv->mfocus->track->prev != NULL) {
+		if (cs->v->mfocus->track->prev != NULL) {
 			//find position in it
 			//find the midpoint of the current cont
 			struct cont *p;
-			p = cv->mfocus->prev;
+			p = cs->v->mfocus->prev;
 			int s = 0;
 			int t = 0;
 			while (p != NULL) {
 				s += p->size;
 				p = p->prev;
 			};
-			s += (cv->mfocus->size / 2);
-			p = cv->mfocus->track->prev->c;
+			s += (cs->v->mfocus->size / 2);
+			p = cs->v->mfocus->track->prev->c;
 			while (p->next != NULL) {
 				t += p->size;
 				if (t >= s) {break;};
 				p = p->next;
 			};
 			if (p != NULL) {//it never should
-				if (cv->mfocus->prev != NULL) {
-					cv->mfocus->prev->next = cv->mfocus->next;
+				if (cs->v->mfocus->prev != NULL) {
+					cs->v->mfocus->prev->next = cs->v->mfocus->next;
 				} else { //it's first in the track
-					if (cv->mfocus->next != NULL) {
-						cv->mfocus->track->c = cv->mfocus->next;
+					if (cs->v->mfocus->next != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->next;
 					} else {
 						//only one in the track
 						//remove the old track
-						if (cv->mfocus->track->next != NULL) {
-							cv->mfocus->track->next->prev = p->track;
+						if (cs->v->mfocus->track->next != NULL) {
+							cs->v->mfocus->track->next->prev = p->track;
 						}; 
-						p->track->next = cv->mfocus->track->next;
-						free(cv->mfocus->track);
+						p->track->next = cs->v->mfocus->track->next;
+						free(cs->v->mfocus->track);
 					};
 				};
-				if (cv->mfocus->next != NULL) {
-					cv->mfocus->next->prev = cv->mfocus->prev;
+				if (cs->v->mfocus->next != NULL) {
+					cs->v->mfocus->next->prev = cs->v->mfocus->prev;
 				};
 				//put it behind p
 				struct cont *b = p->next;
 				if (b != NULL) {
-					b->prev = cv->mfocus;
+					b->prev = cs->v->mfocus;
 				};
-				p->next = cv->mfocus;
-				cv->mfocus->prev = p;
-				cv->mfocus->next = b;
-				cv->mfocus->track = p->track;
+				p->next = cs->v->mfocus;
+				cs->v->mfocus->prev = p;
+				cs->v->mfocus->next = b;
+				cs->v->mfocus->track = p->track;
 			};
 		}else{ //make a track for it
-			if (cv->mfocus->track->c == cv->mfocus) { 
-				if (cv->mfocus->next != NULL) {
-						cv->mfocus->track->c = cv->mfocus->next;
-					} else if (cv->mfocus->prev != NULL) {
-						cv->mfocus->track->c = cv->mfocus->prev;
+			if (cs->v->mfocus->track->c == cs->v->mfocus) { 
+				if (cs->v->mfocus->next != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->next;
+					} else if (cs->v->mfocus->prev != NULL) {
+						cs->v->mfocus->track->c = cs->v->mfocus->prev;
 					} else {
 						return; //premature return, because movign the window that direction doesn't make any sense
 					};
 				};
 			struct track *ptr = (struct track *) malloc (sizeof(struct track));
-			cv->mfocus->track->prev = ptr;
-			cv->ft = ptr;
+			cs->v->mfocus->track->prev = ptr;
+			cs->v->ft = ptr;
 			//update all the other links
-			ptr->view = cv;
-			ptr->next = cv->mfocus->track;
+			ptr->view = cs->v;
+			ptr->next = cs->v->mfocus->track;
 			ptr->prev = NULL;
-			ptr->c = cv->mfocus;
-			ptr->size = cv->mfocus->track->size;
-			cv->mfocus->track = ptr;
+			ptr->c = cs->v->mfocus;
+			ptr->size = cs->v->mfocus->track->size;
+			cs->v->mfocus->track = ptr;
 			//patch up the hole in mfocus->track
-			if (cv->mfocus->prev != NULL) 
-				cv->mfocus->prev->next = cv->mfocus->next;
-			if (cv->mfocus->next != NULL)
-				cv->mfocus->next->prev = cv->mfocus->prev;
-			cv->mfocus->prev = NULL;
-			cv->mfocus->next = NULL;
+			if (cs->v->mfocus->prev != NULL) 
+				cs->v->mfocus->prev->next = cs->v->mfocus->next;
+			if (cs->v->mfocus->next != NULL)
+				cs->v->mfocus->next->prev = cs->v->mfocus->prev;
+			cs->v->mfocus->prev = NULL;
+			cs->v->mfocus->next = NULL;
 		};
 	};
-	if (cv->mfocus->prev != NULL) {
-		cv->mfocus->size = cv->mfocus->prev->size;
-	} else if (cv->mfocus->next != NULL) {
-		cv->mfocus->size = cv->mfocus->next->size;
+	if (cs->v->mfocus->prev != NULL) {
+		cs->v->mfocus->size = cs->v->mfocus->prev->size;
+	} else if (cs->v->mfocus->next != NULL) {
+		cs->v->mfocus->size = cs->v->mfocus->next->size;
 	};
 }
 
 void shift_main_focus(short int dir) {
-	if (cv->mfocus == NULL) {return;};
+	if (cs->v->mfocus == NULL) {return;};
 	dir = convert_to_internal_dir(dir);
 	if (dir == 1) {
-		if (cv->fs == false) {
-			if (cv->mfocus->next != NULL) {
-				cv->mfocus =  cv->mfocus->next;
+		if (cs->v->fs == false) {
+			if (cs->v->mfocus->next != NULL) {
+				cs->v->mfocus =  cs->v->mfocus->next;
 			};
 		} else {
-			if (cv->mfocus->next != NULL) {
-				cv->mfocus = cv->mfocus->next;
-			} else if (cv->mfocus->track->next != NULL) {
-				cv->mfocus = cv->mfocus->track->next->c;
+			if (cs->v->mfocus->next != NULL) {
+				cs->v->mfocus = cs->v->mfocus->next;
+			} else if (cs->v->mfocus->track->next != NULL) {
+				cs->v->mfocus = cs->v->mfocus->track->next->c;
 			};
 		};
 	} else if (dir == 2) { 
-		if (cv->fs == false) {
-			if (cv->mfocus->prev != NULL) {
-				cv->mfocus = cv->mfocus->prev;
+		if (cs->v->fs == false) {
+			if (cs->v->mfocus->prev != NULL) {
+				cs->v->mfocus = cs->v->mfocus->prev;
 			};
 		} else {
-			if (cv->mfocus->prev != NULL) {
-				cv->mfocus = cv->mfocus->prev;
-			} else if (cv->mfocus->track->prev != NULL ) {
-				cv->mfocus = cv->mfocus->track->prev->c;
+			if (cs->v->mfocus->prev != NULL) {
+				cs->v->mfocus = cs->v->mfocus->prev;
+			} else if (cs->v->mfocus->track->prev != NULL ) {
+				cs->v->mfocus = cs->v->mfocus->track->prev->c;
 			};
 		};
-	} else if (dir == 3 && cv->mfocus->track->next != NULL) {
-		if (cv->fs == false) {
+	} else if (dir == 3 && cs->v->mfocus->track->next != NULL) {
+		if (cs->v->fs == false) {
 			struct cont *p;
-				p = cv->mfocus->prev;
+				p = cs->v->mfocus->prev;
 				int s = 0;
 				int t = 0;
 				while (p != NULL) {
 					s += p->size;
 					p = p->prev;
 				};
-				s += (cv->mfocus->size / 2);
-				p = cv->mfocus->track->next->c;
+				s += (cs->v->mfocus->size / 2);
+				p = cs->v->mfocus->track->next->c;
 				while (p->next != NULL) {
 					t += p->size;
 					if (t >= s) {break;};
 					p = p->next;
 				};
-				cv->mfocus = p;
+				cs->v->mfocus = p;
 		};
-	} else if (dir == 4 && cv->mfocus->track->prev != NULL) {
-		if (cv->fs == false) {
+	} else if (dir == 4 && cs->v->mfocus->track->prev != NULL) {
+		if (cs->v->fs == false) {
 			struct cont *p;
-				p = cv->mfocus->prev;
+				p = cs->v->mfocus->prev;
 				int s = 0;
 				int t = 0;
 				while (p != NULL) {
 					s += p->size;
 					p = p->prev;
 				};
-				s += (cv->mfocus->size / 2);
-				p = cv->mfocus->track->prev->c;
+				s += (cs->v->mfocus->size / 2);
+				p = cs->v->mfocus->track->prev->c;
 				while (p->next != NULL) {
 					t += p->size;
 					if (t >= s) {break;};
 					p = p->next;
 				};
-				cv->mfocus = p;
+				cs->v->mfocus = p;
 		};
 	};
 }
@@ -1336,29 +1392,29 @@ struct view * find_view (int i) {
 	struct view *v = NULL;
 	if (i == -2) {
 		//move forward
-		if (cv->next != NULL) {
-			return(cv->next);
+		if (cs->v->next != NULL) {
+			return(cs->v->next);
 		} else {
-			//make cv->next
+			//make cs->v->next
 			v = make_view();
-			cv->next = v;
-			v->prev = cv;
-			v->idx = (cv->idx + 1);
+			cs->v->next = v;
+			v->prev = cs->v;
+			v->idx = (cs->v->idx + 1);
 		};
 	} else if (i == -3) {
 		//move backward
-		if (cv->prev != NULL) {
-			return(cv->prev);
+		if (cs->v->prev != NULL) {
+			return(cs->v->prev);
 		} else {
-			//make cv->prev
+			//make cs->v->prev
 			v = make_view();
-			v->next = cv;
-			cv->prev = v;
-			v->idx = (cv->idx - 1);
+			v->next = cs->v;
+			cs->v->prev = v;
+			v->idx = (cs->v->idx - 1);
 			fv = v;
 		};
 	} else if (i == -1) {
-		v = cv;
+		v = cs->v;
 		while (v->next != NULL) {
 			v = v->next;
 		};
@@ -1404,11 +1460,16 @@ struct view * find_view (int i) {
 
 void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
-	//sets cv
-	//and maps the windows of the new cv
+	//sets cs->v
+	//and maps the windows of the new cs->v
 	//it also deletes empty views
-	if (v == NULL || v == cv) {return;};
-	struct track *t = cv->ft;
+	if (v == NULL) {return;};
+	struct screen *s = firstscreen;
+	while (s != NULL) {
+		if (s->v == v) {return;};
+		s = s->next;
+	};
+	struct track *t = cs->v->ft;
 	struct cont *c;
 	while (t != NULL) {
 		c = t->c;
@@ -1418,19 +1479,19 @@ void goto_view(struct view *v) {
 		};
 		t = t->next;
 	};
-	if (cv->mfocus == NULL && cv->sfocus == NULL) {
-		if (cv->prev != NULL) {
-			cv->prev->next = cv->next;
+	if (cs->v->mfocus == NULL && cs->v->sfocus == NULL) {
+		if (cs->v->prev != NULL) {
+			cs->v->prev->next = cs->v->next;
 		};
-		if (cv->next != NULL) {
-			cv->next->prev = cv->prev;
+		if (cs->v->next != NULL) {
+			cs->v->next->prev = cs->v->prev;
 		};
-		if (cv == fv) {
-			fv = cv->next;
+		if (cs->v == fv) {
+			fv = cs->v->next;
 		};
-		free(cv);
+		free(cs->v);
 	};
-	cv = v;
+	cs->v = v;
 	t = v->ft;
 	while (t != NULL) {
 		c = t->c;
@@ -1445,17 +1506,17 @@ void goto_view(struct view *v) {
 
 void move_to_view(struct view *v) {
 	//move currenlty focused item
-	if (v == NULL || v == cv || cv->mfocus == NULL) {return;};
+	if (v == NULL || v == cs->v || cs->v->mfocus == NULL) {return;};
 	//remove it from the current view
-	struct win *w = cv->mfocus->win;
+	struct win *w = cs->v->mfocus->win;
 	XUnmapWindow(dpy,w->id);
-	remove_cont(cv->mfocus);
+	remove_cont(cs->v->mfocus);
 	//add it to the new view
 	add_client_to_view(w, v);
 }
 
 struct cont * id_to_cont(Window w) {
-	struct track *t = cv->ft;
+	struct track *t = cs->v->ft;
 	struct cont *c;
 	while (t != NULL) {
 		c = t->c;
@@ -1471,243 +1532,251 @@ struct cont * id_to_cont(Window w) {
 }
 
 void resize (int dir) {
-	if (cv->orientv == true) {
+	if (cs->v->orientv == true) {
 		switch (dir) {
 			case 1:
-				cv->mfocus->size -= resize_inc;
+				cs->v->mfocus->size -= resize_inc;
 			break; 
 			case 2:
-				cv->mfocus->track->size += resize_inc;
+				cs->v->mfocus->track->size += resize_inc;
 			break;
 			case 3:
-				cv->mfocus->size += resize_inc;
+				cs->v->mfocus->size += resize_inc;
 			break;
 			case 4:
-				cv->mfocus->track->size -= resize_inc;
+				cs->v->mfocus->track->size -= resize_inc;
 			break;
 		};
 	} else {
 		switch (dir) {
 			case 1:
-				cv->mfocus->track->size += resize_inc;
+				cs->v->mfocus->track->size += resize_inc;
 			break; 
 			case 2:
-				cv->mfocus->size += resize_inc;
+				cs->v->mfocus->size += resize_inc;
 			break;
 			case 3:
-				cv->mfocus->track->size -= resize_inc;
+				cs->v->mfocus->track->size -= resize_inc;
 			break;
 			case 4:
-				cv->mfocus->size -= resize_inc;
+				cs->v->mfocus->size -= resize_inc;
 			break;
 		};
 	};
 }
 
 void layout() {
-	int stackheight;
-	if (cv->showstack == false || cv->fs == true) {
-		stackheight = 0;
-	} else {
-		struct stack_item *si = cv->stack;
-		int i = 0;
-		while (si != NULL) {
-			i++;
-			si = si->next;
-		};
-		stackheight = (i * 20); 
-		if (i == 0) {
-			stackheight = 8; 
-		};
-	};
-	//draw the stack 
-	XClearWindow(dpy,stackid);
-	if (stackheight != 0) {
-		XMoveResizeWindow(dpy,stackid,(res_left),((scrn_h - res_bot) - (stackheight)),(scrn_w - (res_left + res_right)),(stackheight));
-		XRaiseWindow(dpy,stackid);
-		XSync(dpy,false);//important!
-		struct stack_item *si = cv->stack;
-		int i = 15;
-		while (si != NULL) {
-			GC gc;
-			if (si == cv->sfocus) {
-				gc = focus_gc;
-			} else {
-				gc = unfocus_gc;
-			};
-			XTextProperty wmname;
-			XGetWMName(dpy,si->win->id,&wmname);
-			XDrawString(dpy,stackid,gc,3,i, (char *) wmname.value,wmname.nitems);
-			si = si->next;
-			i += 20;
-		}; 
-	} else { //hide stack
-			XMoveResizeWindow(dpy,stackid,0,(scrn_h ),scrn_w,10);
-	};
-	XSync(dpy,false);
-	if (cv->mfocus == NULL) {
-		XSetInputFocus(dpy,root,None,CurrentTime);
-	};
-	if (cv->fs == true && cv->mfocus != NULL && cv->mfocus->win != NULL) {
-		//draw mf fullscreen
-		int w = scrn_w + 2;
-		int h = scrn_h;
-/*		if (cv->showstack == true) {
-			h += 1;
+	struct screen *s = firstscreen;
+	while (s != NULL) {
+		int xo = s->x;
+		int yo = s->y;
+		int stackheight;
+		if (s->v->showstack == false || s->v->fs == true) {
+			stackheight = 0;
 		} else {
-			h += 2;
+			struct stack_item *si = s->v->stack;
+			int i = 0;
+			while (si != NULL) {
+				i++;
+				si = si->next;
+			};
+			stackheight = (i * 20); 
+			if (i == 0) {
+				stackheight = 8; 
+			};
 		};
+		//draw the stack 
+		XClearWindow(dpy,s->stackid);
+		if (stackheight != 0) {
+			XMoveResizeWindow(dpy,s->stackid,(res_left + yo),((s->h - res_bot) - (stackheight)),(s->w - (res_left + yo + res_right)),(stackheight));
+			XRaiseWindow(dpy,s->stackid);
+			XSync(dpy,false);//important!
+			struct stack_item *si = s->v->stack;
+			int i = 15;
+			while (si != NULL) {
+				GC gc;
+				if (si == s->v->sfocus) {
+					gc = focus_gc;
+				} else {
+					gc = unfocus_gc;
+				};
+				XTextProperty wmname;
+				XGetWMName(dpy,si->win->id,&wmname);
+				XDrawString(dpy,s->stackid,gc,3,i, (char *) wmname.value,wmname.nitems);
+				si = si->next;
+				i += 20;
+			}; 
+		} else { //hide stack
+			XMoveResizeWindow(dpy,s->stackid,0,offscreen,s->w,10);
+		};
+		XSync(dpy,false);
+		if (s->v->mfocus == NULL) {
+			XSetInputFocus(dpy,root,None,CurrentTime);
+		};
+		if (s->v->fs == true && s->v->mfocus != NULL && s->v->mfocus->win != NULL) {
+			//draw mf fullscreen
+			int w = s->w + 2;
+			int h = s->h;
+/*			if (s->v->showstack == true) {
+				h += 1;
+			} else {
+				h += 2;
+			};
 These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 */
-		h -= stackheight;
-		XMoveResizeWindow(dpy,cv->mfocus->win->id,(-1),(-1),(w),(h));
-		XRaiseWindow(dpy,cv->mfocus->win->id);
-		if (cv->mfocus->win->take_focus == true) {
-			XClientMessageEvent cm;
-			memset (&cm,'\0', sizeof(cm));
-			cm.type = ClientMessage;
-			cm.window = cv->mfocus->win->id;
-			cm.message_type = wm_prot;
-			cm.format = 32;
-			cm.data.l[0] = wm_take_focus;
-			cm.data.l[1] = CurrentTime;
-		};
-		XSetInputFocus(dpy,cv->mfocus->win->id,None,CurrentTime);
-		XSync(dpy,false);
-	} else {
-		//first check that the tracks layout:
-		struct track *curt = cv->ft;
-		struct cont *curc = NULL;
-		int target;
-		int tot = 0;
-		if (cv->orientv == true) {
-			target = scrn_w - (res_left + res_right);
+			h -= stackheight;
+			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(-1),(-1),(w),(h));
+			XRaiseWindow(dpy,s->v->mfocus->win->id);
+			if (cs == s) {
+				if (s->v->mfocus->win->take_focus == true) {
+					XClientMessageEvent cm;
+					memset (&cm,'\0', sizeof(cm));
+					cm.type = ClientMessage;
+					cm.window = s->v->mfocus->win->id;
+					cm.message_type = wm_prot;
+					cm.format = 32;
+					cm.data.l[0] = wm_take_focus;
+					cm.data.l[1] = CurrentTime;
+				};
+				XSetInputFocus(dpy,s->v->mfocus->win->id,None,CurrentTime);
+			};
+			XSync(dpy,false);
 		} else {
-			if (cv->showstack == true) {
-				target = (scrn_h - (res_top + res_bot)) - stackheight;
+			//first check that the tracks layout:
+			struct track *curt = s->v->ft;
+			struct cont *curc = NULL;
+			int target;
+			int tot = 0;
+			if (s->v->orientv == true) {
+				target = s->w - (res_left + res_right);
 			} else {
-				target = scrn_h - (res_top + res_bot);
+				if (s->v->showstack == true) {
+					target = (s->h - (res_top + res_bot)) - stackheight;
+				} else {
+					target = s->h - (res_top + res_bot);
+				};
 			};
-		};
-		int nooftracks = 0;
-		while (curt != NULL) {
-			//check if the size is negligably small, requireing a reseize
-			if (curt->size <= 5) {
-				curt->size += 40;
-			};
-			tot += curt->size;
-			curt = curt->next;
-			nooftracks ++;
-		};
-		//compare tot to target, if they match go on 
-		if (tot != target) {
-			signed int delta = target - tot;
-			delta /= nooftracks;
-			curt = cv->ft;
+			int nooftracks = 0;
 			while (curt != NULL) {
-				curt->size += delta;
+				//check if the size is negligably small, requireing a reseize
+				if (curt->size <= 5) {
+					curt->size += 40;
+				};
+				tot += curt->size;
+				curt = curt->next;
+				nooftracks ++;
+			};
+			//compare tot to target, if they match go on 
+			if (tot != target) {
+				signed int delta = target - tot;
+				delta /= nooftracks;
+				curt = s->v->ft;
+				while (curt != NULL) {
+					curt->size += delta;
+					curt = curt->next;
+				};
+			};
+			//else calculate the difference, and adjust all tracks
+			//second check that within each track the containers fit
+			curt = s->v->ft;
+			if (s->v->orientv != true) {
+				target = s->w - (res_left + res_right);
+			} else {
+				if (s->v->showstack == true) {
+					target = (s->h - (res_top + res_bot)) - stackheight;
+				} else {
+					target = (s->h - (res_top + res_bot));
+				};
+			}; 
+			while (curt != NULL) {
+				curc = curt->c;
+				int tot = 0;
+				int noofconts = 0;
+				while (curc != NULL) {
+					//check for cont with negligable size and resize if necessary
+					if (curc->size <= 5) {
+						curc->size += 40;
+					};
+					noofconts ++;
+					tot += curc->size;
+					curc = curc->next;
+				};
+				//if tot == target, do nothing
+				//else calculate and distribute difference
+				if (tot != target) {
+					signed int delta = target - tot;
+				 	if (noofconts != 0) {
+						delta /= noofconts;
+					} else {
+						delta = 0;
+					};
+					curc = curt->c;
+					while (curc != NULL) {
+						curc->size += delta;
+						curc = curc->next;
+					};
+				};
+				curt = curt->next;
+			};
+			//walk and draw
+			curt = s->v->ft; //first track of view
+			int x;
+			int y;
+			int h;
+			int w;
+			int offsett = 0;
+			int offsetc = 0;
+			while (curt != NULL) {
+				offsetc = 0;
+				curc = curt->c;
+				while (curc != NULL) {
+					//make sure we tell windows that think they are fs that they aren't
+					if (curc->win->fullscreen == true) {
+						curc->win->fullscreen = false;
+						XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
+					};
+					if (s == cs && curc == s->v->mfocus) {
+					//set border
+						XSetWindowBorder(dpy,curc->win->id,focus_pix);
+						if (s->v->mfocus->win->take_focus == true) {
+							XClientMessageEvent cm;
+							memset (&cm,'\0', sizeof(cm));
+							cm.type = ClientMessage;
+							cm.window = s->v->mfocus->win->id;
+							cm.message_type = wm_prot;
+							cm.format = 32;
+							cm.data.l[0] = wm_take_focus;
+							cm.data.l[1] = CurrentTime;
+						}; 
+						//we intentionally do this even if the event was sent, the
+						//event alone does not suffice to get focus on the window
+						XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
+	
+	
+					} else {
+						XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
+					};
+					//place window
+					if (s->v->orientv == true) {
+						x = offsett + res_left + yo;
+						y = offsetc + res_top + xo;
+						w = curt->size - 2;
+						h = curc->size - 2;
+					} else {
+						x = offsetc + res_left + yo;
+						y = offsett + res_top + xo;
+						w = curc->size - 2;
+						h = curt->size - 2;
+					};
+					XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w),(h));
+					offsetc += curc->size;
+					curc = curc->next;
+				};
+				offsett += curt->size;
 				curt = curt->next;
 			};
 		};
-		//else calculate the difference, and adjust all tracks
-		//second check that within each track the containers fit
-		curt = cv->ft;
-		if (cv->orientv != true) {
-			target = scrn_w - (res_left + res_right);
-		} else {
-			if (cv->showstack == true) {
-				target = (scrn_h - (res_top + res_bot)) - stackheight;
-			} else {
-				target = (scrn_h - (res_top + res_bot));
-			};
-		}; 
-		while (curt != NULL) {
-			curc = curt->c;
-			int tot = 0;
-			int noofconts = 0;
-			while (curc != NULL) {
-				//check for cont with negligable size and resize if necessary
-				if (curc->size <= 5) {
-					curc->size += 40;
-				};
-				noofconts ++;
-				tot += curc->size;
-				curc = curc->next;
-			};
-			//if tot == target, do nothing
-			//else calculate and distribute difference
-			if (tot != target) {
-				signed int delta = target - tot;
-			 	if (noofconts != 0) {
-					delta /= noofconts;
-				} else {
-					delta = 0;
-				};
-				curc = curt->c;
-				while (curc != NULL) {
-					curc->size += delta;
-					curc = curc->next;
-				};
-			};
-			curt = curt->next;
-		};
-		//walk and draw
-		curt = cv->ft; //first track of view
-		int x;
-		int y;
-		int h;
-		int w;
-		int offsett = 0;
-		int offsetc = 0;
-		while (curt != NULL) {
-			offsetc = 0;
-			curc = curt->c;
-			while (curc != NULL) {
-				//make sure we tell windows that think they are fs that they aren't
-				if (curc->win->fullscreen == true) {
-					curc->win->fullscreen = false;
-					XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
-				};
-				if (curc == cv->mfocus) {
-				//set border
-					XSetWindowBorder(dpy,curc->win->id,focus_pix);
-					if (cv->mfocus->win->take_focus == true) {
-						XClientMessageEvent cm;
-						memset (&cm,'\0', sizeof(cm));
-						cm.type = ClientMessage;
-						cm.window = cv->mfocus->win->id;
-						cm.message_type = wm_prot;
-						cm.format = 32;
-						cm.data.l[0] = wm_take_focus;
-						cm.data.l[1] = CurrentTime;
-					}; 
-					//we intentionally do this even if the event was sent, the
-					//event alone does not suffice to get focus on the window
-					XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
-
-
-				} else {
-					XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
-				};
-				//place window
-				if (cv->orientv == true) {
-					x = offsett + res_left;
-					y = offsetc + res_top;
-					w = curt->size - 2;
-					h = curc->size - 2;
-				} else {
-					x = offsetc + res_left;
-					y = offsett + res_top;
-					w = curc->size - 2;
-					h = curt->size - 2;
-				};
-				XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w),(h));
-				offsetc += curc->size;
-				curc = curc->next;
-			};
-			offsett += curt->size;
-			curt = curt->next;
-		};
+	s = s->next;
 	};
 }
 
@@ -1739,24 +1808,29 @@ int event_loop() {
 			/*char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
 			printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 			*/
-			if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
-				if (cv->mfocus->win->id != ev.xmotion.window) {
+			if (ev.type == MotionNotify && sloppy_focus == true && cs->v->fs == false) {
+				if (cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
 					if (f != NULL) {
-						cv->mfocus = f;
+						cs->v->mfocus = f;
 						redraw = true;
 					};
 				}; 
-			} else if (ev.type == EnterNotify && cv->fs == false && ev.xcrossing.focus == false && sloppy_focus == true) { 
+			} else if (ev.type == EnterNotify && cs->v->fs == false && ev.xcrossing.focus == false && sloppy_focus == true) { 
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
 				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
 				if ( sec > 1 || (sec == 0 && usec >= 20000) || (sec == 1 && usec <= -20000)) { 
-					if (cv->mfocus->win->id != ev.xcrossing.window) {
+					if (cs->v->mfocus->win->id != ev.xcrossing.window) {
 						struct cont *f = id_to_cont(ev.xmotion.window);
 						if (f != NULL) {
-							cv->mfocus = f;
+							struct screen *s = firstscreen;
+							while (s->v != f->track->view) {
+								s = s->next;
+							};
+							cs = s;
+							cs->v->mfocus = f;
 							redraw = true;
 						};
 					};
@@ -1907,58 +1981,58 @@ int event_loop() {
 						break;
 					//toggle stack
 					case 32:
-						if (cv->fs == false) {
-							if (cv->showstack == true) {
-								cv->showstack = false;
+						if (cs->v->fs == false) {
+							if (cs->v->showstack == true) {
+								cs->v->showstack = false;
 							} else {
-								cv->showstack = true;
+								cs->v->showstack = true;
 							};
 							redraw = true;
 						};
 						break;
 					//move to stack
 					case 33:
-						if (cv->mfocus == NULL) {break;};
-						if (cv->fs == true) {break;};
-						XUnmapWindow(dpy,cv->mfocus->win->id);
-						move_to_stack(cv->mfocus);
+						if (cs->v->mfocus == NULL) {break;};
+						if (cs->v->fs == true) {break;};
+						XUnmapWindow(dpy,cs->v->mfocus->win->id);
+						move_to_stack(cs->v->mfocus);
 						redraw = true;
 						break;
 					//move to main
 					case 34:
-						if (cv->fs == true) {break;};
+						if (cs->v->fs == true) {break;};
 						move_to_main();
-						if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
-							XMapWindow(dpy,cv->mfocus->win->id);
+						if (cs->v->mfocus != NULL && cs->v->mfocus->win != NULL) {
+							XMapWindow(dpy,cs->v->mfocus->win->id);
 						};
 						redraw = true;
 						break;
 					//flip the layout
 					case 35:
-						if (cv->fs == true) {break;};
-						if (cv->sfocus != NULL && cv->mfocus != NULL) {
-							struct win *m = cv->mfocus->win;
-							struct win *s = cv->sfocus->win;
-							cv->mfocus->win = s;
-							cv->sfocus->win = m;
-							XMapWindow(dpy,cv->mfocus->win->id);
-							XUnmapWindow(dpy,cv->sfocus->win->id);
+						if (cs->v->fs == true) {break;};
+						if (cs->v->sfocus != NULL && cs->v->mfocus != NULL) {
+							struct win *m = cs->v->mfocus->win;
+							struct win *s = cs->v->sfocus->win;
+							cs->v->mfocus->win = s;
+							cs->v->sfocus->win = m;
+							XMapWindow(dpy,cs->v->mfocus->win->id);
+							XUnmapWindow(dpy,cs->v->sfocus->win->id);
 							XSync(dpy,False);
 							redraw = true;
 						};
 						break;
 					//swap stack up/down
 					case 36:
-						if (cv->sfocus != NULL && cv->sfocus->prev != NULL) {
+						if (cs->v->sfocus != NULL && cs->v->sfocus->prev != NULL) {
 							struct stack_item *tmpa, *tmpb, *tmpc, *tmpd;
-							tmpa = cv->sfocus->prev->prev;
-							tmpb = cv->sfocus->prev;
-							tmpc = cv->sfocus;
-							tmpd =cv->sfocus->next;
+							tmpa = cs->v->sfocus->prev->prev;
+							tmpb = cs->v->sfocus->prev;
+							tmpc = cs->v->sfocus;
+							tmpd =cs->v->sfocus->next;
 							if (tmpa != NULL) {
 								tmpa->next = tmpc;
 							} else {
-								cv->stack = tmpc;
+								cs->v->stack = tmpc;
 							};
 							if (tmpd != NULL) {
 								tmpd->prev = tmpb;
@@ -1971,16 +2045,16 @@ int event_loop() {
 						redraw = true;
 						break;
 					case 37:
-						if (cv->sfocus != NULL && cv->sfocus->next != NULL) {
+						if (cs->v->sfocus != NULL && cs->v->sfocus->next != NULL) {
 							struct stack_item *tmpa, *tmpb, *tmpc, *tmpd;
-							tmpa = cv->sfocus->prev;
-							tmpb = cv->sfocus;
-							tmpc = cv->sfocus->next;
-							tmpd =cv->sfocus->next->next;
+							tmpa = cs->v->sfocus->prev;
+							tmpb = cs->v->sfocus;
+							tmpc = cs->v->sfocus->next;
+							tmpd =cs->v->sfocus->next->next;
 							if (tmpa != NULL) {
 								tmpa->next = tmpc;
 							} else {
-								cv->stack = tmpc;
+								cs->v->stack = tmpc;
 							};
 							if (tmpd != NULL) {
 								tmpd->prev = tmpb;
@@ -2020,26 +2094,26 @@ int event_loop() {
 						break;
 					//close win soft or hard
 					case 44:
-						if (cv->mfocus == NULL || cv->mfocus->win == NULL) {
+						if (cs->v->mfocus == NULL || cs->v->mfocus->win == NULL) {
 							break;
 						};
-						if (cv->mfocus->win->del_win == true) {
+						if (cs->v->mfocus->win->del_win == true) {
 							XClientMessageEvent	cm;
 							memset(&cm,'\0', sizeof cm);
 							cm.type = ClientMessage;
-							cm.window = cv->mfocus->win->id;
+							cm.window = cs->v->mfocus->win->id;
 							cm.message_type = wm_prot;
 							cm.format = 32;
 							cm.data.l[0] = wm_del_win;
 							cm.data.l[1] = CurrentTime;
-							XSendEvent(dpy, cv->mfocus->win->id, False, 0L, (XEvent *)&cm);
+							XSendEvent(dpy, cs->v->mfocus->win->id, False, 0L, (XEvent *)&cm);
 						} else {
-							XDestroyWindow(dpy,cv->mfocus->win->id);
+							XDestroyWindow(dpy,cs->v->mfocus->win->id);
 						};
 						break;
 					case 45:
-						if (cv->mfocus != NULL && cv->mfocus->win != NULL) {
-							XKillClient(dpy,cv->mfocus->win->id);
+						if (cs->v->mfocus != NULL && cs->v->mfocus->win != NULL) {
+							XKillClient(dpy,cs->v->mfocus->win->id);
 						};
 						break;
 					//run menu/xterm
@@ -2052,10 +2126,10 @@ int event_loop() {
 						break;
 					//fullscreen:
 					case 48:
-						if (cv->fs == true) {
-							cv->fs = false;
+						if (cs->v->fs == true) {
+							cs->v->fs = false;
 						} else { 
-							cv->fs = true;
+							cs->v->fs = true;
 						};
 						redraw = true;
 						break;
@@ -2064,10 +2138,10 @@ int event_loop() {
 						return(0);
 						break;
 					case 50:
-						if (cv->orientv == true) {
-							cv->orientv = false;
+						if (cs->v->orientv == true) {
+							cs->v->orientv = false;
 						} else {
-							cv->orientv = true;
+							cs->v->orientv = true;
 						};
 						redraw = true;
 						break;
@@ -2162,10 +2236,28 @@ int event_loop() {
 							XFreeGC(dpy,unfocus_gc);
 							XGCValues xgcv;
 							xgcv.foreground = stack_focus_pix;
-							focus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+							focus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 							xgcv.foreground = stack_unfocus_pix;
-							unfocus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+							unfocus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 						};
+					case 62:
+						//move to previous screen
+						if (cs != firstscreen) {
+							struct screen *s = firstscreen;
+							while (s->next != cs) {
+								s = s->next;
+							};
+							cs = s;
+							redraw = true;
+						};
+						break;
+					case 63:
+						//move to next screen
+						if (cs->next != NULL) {
+							cs = cs->next;
+							redraw = true;
+						};
+						break;
 				};
 	
 			} else if (ev.type == ReparentNotify) {
@@ -2176,7 +2268,7 @@ int event_loop() {
 						XWindowAttributes att;
 						XGetWindowAttributes (dpy,ev.xreparent.window,&att);
 						if (att.map_state != IsUnmapped) {
-							add_client_to_view(t,cv);
+							add_client_to_view(t,cs->v);
 							redraw = true;
 						};
 					};
@@ -2218,7 +2310,7 @@ int event_loop() {
 						w = add_win(ev.xmap.window);
 					};
 					//finally add to layout
-					add_client_to_view(w,cv);
+					add_client_to_view(w,cs->v);
 					redraw = true;
 				};
 			} else if (ev.type == UnmapNotify ) {
@@ -2226,8 +2318,8 @@ int event_loop() {
 				s = id_to_cont(ev.xunmap.window);
 				if (s != NULL ) {
 					
-					if (s->track->view == cv) {
-						cv->fs = false;
+					if (s->track->view == cs->v) {
+						cs->v->fs = false;
 					};
 					remove_cont(s);
 					//unless we caused this, we should check the window's original state 
@@ -2240,15 +2332,15 @@ int event_loop() {
 				//if a window tries to manage itself we are going to play rough, unless it is putting itself in or out of fullscreen
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
-					if (wc->track->view == cv) {
-						if (ev.xconfigure.width >= scrn_w  && ev.xconfigure.height >= scrn_h) {
-							if (cv->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
-								cv->fs = true;
-								cv->mfocus = wc;
+					if (wc->track->view == cs->v) {
+						if (ev.xconfigure.width >= cs->w  && ev.xconfigure.height >= cs->h) {
+							if (cs->v->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
+								cs->v->fs = true;
+								cs->v->mfocus = wc;
 								redraw = true;
 							};
-						} else if (cv->fs == true && wc == cv->mfocus && (ev.xconfigure.height < scrn_h || ev.xconfigure.width < scrn_w)) {
-							cv->fs = false;
+						} else if (cs->v->fs == true && wc == cs->v->mfocus && (ev.xconfigure.height < cs->h || ev.xconfigure.width < cs->w)) {
+							cs->v->fs = false;
 							redraw = true; 
 						
 						} else if (wc->track->view->orientv == true) {
@@ -2280,9 +2372,9 @@ int main() {
 	
 	dpy = XOpenDisplay(0);
 	XSetErrorHandler(xerror);
-	scrn_h = DisplayHeight(dpy,DefaultScreen(dpy));
-	scrn_w = DisplayWidth(dpy,DefaultScreen(dpy));
-	printf("euclid-wm: sreen dimensions: %d %d\n",scrn_h, scrn_w);
+	//	cs->h = DisplayHeight(dpy,DefaultScreen(dpy));
+//	cs->w = DisplayWidth(dpy,DefaultScreen(dpy));
+//	printf("euclid-wm: sreen dimensions: %d %d\n",cs->h, cs->w);
 	//set some stuff
 	if ((root = DefaultRootWindow(dpy))) {
 		printf("euclid-wm: root is %6.0lx\n",root);
@@ -2298,35 +2390,35 @@ int main() {
 	color.green = 0;
 	color.blue = 65500;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	focus_pix = color.pixel;
 	//unfocus color
 	color.red = 5000;
 	color.green = 5000;
 	color.blue = 5000;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	unfocus_pix = color.pixel;
 	//stack background:
 	color.red = 100;
 	color.green = 100;
 	color.blue = 200;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_background_pix = color.pixel;
 	//stack unfocus text:
 	color.red = 60000;
 	color.green = 60000;
 	color.blue = 60000;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_unfocus_pix = color.pixel;
 	//stack focus text:
 	color.red = 0;
 	color.green = 0;
 	color.blue = 65500;
 	color.flags = DoRed | DoGreen | DoBlue;
-	XAllocColor(dpy,DefaultColormap(dpy,0),&color);
+	XAllocColor(dpy,DefaultColormap(dpy,DefaultScreen(dpy)),&color);
 	stack_focus_pix = color.pixel;
 	
 	//we have to do this after we get root
@@ -2336,14 +2428,32 @@ int main() {
 
 	
 	set_atoms();
-	int i;
-	cv = make_view();
-	fv = cv;
-	cv->idx = 1;
+	int screens;
+	XineramaScreenInfo *scrn_info = NULL; 
+	scrn_info = XineramaQueryScreens(dpy,&screens);
+	printf("screens %d\n",screens);
+	unsigned short sn = 0;
+	if (screens == 0) {
+		printf("Xinerama diabled\n");
+		addscreen( DisplayHeight(dpy,DefaultScreen(dpy)),DisplayWidth(dpy,DefaultScreen(dpy)),0,0,0);
+
+	} else {
+		printf("Xinerama enabled: %d screens\n",screens);
+		while (sn < screens) {
+			addscreen(scrn_info[sn].height,scrn_info[sn].width,scrn_info[sn].x_org,scrn_info[sn].y_org,sn);
+			sn ++;
+		};
+	};
+	XFree(scrn_info);
+	offscreen = DisplayHeight(dpy,DefaultScreen(dpy));
+//	cs->v = make_view();
+//	fv = cs->v;
+//	cs->v->idx = 1;
 
 	//now we also need to get all already exisiting windows
 	Window d1, d2, *wins = NULL;
 	unsigned int no;
+	int i;
 	XQueryTree(dpy,root,&d1,&d2,&wins,&no);
 	struct win *t;
 	printf("euclid-wm: %d windows\n",no);
@@ -2353,7 +2463,7 @@ int main() {
 			XWindowAttributes att;
 			XGetWindowAttributes(dpy,wins[i],&att);
 			if (att.map_state != IsUnmapped) {
-				add_client_to_view(t,cv);
+				add_client_to_view(t,cs->v);
 			};
 			//to see how to check for iconified windows, look at scrotwm getstate(
 		};
@@ -2368,19 +2478,12 @@ int main() {
 	};
 	XSync(dpy,False);
 	
-//make the stack window:
-	stackid = XCreateSimpleWindow(dpy,root,0,(scrn_h-15),scrn_w,15,1,stack_unfocus_pix,stack_background_pix);
-	XSetWindowAttributes att;
-	att.override_redirect = true;
-	XChangeWindowAttributes(dpy,stackid,CWOverrideRedirect,&att);
-	XMapWindow(dpy,stackid);
-	XSync(dpy,False);
 	
 	XGCValues xgcv;
 	xgcv.foreground = stack_focus_pix;
-	focus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+	focus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 	xgcv.foreground = stack_unfocus_pix;
-	unfocus_gc = XCreateGC(dpy,stackid,GCForeground,&xgcv);
+	unfocus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 
 	layout();
 	

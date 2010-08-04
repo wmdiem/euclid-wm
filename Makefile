@@ -2,8 +2,8 @@ PREFIX    = usr
 SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
-SVNREV 	  = 149
-VER	  = 0.1.1
+SVNREV 	  = 160
+VER	  = 0.2.a1
 DIST	  = euclid-wm-${VER}
 
 
@@ -14,7 +14,7 @@ CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
 
 CC = cc -pedantic -Wall
 CFLAGS = -O2 -g -std=c99
-LDFLAGS = -lX11
+LDFLAGS = -lX11 -lXinerama
 
 .PHONY: all install install_conf clean uninstall dist dist_clean
 
@@ -47,7 +47,7 @@ clean:
 
 dist: 
 	mkdir ${DIST}	
-	svn co http://euclid-wm.googlecode.com/svn/trunk/ ./${DIST} -r ${SVNREV}
+	svn co http://euclid-wm.googlecode.com/svn/branches/multihead ./${DIST} -r ${SVNREV}
 	echo "${VER} (svn${SVNREV}/`date +%F`)" > ./${DIST}/VERSION
 	rm -rf ${DIST}/.svn
 	tar -cvz ${DIST} -f${DIST}.tar.gz
