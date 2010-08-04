@@ -727,6 +727,7 @@ void remove_cont(struct cont *c) {
 
 
 struct win * add_win(Window  id) {
+	//PropertyChangeMask might be important for future features
 	if (sloppy_focus == true) {
 		XSelectInput(dpy,id,PointerMotionMask | PointerMotionHintMask | EnterWindowMask);
 	};
@@ -1733,6 +1734,11 @@ int event_loop() {
 		redraw = false; //this will get set to true if something gets changed onscreen
 		do {
 			XNextEvent(dpy, &ev);
+			/*
+			Debugging, print all events:
+			char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
+			printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
+			*/
 			if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
 				if (cv->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
@@ -2231,11 +2237,19 @@ int event_loop() {
 			} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
 				add_win(ev.xcreatewindow.window);
 			} else if (ev.type == ConfigureNotify) {
-				//if a window tries to manage itself we are going to play rough
+				//if a window tries to manage itself we are going to play rough, unless it is putting itself in or out of fullscreen
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
 					if (wc->track->view == cv) {
-						if (wc->track->view->orientv == true) {
+						if (ev.xconfigure.width >= scrn_w  && ev.xconfigure.height >= scrn_h  && cv->fs == false) {
+							cv->fs = true;
+							cv->mfocus = wc;
+							redraw = true;
+						} else if (cv->fs == true && wc == cv->mfocus && (ev.xconfigure.height < scrn_h || ev.xconfigure.width < scrn_w)) {
+							cv->fs = false;
+							redraw = true; 
+						
+						} else if (wc->track->view->orientv == true) {
 							//we are going to be niave and just check the w and h
 							//w =track size
 							if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
