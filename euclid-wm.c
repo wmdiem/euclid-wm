@@ -1734,9 +1734,9 @@ int event_loop() {
 		redraw = false; //this will get set to true if something gets changed onscreen
 		do {
 			XNextEvent(dpy, &ev);
-			/*
-			Debugging, print all events:
-			char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
+			
+			//Debugging, print all events:
+			/*char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
 			printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 			*/
 			if (ev.type == MotionNotify && sloppy_focus == true && cv->fs == false) {
@@ -2241,10 +2241,12 @@ int event_loop() {
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
 					if (wc->track->view == cv) {
-						if (ev.xconfigure.width >= scrn_w  && ev.xconfigure.height >= scrn_h  && cv->fs == false) {
-							cv->fs = true;
-							cv->mfocus = wc;
-							redraw = true;
+						if (ev.xconfigure.width >= scrn_w  && ev.xconfigure.height >= scrn_h) {
+							if (cv->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
+								cv->fs = true;
+								cv->mfocus = wc;
+								redraw = true;
+							};
 						} else if (cv->fs == true && wc == cv->mfocus && (ev.xconfigure.height < scrn_h || ev.xconfigure.width < scrn_w)) {
 							cv->fs = false;
 							redraw = true; 
