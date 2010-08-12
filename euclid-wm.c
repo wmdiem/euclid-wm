@@ -1047,6 +1047,17 @@ bool is_top_level(Window id) {
 	Window p; //parent return;
 	Window *c; //children;
 	unsigned int nc; //number of children 
+	//this is a hack, hopefully temproary: for some reason in a multiscreen setup the stack for the second screen is showing up as a normal top level window:
+
+	struct screen *s = firstscreen;
+	while (s != NULL) {
+		if (s->stackid == id) {
+			return false;
+		};
+		
+		s = s->next;
+	};
+
 	gxerror = false;
 	XQueryTree(dpy,root,&r,&p,&c,&nc);
 	if (gxerror) {
@@ -1507,13 +1518,21 @@ void move_to_view(struct view *v) {
 	if (v == NULL || v == cs->v || cs->v->mfocus == NULL) {return;};
 	//remove it from the current view
 	struct win *w = cs->v->mfocus->win;
-	XUnmapWindow(dpy,w->id);
+	//check whether the view we are moving it to is displayed before unmapping
+	struct screen *s = firstscreen;
+	while (s != NULL && s->v != v) {
+		s = s->next;
+	};
+	if (s == NULL) {
+		XUnmapWindow(dpy,w->id);
+	};
 	remove_cont(cs->v->mfocus);
 	//add it to the new view
 	add_client_to_view(w, v);
 }
 
 struct cont * id_to_cont(Window w) {
+	//TODO should this check all layouts or just the current one?
 	struct track *t = cs->v->ft;
 	struct cont *c;
 	while (t != NULL) {
@@ -1748,13 +1767,13 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 					};
 					//place window
 					if (s->v->orientv == true) {
-						x = offsett + res_left + yo;
-						y = offsetc + res_top + xo;
+						x = offsett + res_left + xo;
+						y = offsetc + res_top + yo;
 						w = curt->size - 2;
 						h = curc->size - 2;
 					} else {
-						x = offsetc + res_left + yo;
-						y = offsett + res_top + xo;
+						x = offsetc + res_left + xo;
+						y = offsett + res_top + yo;
 						w = curc->size - 2;
 						h = curt->size - 2;
 					};
@@ -2291,17 +2310,19 @@ int event_loop() {
 				//check whether it's in the layout, if not add it
 				if (id_to_cont(ev.xmap.window) == NULL) {
 					//see whether we know about the window
-					struct win *w;
-					w = first_win;
-					while (w != NULL && w->id != ev.xmap.window) {
-						w = w->next;
+					if (is_top_level(ev.xmap.window)) {
+						struct win *w;
+						w = first_win;
+						while (w != NULL && w->id != ev.xmap.window) {
+							w = w->next;
+						};
+						if (w == NULL) { //we don't have a record of it
+							w = add_win(ev.xmap.window);
+						};
+						//finally add to layout
+						add_client_to_view(w,cs->v);
+						redraw = true;
 					};
-					if (w == NULL) { //we don't have a record of it
-						w = add_win(ev.xmap.window);
-					};
-					//finally add to layout
-					add_client_to_view(w,cs->v);
-					redraw = true;
 				};
 			} else if (ev.type == UnmapNotify ) {
 				struct cont *s;
@@ -2333,14 +2354,15 @@ int event_loop() {
 							cs->v->fs = false;
 							redraw = true; 
 						
+						//when we configure a window we set its w and height to -2 the w and height of the cont on screen to allow for a border, shouldn't we be checking that here?
 						} else if (wc->track->view->orientv == true) {
 							//we are going to be niave and just check the w and h
 							//w =track size
-							if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
+							if (wc->track->size - 2 != ev.xconfigure.width || wc->size - 2 != ev.xconfigure.height) {
 								redraw = true;
 							};
 						} else {
-							if (wc->track->size != ev.xconfigure.height || wc->size != ev.xconfigure.width) {
+							if (wc->track->size - 2 != ev.xconfigure.height || wc->size - 2 != ev.xconfigure.width) {
 								redraw = true;
 							};
 						};
@@ -2419,8 +2441,26 @@ int main() {
 	
 	set_atoms();
 	int screens;
+	
+//DEBUGGING MULTISCREEN (on a single head setup)
+	//comment out the next two lines, 
+	//and the XFree(scrn_info) that follows screen setup
+	//uncomment the following block
+
 	XineramaScreenInfo *scrn_info = NULL; 
 	scrn_info = XineramaQueryScreens(dpy,&screens);
+	
+/*	XineramaScreenInfo scrn_info[2];
+	scrn_info[0].height = 400;
+	scrn_info[0].width = 450;
+	scrn_info[0].x_org = 5;
+	scrn_info[0].y_org = 5;
+	scrn_info[1].height = 300;
+	scrn_info[1].width = 250;
+	scrn_info[1].x_org = 200;
+	scrn_info[1].y_org = 410;
+	screens = 2;
+*/
 	printf("screens %d\n",screens);
 	unsigned short sn = 0;
 	if (screens == 0) {
@@ -2434,7 +2474,9 @@ int main() {
 			sn ++;
 		};
 	};
+//Comment this out too when debugging multiscreen 
 	XFree(scrn_info);
+
 	offscreen = DisplayHeight(dpy,DefaultScreen(dpy));
 //	cs->v = make_view();
 //	fv = cs->v;
