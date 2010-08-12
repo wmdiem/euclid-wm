@@ -1586,7 +1586,7 @@ void layout() {
 		//draw the stack 
 		XClearWindow(dpy,s->stackid);
 		if (stackheight != 0) {
-			XMoveResizeWindow(dpy,s->stackid,(res_left + yo),((s->h - res_bot) - (stackheight)),(s->w - (res_left + yo + res_right)),(stackheight));
+			XMoveResizeWindow(dpy,s->stackid,(res_left + xo),(((s->h - res_bot) - stackheight) + yo),(s->w - (res_left + res_right)),(stackheight));
 			XRaiseWindow(dpy,s->stackid);
 			XSync(dpy,false);//important!
 			struct stack_item *si = s->v->stack;
@@ -1648,11 +1648,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 			if (s->v->orientv == true) {
 				target = s->w - (res_left + res_right);
 			} else {
-				if (s->v->showstack == true) {
-					target = (s->h - (res_top + res_bot)) - stackheight;
-				} else {
-					target = s->h - (res_top + res_bot);
-				};
+				target = (s->h - (res_top + res_bot)) - stackheight;
 			};
 			int nooftracks = 0;
 			while (curt != NULL) {
@@ -1680,11 +1676,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 			if (s->v->orientv != true) {
 				target = s->w - (res_left + res_right);
 			} else {
-				if (s->v->showstack == true) {
-					target = (s->h - (res_top + res_bot)) - stackheight;
-				} else {
-					target = (s->h - (res_top + res_bot));
-				};
+				target = (s->h - (res_top + res_bot)) - stackheight;
 			}; 
 			while (curt != NULL) {
 				curc = curt->c;
@@ -1774,7 +1766,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 				curt = curt->next;
 			};
 		};
-	s = s->next;
+		s = s->next;
 	};
 }
 
