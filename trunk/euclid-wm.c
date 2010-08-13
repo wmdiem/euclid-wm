@@ -1532,18 +1532,22 @@ void move_to_view(struct view *v) {
 }
 
 struct cont * id_to_cont(Window w) {
-	//TODO should this check all layouts or just the current one?
-	struct track *t = cs->v->ft;
+	struct track *t;
 	struct cont *c;
-	while (t != NULL) {
-		c = t->c;
-		while (c!= NULL) {
-			if (c->win->id == w) {
-				return (c);
+	struct screen *s = firstscreen;
+	while (s != NULL) {
+		t = s->v->ft;
+		while (t != NULL) {
+			c = t->c;
+			while (c!= NULL) {
+				if (c->win->id == w) {
+					return (c);
+				};
+				c = c->next;
 			};
-			c = c->next;
+			t = t->next;
 		};
-		t = t->next;
+	s = s->next;
 	};
 	return (NULL);
 }
@@ -1818,10 +1822,17 @@ int event_loop() {
 			printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 			*/
 			if (ev.type == MotionNotify && sloppy_focus == true && cs->v->fs == false) {
-				if (cs->v->mfocus->win->id != ev.xmotion.window) {
+				if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
 					if (f != NULL) {
 						cs->v->mfocus = f;
+							struct screen *s = firstscreen;
+							while (s != NULL && s->v != f->track->view) {
+								s = s->next;
+							};
+							cs = s;
+							cs->v->mfocus = f;
+
 						redraw = true;
 					};
 				}; 
@@ -1831,11 +1842,11 @@ int event_loop() {
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
 				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
 				if ( sec > 1 || (sec == 0 && usec >= 20000) || (sec == 1 && usec <= -20000)) { 
-					if (cs->v->mfocus->win->id != ev.xcrossing.window) {
+					if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xcrossing.window) {
 						struct cont *f = id_to_cont(ev.xmotion.window);
 						if (f != NULL) {
 							struct screen *s = firstscreen;
-							while (s->v != f->track->view) {
+							while (s != NULL && s->v != f->track->view) {
 								s = s->next;
 							};
 							cs = s;
@@ -2450,7 +2461,7 @@ int main() {
 	XineramaScreenInfo *scrn_info = NULL; 
 	scrn_info = XineramaQueryScreens(dpy,&screens);
 	
-/*	XineramaScreenInfo scrn_info[2];
+/*	XineramaScreenInfo scrn_info[3];
 	scrn_info[0].height = 400;
 	scrn_info[0].width = 450;
 	scrn_info[0].x_org = 5;
@@ -2459,7 +2470,12 @@ int main() {
 	scrn_info[1].width = 250;
 	scrn_info[1].x_org = 200;
 	scrn_info[1].y_org = 410;
-	screens = 2;
+	scrn_info[2].height = 500;
+	scrn_info[2].width = 400;
+	scrn_info[2].x_org = 650;
+	scrn_info[2].y_org = 200;
+
+	screens = 3;
 */
 	printf("screens %d\n",screens);
 	unsigned short sn = 0;
