@@ -1609,7 +1609,7 @@ void layout() {
 		//draw the stack 
 		XClearWindow(dpy,s->stackid);
 		if (stackheight != 0) {
-			XMoveResizeWindow(dpy,s->stackid,(res_left + xo),(((s->h - res_bot) - stackheight) + yo),(s->w - (res_left + res_right)),(stackheight));
+			XMoveResizeWindow(dpy,s->stackid,(res_left + xo),(((s->h - res_bot) - stackheight) + yo),(s->w - (res_left + res_right + 2)),(stackheight - 2));
 			XRaiseWindow(dpy,s->stackid);
 			XSync(dpy,false);//important!
 			struct stack_item *si = s->v->stack;
