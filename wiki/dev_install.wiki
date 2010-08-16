@@ -21,7 +21,6 @@ make
 su
 make install
 suspend
-make install_conf
 
 }}}
 
