@@ -38,7 +38,7 @@ Debugging a window manager poses its own set of problems, here is the best way I
 
   * Compile with:
 {{{
-cc -O0 -g -lX11 -oeuclid-wm euclid-wm.c
+cc -O0 -g -lX11 -lXinerama -oeuclid-wm euclid-wm.c
 }}}
 
   * Start a new virtual terminal (if you are doing this several times, starting the doing this from within the directory where you compiled will save you some typing when you in the next step):
