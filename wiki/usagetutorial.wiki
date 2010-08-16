@@ -52,7 +52,7 @@ Now we have four xterms, still stacked one on top of the other.
 
 This is a little-bit ridiculous, as the windows are getting somewhat short. So let's move the 3rd one from the bottom to a new "track".
 
-First, we have to focus it. Changing focus uses the standard h/j/k/l keys (left, up, down, right) wit the alt key. So, assuming the focus is on the bottom (4th, window) we select the 3rd window with:
+First, we have to focus it. Changing focus uses the standard h/j/k/l keys (left, up, down, right) with the alt key. So, assuming the focus is on the bottom (4th, window) we select the 3rd window with:
 
         `<alt> + k`
 
@@ -63,11 +63,11 @@ Now we can move this window right. Moving windows the same keys as moving focus,
 
         `<alt> + <shift> + l`
 
-Now you will have two equal, vertically-oriented tracks. The one on the left has three stacked windows, the one on the right, has a single window. The window on the right should still have focus. 
+Now you will have two equal, vertically-oriented tracks. The one on the left has three stacked windows, the one on the right has a single window. The window on the right should still have focus. 
 
 <a href = "http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial6.png"><img src = "http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial6.png" height = 160 width = 256" /> </a>
 
-We can resize it using y/u/i/o Remember these are just like the standard movement keys, just shifted up a row. Think of them as moving the bottom right corner, so to make it wider move the bottom corner right. Hold:
+We can resize it using y/u/i/o Remember these are just like the standard movement keys, just shifted up a row. Think of them as moving the bottom right corner, so to make it wider move the bottom-right corner right. Hold:
 
         `<alt> + o`
 
@@ -82,7 +82,7 @@ will toggle fullscreen.
 <a href = "http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial8.png"><img src = "http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial8.png" height = 160 width = 256" /> </a>
 
 
-Now we, are done with the middle window in the left column, and wish to hid it for now, so we add it to the "stack". First we focus it:
+Now we are done with the middle window in the left column and wish to hid it for now, so we add it to the "stack". First we focus it:
 
         `<alt> + h`
 
@@ -158,7 +158,7 @@ Whichever window was focused should have just disappeared, but it didn't go far,
 
         `<alt> + 3`
 
-Now you should see your window. Now we will go back to 1, a different way:
+Now you should see your window. Now we will go back to 1 a different way:
 
         `<alt> + n`
 
@@ -180,7 +180,7 @@ takes us to the next view, which is now 2. Do it again to see 3:
 etc.
 
 You can read all the keybindings on the man page. 
-You can configure them (and lot's of other things) in euclid-wm.conf. 
+You can configure them (and lots of other things) in euclid-wm.conf. 
 
 
                                                                                     
