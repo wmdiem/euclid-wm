@@ -1,4 +1,4 @@
-.TH EUCLID 1 04-8-2010
+.TH EUCLID 1 15-8-2010
 .SH NAME
 euclid-wm \- A highly flexible, minimal, dynamic, tiling window manager
 .SH SYNOPSIS
@@ -123,9 +123,7 @@ If $XDG_CONFIG_HOME is not defined it will look for
 If euclid-wm.conf is found, euclid will override its default settings with those found in the file. 
 A sample config file 
 .I euclid-wm.conf.sample 
-should have come with euclid and can be installed by the makefile by running 
-.I make install_conf 
-as the user for whom you wish to install these files. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
+should have come with euclid. If euclid is started with start-euclid the start-euclid will check to see whether these files are installed for the current user, and if not, it will create them from the system defaults. The default is kept in /usr/share/euclid-wm/
 At startup euclid will also (try to) run the script
 .I euclidrc
 in the same directory (e.g., ~/.config/euclid-wm/euclidrc). This is meant as a place for the user to add any commands he would like run at startup.  A default is stored in /usr/share/euclid-wm/
