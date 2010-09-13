@@ -692,6 +692,7 @@ void addscreen(short h, short w, short x, short y, short n) {
 	//set the pointers
 	
 	
+	printf("adding screen %d: \n\tH %d \n\tW %d \n\tX %d \n\tY %d\n",n,h,w,x,y);
 	new->next = NULL;
 	if (firstscreen == NULL) {
 		//set it as first screen
