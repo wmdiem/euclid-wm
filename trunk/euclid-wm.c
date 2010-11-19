@@ -633,7 +633,9 @@ void commit_bindings() {
 	for (i = 0; i < BINDINGS; i++) {
 		//need to check whether the binding has been set before sending garbage to X
 		if (bindings[i].keycode != 0) {
+			//BIND *ALSO* WITH The LOCKMASK set so we will get keypresses when caplock or numlock is on
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root,True,GrabModeAsync,GrabModeAsync);
+			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask,root,True,GrabModeAsync,GrabModeAsync);
 			if (gxerror == true) {
 				fprintf(stderr,"euclid-wm ERROR: error grabbing key %d\n",bindings[i].keycode);
 				gxerror = false;
@@ -1858,8 +1860,10 @@ int event_loop() {
 				};
 			} else if (ev.type == KeyPress) {
 			//first find the keypress index from bindings[]
+			//set the lockmask to 0 first
+			//LockMask ^ ev.xkey.state
 				int i = 0;
-				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != ev.xkey.state)) {
+				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != (ev.xkey.state & ~LockMask))) {
 					i++;
 				};
   
@@ -2244,7 +2248,9 @@ int event_loop() {
 							int i = 0;
 							while (i < BINDINGS ) {
 								if (bindings[i].mask != NULL) {
+									//Also ungrab with the LockMask set
 									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root);
+									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask,root);
 								};
 								i++;
 							};
