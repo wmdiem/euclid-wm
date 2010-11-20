@@ -13,7 +13,7 @@ endif
 CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
 
 CC = cc -pedantic -Wall
-CFLAGS = -O2 -g -std=c99
+CFLAGS = -O2 -g -std=c99 
 LDFLAGS = -lX11 -lXinerama
 
 .PHONY: all install install_conf clean uninstall dist dist_clean
@@ -22,6 +22,9 @@ all: euclid-wm
 
 euclid-wm: euclid-wm.c
 	${CC} ${LDFLAGS} ${CFLAGS} $< -o $@
+
+testmultihead: euclid-wm.c
+	${CC} ${LDFLAGS} ${CFLAGS} -D TESTING_MULTIHEAD $< -o $@
 
 install: all
 	@install -m755 euclid-wm -D ${DESTDIR}/${BINDIR}/euclid-wm
