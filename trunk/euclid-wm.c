@@ -2020,12 +2020,6 @@ int event_loop() {
 						if (cs->v->mfocus == NULL) {break;};
 						if (cs->v->fs == true) {break;};
 						XUnmapWindow(dpy,cs->v->mfocus->win->id);
-						#ifdef renice
-							//get pid
-							//(eventually if this works we will record pid in the struct for the window)
-
-							renice(3)
-						#endif
 						move_to_stack(cs->v->mfocus);
 						redraw = true;
 						break;
