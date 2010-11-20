@@ -2020,6 +2020,12 @@ int event_loop() {
 						if (cs->v->mfocus == NULL) {break;};
 						if (cs->v->fs == true) {break;};
 						XUnmapWindow(dpy,cs->v->mfocus->win->id);
+						#ifdef renice
+							//get pid
+							//(eventually if this works we will record pid in the struct for the window)
+
+							renice(3)
+						#endif
 						move_to_stack(cs->v->mfocus);
 						redraw = true;
 						break;
@@ -2460,15 +2466,13 @@ int main() {
 	set_atoms();
 	int screens;
 	
-//DEBUGGING MULTISCREEN (on a single head setup)
-	//comment out the next two lines, 
-	//and the XFree(scrn_info) that follows screen setup
-	//uncomment the following block
-
+#ifndef TESTING_MULTIHEAD
 	XineramaScreenInfo *scrn_info = NULL; 
 	scrn_info = XineramaQueryScreens(dpy,&screens);
-	
-/*	XineramaScreenInfo scrn_info[3];
+
+
+#else
+	XineramaScreenInfo scrn_info[3];
 	scrn_info[0].height = 400;
 	scrn_info[0].width = 450;
 	scrn_info[0].x_org = 5;
@@ -2483,7 +2487,7 @@ int main() {
 	scrn_info[2].y_org = 200;
 
 	screens = 3;
-*/
+#endif
 	printf("screens %d\n",screens);
 	unsigned short sn = 0;
 	if (screens == 0) {
@@ -2497,10 +2501,12 @@ int main() {
 			sn ++;
 		};
 	};
-//Comment this out too when debugging multiscreen 
-	XFree(scrn_info);
 
+#ifndef TESTING_MULTIHEAD
+	XFree(scrn_info);
+#endif
 	offscreen = DisplayHeight(dpy,DefaultScreen(dpy));
+
 //	cs->v = make_view();
 //	fv = cs->v;
 //	cs->v->idx = 1;
