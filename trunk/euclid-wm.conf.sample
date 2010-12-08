@@ -115,6 +115,9 @@ bind_reload_config = M r
 bind_goto_previous_screen = M Previous
 bind_goto_next_screen = M Next
 
+#search for a window via dmenu
+bind_search = MS /
+
 #CUSTOM HOTKEYS
 #euclid supports up to ten hotkeys, bound to external commands
 #the format for the binding is: bind_custom_[01-10] = [M | MS] [keyname] (just like normal bindings
