@@ -116,7 +116,7 @@ bind_goto_previous_screen = M Previous
 bind_goto_next_screen = M Next
 
 #search for a window via dmenu
-bind_search = MS /
+bind_search = MS slash
 
 #CUSTOM HOTKEYS
 #euclid supports up to ten hotkeys, bound to external commands

@@ -323,7 +323,7 @@ void load_defaults() {
 	bind_key("Next", &mod,  &bindings[63]);
 
 	//bind search
-	bind_key("/",&mods, &bindings[64]);
+	bind_key("slash",&mods, &bindings[64]);
 }
 
 void spawn(char *cmd) {
@@ -1596,24 +1596,50 @@ void resize (int dir) {
 
 void search_wins() {
 
-	struct win *w = first_win;
 	char *fname = tempnam(NULL,"eucld");
 	FILE *list = fopen(fname,"w");
-	while (w != NULL) {
-		XTextProperty wmname;
-		XGetWMName(dpy,w->id,&wmname);
-		char ent[128];
-		int i = 0;
-		int limit = 128 < (wmname.nitems) ? 128 : (wmname.nitems);
-		while (i < limit) {
-			ent[i] = wmname.value[i];
-			i++;
+	struct view *v = fv;
+	while (v != NULL) {
+		struct track *t = v->ft;
+		while (t != NULL) {
+			struct cont *c = t->c;
+			while (c != NULL) {
+				//print	
+				XTextProperty wmname;
+				XGetWMName(dpy,c->win->id,&wmname);
+				char ent[128];
+				int i = 0;
+				int limit = 128 < (wmname.nitems) ? 128 : (wmname.nitems);
+				while (i < limit) {
+					ent[i] = wmname.value[i];
+					i++;
+				};
+				ent[i] = '\0';
+				fprintf(list,"%s [%d]\n",ent, (int) c->win->id);
+				c = c->next;
+			};
+			t = t->next;
 		};
-		ent[i] = '\0';
-		fprintf(list,"%s [%d]\n",ent, (int) w->id);
+		struct stack_item *s = v->stack;
+		while (s != NULL) {
+			XTextProperty wmname;
+			XGetWMName(dpy,s->win->id,&wmname);
+			char ent[128];
+			int i = 0;
+			int limit = 128 < (wmname.nitems) ? 128 : (wmname.nitems);
+			while (i < limit) {
+				ent[i] = wmname.value[i];
+				i++;
+			};
+			ent[i] = '\0';
+			fprintf(list,"%s [%d]\n",ent, (int) s->win->id);
 	
-		w = w->next;
-	};
+			s = s->next;
+		};
+
+		v = v->next;
+	};	
+
 		
 		fclose(list);
 		FILE *ret;
@@ -1657,7 +1683,7 @@ void search_wins() {
 		};
 		winnum[pos2] = '\0';
 		int id = atoi(winnum);
-	struct view *v = fv;
+	v = fv;
 	while (v != NULL) {
 		//search main area
 		struct track *t = v->ft;
