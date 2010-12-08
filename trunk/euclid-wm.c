@@ -1595,37 +1595,21 @@ void resize (int dir) {
 }
 
 void search_wins() {
-	//search
-		//1 get all the window numbers and titles
 
 	struct win *w = first_win;
-	//char template[] = "/tmp/euclidwm-winlistXXXXXX";
-	//int tmpfd = 0;
-	//tmpfd = mkstemp(template);
 	char *fname = tempnam(NULL,"eucld");
-	printf("%s\n",fname);
 	FILE *list = fopen(fname,"w");
 	while (w != NULL) {
 		XTextProperty wmname;
 		XGetWMName(dpy,w->id,&wmname);
-		//write these to temp file, 
-		//w->id;
-		// (char *) wmname.value,wmname.nitems
-		//construct string:
-		char ent[64];
+		char ent[128];
 		int i = 0;
-		int limit = 64 < (wmname.nitems) ? 64 : (wmname.nitems);
+		int limit = 128 < (wmname.nitems) ? 128 : (wmname.nitems);
 		while (i < limit) {
 			ent[i] = wmname.value[i];
 			i++;
 		};
 		ent[i] = '\0';
-		//this segfaults in fdopen
-//		FILE *fh = fdopen(tmpfd,'w');
-//		fprintf(fh,"%s [%d]\n",ent,(int) w->id);
-		//this is not portable, not sure what to do with it. 
-		//dprintf(tmpfd,"%s [%d]\n",ent, (int) w->id);
-		//printf("%s [%d]\n",ent, (int) w->id);
 		fprintf(list,"%s [%d]\n",ent, (int) w->id);
 	
 		w = w->next;
@@ -1636,16 +1620,14 @@ void search_wins() {
 		char *com = malloc(strlen(fname) + 9);
 		strcpy(com,"dmenu < ");
 		strcat(com,fname);
-		//2 dump them to dmenu use popen and fgets, redirect our temp file into dmenu
-		printf("%s\n",com);
 		ret = popen(com,"r");
 		free(com);
 		
-		char buff[128];
+		char buff[256];
 		if (!ret) {
 			printf("ERROR opening dmenu\n");
 		} else {
-			fgets(buff,128,ret);
+			fgets(buff,256,ret);
 		};
 		unlink(fname);	
 		free(fname);
@@ -1656,11 +1638,14 @@ void search_wins() {
 			return;
 		};
 		
-		//3 parse the return, buff
+		// parse the return, buff
 		int last = strlen(buff);
 		int pos = last;
-		while (buff[pos] != '[') {
+		while (buff[pos] != '[' && pos != 0) {
 			pos--;
+		};
+		if (pos == 0) {
+			return;
 		};
 		pos++;
 		char winnum[32];
@@ -1671,9 +1656,7 @@ void search_wins() {
 			pos2++;
 		};
 		winnum[pos2] = '\0';
-		printf("window sellected: %s\n", winnum);
 		int id = atoi(winnum);
-		//4 find the window
 	struct view *v = fv;
 	while (v != NULL) {
 		//search main area
@@ -1708,7 +1691,6 @@ void search_wins() {
 		v = v->next;
 	};
 	
-		//5 switch to that view
 }
 
 void layout() {
