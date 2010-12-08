@@ -323,7 +323,7 @@ void load_defaults() {
 	bind_key("Next", &mod,  &bindings[63]);
 
 	//bind search
-	bind_key("b",&mod, &bindings[64]);
+	bind_key("/",&mods, &bindings[64]);
 }
 
 void spawn(char *cmd) {
