@@ -1643,8 +1643,8 @@ void search_wins() {
 		
 		fclose(list);
 		FILE *ret;
-		char *com = malloc(strlen(fname) + 9);
-		strcpy(com,"dmenu < ");
+		char *com = malloc(strlen(fname) + 12);
+		strcpy(com,"dmenu -i < ");
 		strcat(com,fname);
 		ret = popen(com,"r");
 		free(com);
