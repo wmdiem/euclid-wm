@@ -641,6 +641,9 @@ void commit_bindings() {
 			//BIND *ALSO* WITH The LOCKMASK set so we will get keypresses when caplock or numlock is on
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root,True,GrabModeAsync,GrabModeAsync);
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask,root,True,GrabModeAsync,GrabModeAsync);
+			//mod2mask == numlock
+			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask ^ Mod2Mask,root,True,GrabModeAsync,GrabModeAsync);
+			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ Mod2Mask,root,True,GrabModeAsync,GrabModeAsync);
 			if (gxerror == true) {
 				fprintf(stderr,"euclid-wm ERROR: error grabbing key %d\n",bindings[i].keycode);
 				gxerror = false;
@@ -1993,7 +1996,7 @@ int event_loop() {
 			//set the lockmask to 0 first
 			//LockMask ^ ev.xkey.state
 				int i = 0;
-				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != (ev.xkey.state & ~LockMask))) {
+				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != (ev.xkey.state & ~LockMask &~Mod2Mask))) {
 					i++;
 				};
   
@@ -2381,6 +2384,9 @@ int event_loop() {
 									//Also ungrab with the LockMask set
 									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root);
 									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask,root);
+									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask ^ Mod2Mask,root);
+									XUngrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ Mod2Mask,root);
+
 								};
 								i++;
 							};
