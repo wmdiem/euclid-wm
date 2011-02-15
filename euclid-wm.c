@@ -1977,7 +1977,7 @@ int event_loop() {
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
 				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
-				if ( sec > 1 || (sec == 0 && usec >= 20000) || (sec == 1 && usec <= -20000)) { 
+				if ( sec > 1 || (sec == 0 && usec >= 200000) || (sec == 1 && usec >= -800000)) { 
 					if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xcrossing.window) {
 						struct cont *f = id_to_cont(ev.xmotion.window);
 						if (f != NULL) {
@@ -2424,6 +2424,7 @@ int event_loop() {
 					case 64:
 						search_wins();	
 						redraw = true;
+				
 
 						break;
 				};
