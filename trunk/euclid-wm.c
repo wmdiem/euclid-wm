@@ -639,9 +639,9 @@ void commit_bindings() {
 		//need to check whether the binding has been set before sending garbage to X
 		if (bindings[i].keycode != 0) {
 			//BIND *ALSO* WITH The LOCKMASK set so we will get keypresses when caplock or numlock is on
+			//mod2mask == numlock
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask),root,True,GrabModeAsync,GrabModeAsync);
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask,root,True,GrabModeAsync,GrabModeAsync);
-			//mod2mask == numlock
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ LockMask ^ Mod2Mask,root,True,GrabModeAsync,GrabModeAsync);
 			XGrabKey(dpy,bindings[i].keycode,*(bindings[i].mask) ^ Mod2Mask,root,True,GrabModeAsync,GrabModeAsync);
 			if (gxerror == true) {
