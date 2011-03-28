@@ -33,7 +33,7 @@ install: all
 	@install -m644 euclid-wm.conf.sample -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclid-wm.conf
 	@install -m644 euclidrc -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclidrc
 	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION 2>/dev/null || echo "From SVN: `svn info | grep Revision: | cut -d ' ' -f2`/`date +%F`" >${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
-	@sed s_/usr/share_${DESTDIR}/${SHAREDIR}_ <start-euclid >start-euclid-local
+	@sed s_/usr/share_/${SHAREDIR}_ <start-euclid >start-euclid-local
 	@install -m755 start-euclid-local -D ${DESTDIR}/${BINDIR}/start-euclid
 
 install_conf:
@@ -47,6 +47,7 @@ uninstall:
 
 clean:
 	rm -f euclid-wm
+	rm -f start-euclid-local
 
 dist: 
 	mkdir ${DIST}	
