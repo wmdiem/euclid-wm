@@ -2520,11 +2520,60 @@ int event_loop() {
 							//w =track size
 							if (wc->track->size - 2 != ev.xconfigure.width || wc->size - 2 != ev.xconfigure.height) {
 								redraw = true;
+							} else {
+								//calculate the x
+								//tp is a pointer to the track
+								struct track *tp = wc->track->view->ft;
+								int tmpx = 0;
+								while (tp != NULL && tp != wc->track) {
+									tmpx += tp->size;
+									tp = tp->next;
+								};
+								if (ev.xconfigure.x != tmpx) {
+									redraw = true;
+								} else {
+									//check y, tc is a temp container pointer
+									struct cont *tc = wc->track->c;
+									int tmpy = 0;
+									while (tc != NULL && tc != wc) {
+										tmpy += tc->size;
+										tc = tc->next;
+									};
+									if (tmpy != ev.xconfigure.y) {
+										redraw = true;
+									};
+								};
+
 							};
 						} else {
 							if (wc->track->size - 2 != ev.xconfigure.height || wc->size - 2 != ev.xconfigure.width) {
 								redraw = true;
+							} else {
+								//calculate the y
+								//tp is a pointer to the track
+								struct track *tp = wc->track->view->ft;
+								int tmpy = 0;
+								while (tp != NULL && tp != wc->track) {
+									tmpy += tp->size;
+									tp = tp->next;
+								};
+								if (ev.xconfigure.y != tmpy) {
+									redraw = true;
+								} else {
+									//check x, tc is a temp container pointer
+									struct cont *tc = wc->track->c;
+									int tmpx = 0;
+									while (tc != NULL && tc != wc) {
+										tmpx += tc->size;
+										tc = tc->next;
+									};
+									if (tmpx != ev.xconfigure.x) {
+										redraw = true;
+									};
+								};
+
 							};
+	
 						};
 					};
 				};
