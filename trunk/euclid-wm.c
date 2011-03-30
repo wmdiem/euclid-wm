@@ -215,6 +215,7 @@ unsigned short res_left = 0;
 unsigned short res_right = 0;
 unsigned short resize_inc = 15;
 unsigned short offscreen = 0;
+struct timeval last_redraw;
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -1521,6 +1522,8 @@ void goto_view(struct view *v) {
 		};
 		t = t->next;
 	};
+	//gettimeofday
+	gettimeofday(&last_redraw,0);
 }
 
 
@@ -1943,7 +1946,7 @@ int xerror(Display *d, XErrorEvent *e) {
 
 int event_loop() {
 	bool redraw;
-	struct timeval last_redraw;
+	//struct timeval last_redraw;
 	last_redraw.tv_sec = 0;
 	last_redraw.tv_usec = 0;
 	layout();
