@@ -1785,7 +1785,7 @@ void layout() {
 These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 */
 			h -= stackheight;
-			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(-1),(-1),(w),(h));
+			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(xo - 1),(yo - 1),(w),(h));
 			XRaiseWindow(dpy,s->v->mfocus->win->id);
 			if (cs == s) {
 				if (s->v->mfocus->win->take_focus == true) {
@@ -2506,15 +2506,19 @@ int event_loop() {
 				//if a window tries to manage itself we are going to play rough, unless it is putting itself in or out of fullscreen
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
-					if (wc->track->view == cs->v) {
-						if (ev.xconfigure.width >= cs->w  && ev.xconfigure.height >= cs->h) {
-							if (cs->v->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
-								cs->v->fs = true;
-								cs->v->mfocus = wc;
+					struct screen *tmps = firstscreen;
+					while (tmps->next != NULL && tmps->v != wc->track->view) {
+						tmps = tmps->next;
+					};
+					if (wc->track->view == tmps->v) {
+						if (ev.xconfigure.width >= tmps->w  && ev.xconfigure.height >= tmps->h) {
+							if (tmps->v->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
+								tmps->v->fs = true;
+								tmps->v->mfocus = wc;
 								redraw = true;
 							};
-						} else if (cs->v->fs == true && wc == cs->v->mfocus && (ev.xconfigure.height < cs->h || ev.xconfigure.width < cs->w)) {
-							cs->v->fs = false;
+						} else if (tmps->v->fs == true && wc == tmps->v->mfocus && (ev.xconfigure.height < tmps->h || ev.xconfigure.width < tmps->w)) {
+							tmps->v->fs = false;
 							redraw = true; 
 						
 						//when we configure a window we set its w and height to -2 the w and height of the cont on screen to allow for a border, shouldn't we be checking that here?
