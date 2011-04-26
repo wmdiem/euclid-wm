@@ -12,7 +12,7 @@ XDG_CONFIG_HOME=${HOME}/.config
 endif
 CONFDIR = ${XDG_CONFIG_HOME}/euclid-wm
 
-CC = cc -pedantic -Wall
+CC = cc -pedantic -Wall 
 CFLAGS = -O2 -g -std=c99 
 LDFLAGS = -lX11 -lXinerama
 

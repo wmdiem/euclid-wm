@@ -112,7 +112,7 @@ bind_quit = MS q
 bind_reload_config = M r
 
 #move focus to screen (Previous and Next are the X names for PgUp and PgDown:
-bind_goto_previous_screen = M Previous
+bind_goto_previous_screen = M Prior
 bind_goto_next_screen = M Next
 
 #search for a window via dmenu
