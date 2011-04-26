@@ -1770,7 +1770,7 @@ void layout() {
 			XMoveResizeWindow(dpy,s->stackid,0,offscreen,s->w,10);
 		};
 		XSync(dpy,false);
-		if (s->v->mfocus == NULL) {
+		if (s->v->mfocus == NULL && cs == s) {
 			XSetInputFocus(dpy,root,None,CurrentTime);
 		};
 		if (s->v->fs == true && s->v->mfocus != NULL && s->v->mfocus->win != NULL) {
