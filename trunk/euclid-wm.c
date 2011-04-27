@@ -1790,7 +1790,7 @@ void layout() {
 These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 */
 			h -= stackheight;
-			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(xo - 1),(yo - 1),(w),(h));
+			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(xo),(yo),(w),(h));
 			XRaiseWindow(dpy,s->v->mfocus->win->id);
 			if (cs == s) {
 				if (s->v->mfocus->win->take_focus == true) {
