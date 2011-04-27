@@ -1775,7 +1775,8 @@ void layout() {
 		};
 		if (s->v->fs == true && s->v->mfocus != NULL && s->v->mfocus->win != NULL) {
 			//draw mf fullscreen
-			int w = s->w + 2;
+			XSetWindowBorderWidth(dpy,s->v->mfocus->win->id,0);
+			int w = s->w; //this overflows onto adjacent screens. 
 			int h = s->h;
 /*			if (s->v->showstack == true) {
 				h += 1;
@@ -1887,6 +1888,8 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 						curc->win->fullscreen = false;
 						XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 					};
+
+					XSetWindowBorderWidth(dpy,curc->win->id,1);
 					if (s == cs && curc == s->v->mfocus) {
 					//set border
 						XSetWindowBorder(dpy,curc->win->id,focus_pix);
@@ -2289,6 +2292,7 @@ int event_loop() {
 					case 48:
 						if (cs->v->fs == true) {
 							cs->v->fs = false;
+
 						} else { 
 							cs->v->fs = true;
 						};
