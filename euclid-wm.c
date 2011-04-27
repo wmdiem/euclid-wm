@@ -1360,7 +1360,11 @@ void shift_main_focus(short int dir) {
 			if (cs->v->mfocus->prev != NULL) {
 				cs->v->mfocus = cs->v->mfocus->prev;
 			} else if (cs->v->mfocus->track->prev != NULL ) {
-				cs->v->mfocus = cs->v->mfocus->track->prev->c;
+				struct cont *tmpc = cs->v->mfocus->track->prev->c;
+				while (tmpc->next != NULL) {
+					tmpc = tmpc->next;
+				};
+				cs->v->mfocus = tmpc;
 			};
 		};
 	} else if (dir == 3 && cs->v->mfocus->track->next != NULL) {
