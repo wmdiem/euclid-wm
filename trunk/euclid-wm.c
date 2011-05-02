@@ -1409,7 +1409,7 @@ void shift_main_focus(short int dir) {
 	};
 }
 
-struct view * find_view (int i) {
+struct view * find_view(int i) {
 	//this will return a pointer to a given view
 	//even if it must first create it
 	//some views get a numbered index
@@ -1418,23 +1418,32 @@ struct view * find_view (int i) {
 	struct view *v = NULL;
 	if (i == -2) {
 		//move forward
-		if (cs->v->next != NULL) {
+		if (cs->v->next != NULL && cs->v->next->idx == cs->v->idx + 1) {
 			return(cs->v->next);
 		} else {
 			//make cs->v->next
 			v = make_view();
+			if (cs->v->next != NULL) {
+				cs->v->next->prev = v;
+			};
+			v->next = cs->v->next;
 			cs->v->next = v;
 			v->prev = cs->v;
 			v->idx = (cs->v->idx + 1);
 		};
 	} else if (i == -3) {
 		//move backward
-		if (cs->v->prev != NULL) {
+		if (cs->v->prev != NULL && cs->v->prev->idx == cs->v->idx - 1) {
 			return(cs->v->prev);
 		} else {
 			//make cs->v->prev
 			v = make_view();
 			v->next = cs->v;
+			//v next, v prev, cs prev next, cs prev
+			v->prev = cs->v->prev;
+			if (cs->v->prev != NULL) {
+				cs->v->prev->next = v; 
+			};
 			cs->v->prev = v;
 			v->idx = (cs->v->idx - 1);
 			fv = v;
