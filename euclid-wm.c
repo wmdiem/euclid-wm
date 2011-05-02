@@ -145,12 +145,13 @@ struct cont {
 
 };
 
-struct  win {
+struct win {
 	Window id; 
 	struct win *next;
 	bool del_win;
 	bool take_focus;
 	bool fullscreen;
+	bool req_fullscreen; //did this window originate the fullscreen state of the view?
 };
 
 struct stack_item {
@@ -1890,6 +1891,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 					//make sure we tell windows that think they are fs that they aren't
 					if (curc->win->fullscreen == true) {
 						curc->win->fullscreen = false;
+						curc->win->req_fullscreen = false;
 						XChangeProperty(dpy,curc->win->id,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 					};
 
@@ -2465,11 +2467,15 @@ int event_loop() {
 								wc->track->view->fs = true;
 								redraw = true;
 								wc->win->fullscreen = true;
+								wc->win->req_fullscreen = true;
 								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
 							} else { // exit fullscreen
-								wc->track->view->fs = false;
+								if (wc->win->req_fullscreen == true) {
+									wc->track->view->fs = false;
+								};
 								redraw = true;
 								wc->win->fullscreen = false;
+								wc->win->req_fullscreen = false;
 								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
 							};
 						};
@@ -2500,12 +2506,15 @@ int event_loop() {
 				s = id_to_cont(ev.xunmap.window);
 				if (s != NULL ) {
 					
-					if (s->track->view == cs->v) {
+					if (s->win->req_fullscreen == true && s->track->view->mfocus == s) {
 						cs->v->fs = false;
+						s->win->req_fullscreen = false;
 					};
 					remove_cont(s);
 					//unless we caused this, we should check the window's original state 
 					//before setting this
+					
+					//we could potentially save cycles by first checking whether this view is displayed on a screen before redrawing
 					redraw = true;
 				};
 			} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
@@ -2522,11 +2531,15 @@ int event_loop() {
 						if (ev.xconfigure.width >= tmps->w  && ev.xconfigure.height >= tmps->h) {
 							if (tmps->v->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
 								tmps->v->fs = true;
+								tmps->v->mfocus->win->req_fullscreen = true;
 								tmps->v->mfocus = wc;
 								redraw = true;
 							};
 						} else if (tmps->v->fs == true && wc == tmps->v->mfocus && (ev.xconfigure.height < tmps->h || ev.xconfigure.width < tmps->w)) {
-							tmps->v->fs = false;
+							if (wc->win->req_fullscreen == true) {
+								tmps->v->fs = false;
+							};
+							tmps->v->mfocus->win->req_fullscreen = false;
 							redraw = true; 
 						
 						//when we configure a window we set its w and height to -2 the w and height of the cont on screen to allow for a border, shouldn't we be checking that here?
