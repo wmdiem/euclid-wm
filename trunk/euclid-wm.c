@@ -1446,7 +1446,9 @@ struct view * find_view(int i) {
 			};
 			cs->v->prev = v;
 			v->idx = (cs->v->idx - 1);
-			fv = v;
+			if (fv == v->next) {
+				fv = v;
+			};
 		};
 	} else if (i == -1) {
 		v = cs->v;
