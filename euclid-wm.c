@@ -2535,6 +2535,12 @@ int event_loop() {
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
 					struct screen *tmps = firstscreen;
+					//we will see if adding this line, is good or not: the problem is that in fs, if a window tries to bring itself to the front euclid won't let it
+					//this behavior might be good, as it could keep things from stealing focus, try and see. 
+					if (wc->track->view->fs == true) {
+						wc->track->view->mfocus = wc;
+					};
+
 					while (tmps->next != NULL && tmps->v != wc->track->view) {
 						tmps = tmps->next;
 					};
