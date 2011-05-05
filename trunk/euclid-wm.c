@@ -2542,22 +2542,21 @@ int event_loop() {
 						if (ev.xconfigure.width >= tmps->w  && ev.xconfigure.height >= tmps->h) {
 							if (tmps->v->fs == false) { //if we get this request when we are already in fullscreen just ignore it, do NOT fall through to one of the last two elses
 								tmps->v->fs = true;
-								tmps->v->mfocus->win->req_fullscreen = true;
 								tmps->v->mfocus = wc;
+								tmps->v->mfocus->win->req_fullscreen = true;
 								redraw = true;
 							};
 						} else if (tmps->v->fs == true && wc == tmps->v->mfocus && (ev.xconfigure.height < tmps->h || ev.xconfigure.width < tmps->w)) {
 							if (wc->win->req_fullscreen == true) {
 								tmps->v->fs = false;
 							};
-							tmps->v->mfocus->win->req_fullscreen = false;
+							wc->win->req_fullscreen = false;
 							redraw = true; 
 						
-						//when we configure a window we set its w and height to -2 the w and height of the cont on screen to allow for a border, shouldn't we be checking that here?
 						} else if (wc->track->view->orientv == true) {
 							//we are going to be niave and just check the w and h
 							//w =track size
-							if (wc->track->size - 2 != ev.xconfigure.width || wc->size - 2 != ev.xconfigure.height) {
+							if (wc->track->size != ev.xconfigure.width || wc->size != ev.xconfigure.height) {
 								redraw = true;
 							} else {
 								//calculate the x
@@ -2585,7 +2584,7 @@ int event_loop() {
 
 							};
 						} else {
-							if (wc->track->size - 2 != ev.xconfigure.height || wc->size - 2 != ev.xconfigure.width) {
+							if (wc->track->size != ev.xconfigure.height || wc->size != ev.xconfigure.width) {
 								redraw = true;
 							} else {
 								//calculate the y
