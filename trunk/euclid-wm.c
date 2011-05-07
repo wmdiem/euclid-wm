@@ -1618,7 +1618,7 @@ void resize (int dir) {
 
 void search_wins() {
 
-	char *fname = tempnam(NULL,"eucld");
+	char *fname = (char *) tempnam(NULL,"eucld");
 	FILE *list = fopen(fname,"w");
 	struct view *v = fv;
 	while (v != NULL) {
@@ -1668,7 +1668,7 @@ void search_wins() {
 		char *com = malloc(strlen(fname) + 12);
 		strcpy(com,"dmenu -i < ");
 		strcat(com,fname);
-		ret = popen(com,"r");
+		ret = (FILE *) popen(com,"r");
 		free(com);
 		
 		char buff[256];
