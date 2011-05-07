@@ -88,6 +88,12 @@ Thus the one or more of the following notices may apply to some sections:
 #include <errno.h>
 #include <X11/extensions/Xinerama.h>
 
+
+//this is a hack
+FILE *popen(char *, char *);
+int pclose (FILE *);
+char *tempnam(char *,char*);
+
 #define BINDINGS 65 
 /*BASIC VARIABLE TYPES*/
 
