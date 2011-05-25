@@ -743,14 +743,17 @@ void addscreen(short h, short w, short x, short y, short n) {
 
 void remove_cont(struct cont *c) {
 	//reset focus if necessary
-	if (c->next != NULL) {
-		c->track->view->mfocus = c->next;
-	} else if (c->prev != NULL) {
+	if (c->prev != NULL) {
 		c->track->view->mfocus = c->prev;
-	} else if (c->track->next != NULL) {
-		c->track->view->mfocus = c->track->next->c;
+	} else if (c->next != NULL) {
+		c->track->view->mfocus = c->next;
 	} else if (c->track->prev != NULL) {
 		c->track->view->mfocus = c->track->prev->c;
+		while (c->track->view->mfocus->next != NULL) {
+			c->track->view->mfocus = c->track->view->mfocus->next;
+		};
+	} else if (c->track->next != NULL) {
+		c->track->view->mfocus = c->track->next->c;
 	} else {
 		c->track->view->mfocus = NULL;
 	};
