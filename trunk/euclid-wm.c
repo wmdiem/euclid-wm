@@ -865,7 +865,7 @@ void forget_win (Window id) {
 				if (c->win == w) {
 					//if it is the main focus on a fullscreen desktop
 					//take the desktop out of fs
-					c->track->view->fs = false;
+					//c->track->view->fs = false;
 					//reset focus if necessary
 					if (v->mfocus == c) {
 						if (c->next != NULL) {
