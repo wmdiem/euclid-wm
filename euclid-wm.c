@@ -87,12 +87,14 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xatom.h>
 #include <errno.h>
 #include <X11/extensions/Xinerama.h>
+#include <signal.h>
 
 
 //this is a hack
 FILE *popen(char *, char *);
 int pclose (FILE *);
 char *tempnam(char *,char*);
+
 
 #define BINDINGS 65 
 /*BASIC VARIABLE TYPES*/
@@ -2643,7 +2645,10 @@ int event_loop() {
 
 int main() {
 	printf("\neuclid-wm: running\n");
-	
+	//this is to avoid leaving zombies
+	//sighandler_t is a gnu extention
+	signal (SIGCHLD, SIG_IGN);
+
 	dpy = XOpenDisplay(0);
 	XSetErrorHandler(xerror);
 	//	cs->h = DisplayHeight(dpy,DefaultScreen(dpy));
