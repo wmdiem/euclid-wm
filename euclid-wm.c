@@ -86,7 +86,9 @@ Thus the one or more of the following notices may apply to some sections:
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <errno.h>
+#ifndef NOXINERAMA
 #include <X11/extensions/Xinerama.h>
+#endif
 #include <signal.h>
 
 
@@ -1988,9 +1990,9 @@ int event_loop() {
 			XNextEvent(dpy, &ev);
 			
 			//Debugging, print all events:
-			/*char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
-			printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
-			*/
+			//char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
+			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
+			
 			if (ev.type == MotionNotify && sloppy_focus == true && cs->v->fs == false) {
 				if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
@@ -2030,6 +2032,7 @@ int event_loop() {
 			//set the lockmask to 0 first
 			//LockMask ^ ev.xkey.state
 				int i = 0;
+				printf("\n%x -- %x\n",ev.xkey.keycode,ev.xkey.state);
 				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != (ev.xkey.state & ~LockMask &~Mod2Mask))) {
 					i++;
 				};
@@ -2707,30 +2710,13 @@ int main() {
 
 	
 	set_atoms();
-	int screens;
 	
-#ifndef TESTING_MULTIHEAD
+#ifndef NOXINERAMA 
+
+	int screens;
 	XineramaScreenInfo *scrn_info = NULL; 
 	scrn_info = XineramaQueryScreens(dpy,&screens);
 
-
-#else
-	XineramaScreenInfo scrn_info[3];
-	scrn_info[0].height = 400;
-	scrn_info[0].width = 450;
-	scrn_info[0].x_org = 5;
-	scrn_info[0].y_org = 5;
-	scrn_info[1].height = 300;
-	scrn_info[1].width = 250;
-	scrn_info[1].x_org = 200;
-	scrn_info[1].y_org = 410;
-	scrn_info[2].height = 500;
-	scrn_info[2].width = 400;
-	scrn_info[2].x_org = 650;
-	scrn_info[2].y_org = 200;
-
-	screens = 3;
-#endif
 	printf("screens %d\n",screens);
 	unsigned short sn = 0;
 	if (screens == 0) {
@@ -2745,9 +2731,29 @@ int main() {
 		};
 	};
 
-#ifndef TESTING_MULTIHEAD
 	XFree(scrn_info);
+#else
+	/* Old testing definitions
+	XineramaScreenInfo scrn_info[3];
+	scrn_info[0].height = 400;
+	scrn_info[0].width = 450;
+	scrn_info[0].x_org = 5;
+	scrn_info[0].y_org = 5;
+	scrn_info[1].height = 300;
+	scrn_info[1].width = 250;
+	scrn_info[1].x_org = 200;
+	scrn_info[1].y_org = 410;
+	scrn_info[2].height = 500;
+	scrn_info[2].width = 400;
+	scrn_info[2].x_org = 650;
+	scrn_info[2].y_org = 200;
+	screens = 3;
+	*/
+	printf("Compiled without Xinerama support.\n");
+	addscreen(DisplayHeight(dpy,DefaultScreen(dpy)),DisplayWidth(dpy,DefaultScreen(dpy)),0,0,0);
+
 #endif
+	
 	offscreen = DisplayHeight(dpy,DefaultScreen(dpy));
 
 //	cs->v = make_view();
