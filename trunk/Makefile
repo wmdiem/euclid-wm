@@ -23,8 +23,9 @@ all: euclid-wm
 euclid-wm: euclid-wm.c
 	${CC} ${LDFLAGS} ${CFLAGS} $< -o $@
 
-testmultihead: euclid-wm.c
-	${CC} ${LDFLAGS} ${CFLAGS} -D TESTING_MULTIHEAD $< -o $@
+noxinerama: euclid-wm.c
+	${CC} ${LDFLAGS} ${CFLAGS} -D NOXINERAMA $< -o $@
+	cp noxinerama euclid-wm
 
 install: all
 	@install -m755 euclid-wm -D ${DESTDIR}/${BINDIR}/euclid-wm
@@ -48,6 +49,7 @@ uninstall:
 clean:
 	rm -f euclid-wm
 	rm -f start-euclid-local
+	rm -f noxinerama
 
 dist: 
 	mkdir ${DIST}	
