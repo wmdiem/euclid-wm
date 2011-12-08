@@ -2032,7 +2032,7 @@ int event_loop() {
 			//set the lockmask to 0 first
 			//LockMask ^ ev.xkey.state
 				int i = 0;
-				printf("\n%x -- %x\n",ev.xkey.keycode,ev.xkey.state);
+				//printf("\n%x -- %x\n",ev.xkey.keycode,ev.xkey.state);
 				while (i < BINDINGS && (bindings[i].keycode != ev.xkey.keycode || *(bindings[i].mask) != (ev.xkey.state & ~LockMask &~Mod2Mask))) {
 					i++;
 				};
