@@ -24,7 +24,7 @@ euclid-wm: euclid-wm.c
 	${CC} ${LDFLAGS} ${CFLAGS} $< -o $@
 
 noxinerama: euclid-wm.c
-	${CC} ${LDFLAGS} ${CFLAGS} -D NOXINERAMA $< -o $@
+	${CC} -lX11 ${CFLAGS} -D NOXINERAMA $< -o $@
 	cp noxinerama euclid-wm
 
 install: all
