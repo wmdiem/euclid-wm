@@ -1993,7 +1993,7 @@ int event_loop() {
 			//char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
 			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 			
-			if (ev.type == MotionNotify && sloppy_focus == true && cs->v->fs == false) {
+			if (ev.type == MotionNotify && sloppy_focus == true ) {
 				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
 					if (f != NULL) {
@@ -2008,7 +2008,7 @@ int event_loop() {
 						redraw = true;
 					};
 				}; 
-			} else if (ev.type == EnterNotify && cs->v->fs == false && ev.xcrossing.focus == false && sloppy_focus == true) { 
+			} else if (ev.type == EnterNotify && ev.xcrossing.focus == false && sloppy_focus == true) { 
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
