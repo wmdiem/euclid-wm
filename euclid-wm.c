@@ -1994,10 +1994,10 @@ int event_loop() {
 			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 			
 			if (ev.type == MotionNotify && sloppy_focus == true && cs->v->fs == false) {
-				if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xmotion.window) {
+				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
 					if (f != NULL) {
-						cs->v->mfocus = f;
+						//cs->v->mfocus = f;
 							struct screen *s = firstscreen;
 							while (s != NULL && s->v != f->track->view) {
 								s = s->next;
