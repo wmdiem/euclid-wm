@@ -2524,6 +2524,8 @@ int event_loop() {
 						//finally add to layout
 						add_client_to_view(w,cs->v);
 						redraw = true;
+						//Must check whether it is in the stack or not, to prevent the same window from being prsent in multiple places
+
 					};
 				};
 			} else if (ev.type == UnmapNotify ) {
