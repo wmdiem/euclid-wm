@@ -3,7 +3,7 @@ SHAREDIR  = ${PREFIX}/share
 MANDIR    = ${SHAREDIR}/man
 BINDIR    = ${PREFIX}/bin
 SVNREV 	  = 213 
-VER	  = 0.4.0-rc1
+VER	  = 0.4.0
 DIST	  = euclid-wm-${VER}
 
 
@@ -21,10 +21,10 @@ LDFLAGS = -lX11 -lXinerama
 all: euclid-wm
 
 euclid-wm: euclid-wm.c
-	${CC} ${LDFLAGS} ${CFLAGS} $< -o $@
+	${CC} $< ${LDFLAGS} ${CFLAGS} -o $@
 
 noxinerama: euclid-wm.c
-	${CC} -lX11 ${CFLAGS} -D NOXINERAMA $< -o $@
+	${CC} $< -lX11 ${CFLAGS} -D NOXINERAMA -o $@
 	cp noxinerama euclid-wm
 
 install: all
