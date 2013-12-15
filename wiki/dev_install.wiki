@@ -1,5 +1,6 @@
 #summary Installation from svn
 
+
 =Basic Testdrive=
 
   * First get the latest source:
@@ -9,6 +10,8 @@ svn checkout http://euclid-wm.googlecode.com/svn/trunk/ euclid-wm-read-only
 }}}
 
   * cd into the trunk directory
+
+Note: you will need to have the Xlib and Xinerama headers installed prior to compiling. On Debian you can get them by installing libx11-dev and libxinerama-dev. 
 
   * Compile:
 {{{
@@ -28,6 +31,8 @@ suspend
 {{{
 man euclid-wm
 }}}
+
+  Note: By default euclid-wm uses xterm and dmenu as the terminal and menu respectively; running euclid-wm without having either installed them or reconfigured euclid-wm to use alternatives gives a substandard user experience. 
 
   * Give it a go: Log out and log in using the euclid session. 
 
