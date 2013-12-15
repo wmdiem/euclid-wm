@@ -30,3 +30,6 @@ Password:
 
 If you use a display manger euclid-wm should now be in its list of sessions. 
 If you use xinitrc, you should `exec start-euclid`.
+
+
+NOTE: you should either make sure you have dmenu and xterm installed prior to running euclid-wm, or you should edit the config file for euclid to use other tools to provide menu and terminal functions. 
