@@ -1060,11 +1060,19 @@ void move_to_main() {
 
 void shift_stack_focus (bool dir) {
 	//true up, false, down
-	if (cs->v->sfocus == NULL) {return;};
+	if (cs->v->sfocus == NULL) {return;}; //there is not stack
 	if (dir && cs->v->sfocus->prev != NULL) {
 		cs->v->sfocus = cs->v->sfocus->prev;
+	} else if (dir && cs->v->sfocus->prev == NULL) {
+		//wrap to last, follow next till we run out
+		while (cs->v->sfocus->next != NULL) {
+			cs->v->sfocus = cs->v->sfocus->next;
+		};
 	} else if (!dir && cs->v->sfocus->next != NULL) {
 		cs->v->sfocus = cs->v->sfocus->next;
+		//wrap, jump to first
+	} else if (!dir && cs->v->sfocus->prev != NULL) {
+		cs->v->sfocus = cs->v->stack;
 	};
 }
 
