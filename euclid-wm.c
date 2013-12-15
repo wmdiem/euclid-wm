@@ -986,6 +986,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 		tp = tp->next;
 	};
 
+
 	//make a cont for it
 	struct cont *c = (struct cont *) malloc  (sizeof(struct cont));
 	//no we need to test all these
@@ -2528,6 +2529,33 @@ int event_loop() {
 						};
 						if (w == NULL) { //we don't have a record of it
 							w = add_win(ev.xmap.window);
+						};
+						struct stack_item *s = cs->v->stack;
+						while (s != NULL) {
+							if (s->win->id == ev.xmap.window) {break;};
+						};
+						if (s != NULL && s->win->id == ev.xmap.window) { // remove it from the stack
+							 if (s == cs->v->stack) {
+			                                        cs->v->stack = s->next;
+                        			        };
+			                                if (s == cs->v->sfocus) {
+                        			                if (s->next != NULL) {
+                                               				 cs->v->sfocus = s->next;
+                                       				 } else {
+                                              				  cs->v->sfocus = s->prev;
+                                       				 };
+                               				 };
+                               				 if (s->next != NULL) {
+                                       				 s->next->prev = s->prev;
+                              				  };
+			                                if (s->prev != NULL) {
+                        		                	s->prev->next = s->next;
+                               				 };
+                               				 if (s == cs->v->stack) {
+                                      				  cs->v->stack = s->next;
+                               				 };
+                              				 free(s);
+
 						};
 						//finally add to layout
 						add_client_to_view(w,cs->v);
