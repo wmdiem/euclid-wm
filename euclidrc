@@ -14,3 +14,19 @@
 
 #if you use it:
 #xscreensaver &
+
+#This let's you do root stuff without being root (e.g., mount internal hdds in your file manager)
+#/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 &
+
+#this makes your windows perty
+#xfsettingsd &
+#or if you prefer it: 
+#gnome-settings-daemon &
+
+#If you have the patched version of stalonetray you can activate it here
+#stalonetray --icon-size=20 --kludges=force_icons_size &
+
+#and then  put a couple things in it
+#nm-applet &
+#gnome-sound-applet &
+
