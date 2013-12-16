@@ -2530,6 +2530,7 @@ int event_loop() {
 						if (w == NULL) { //we don't have a record of it
 							w = add_win(ev.xmap.window);
 						};
+						//check to see whether it was hiding in the stack
 						struct stack_item *s = cs->v->stack;
 						while (s != NULL) {
 							if (s->win->id == ev.xmap.window) {break;};
@@ -2557,11 +2558,24 @@ int event_loop() {
                                				 };
                               				 free(s);
 
-						};
+						}; //finished with stack check
 						//finally add to layout
 						add_client_to_view(w,cs->v);
+						//but we aren't done yet. Flash maps the window already configured to be fullscreen, we ignore the first configure, because the window isn't mapped and isn't in our data structure.
+						//so we need to check NOW to see if it is trying to force fullscreen
+
+                               			if (cs->v->fs != true) { 
+							XWindowAttributes wa;
+							XGetWindowAttributes(dpy,ev.xmap.window,&wa);
+							if (gxerror == true) {gxerror = false;};
+							if (wa.height == cs->h && wa.width == cs->w) {
+								cs->v->fs = true;
+								w->fullscreen = true;
+								w->req_fullscreen = true;
+							};
+						};
+
 						redraw = true;
-						//Must check whether it is in the stack or not, to prevent the same window from being prsent in multiple places
 
 					};
 				};
