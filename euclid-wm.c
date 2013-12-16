@@ -2533,6 +2533,7 @@ int event_loop() {
 						struct stack_item *s = cs->v->stack;
 						while (s != NULL) {
 							if (s->win->id == ev.xmap.window) {break;};
+							s = s->next;
 						};
 						if (s != NULL && s->win->id == ev.xmap.window) { // remove it from the stack
 							 if (s == cs->v->stack) {
