@@ -32,10 +32,10 @@ All bindings are prefaced by a mod ("M", defaults to mod1, i.e., alt).
 .SS Starting Programs
 .IP
 .B M + <enter>
-\- start run dialogue (dmenu). NB: this takes keyboard focus as long as it is open; Once it is opened you must either select a command (with enter) or exit the dialog (with esc).
+\- start run dialogue (by default, dmenu). NB: this takes keyboard focus as long as it is open; Once it is opened you must either select a command (with enter) or exit the dialog (with esc).
 .IP 
 .B M + <shift> + <enter>
-\- start x-terminal-emulator
+\- start terminal (default: xterm).
 
 .SS Basic Window Manipulation
 .IP  
@@ -88,6 +88,12 @@ The stack maintains its own focus; The currently focused item can be identified 
 .IP
 .B M + <shift> + 1-9
 \- Move the currently focused window to the 1-9th view
+.IP
+.B M + 0
+\- Move to the last populated view (regardless of its number).
+.IP
+.B M + <shift> + 0
+\- Move the currently focused window to the last populated view. 
 
 A note on the order and numbering of views:
 The enumeration is not strictly accurate; View 9 may not be the 9th view. Specifically, once a view is assigned a number it retains that number regardless of where it actually falls in the list of views. This is so that accessing views based on their number remains consistent. 
@@ -99,7 +105,7 @@ The first view, created when euclid starts, is view 1; Going to the previous vie
 .B M + <shift> + <space>
 \- Change to fullscreen mode. 
 
-Notes on fullscreen mode: In fullscreen mode the stack is disabled, widows cannot be added or taken out. j/k will cycle through all windows on the view in a linear way. If the view is in fullscreen mode and the current window closes, euclid will switch back to its normal tiled layout. 
+Notes on fullscreen mode: In fullscreen mode the stack is disabled: widows cannot be added or taken out. j/k will cycle through all windows on the view in a linear way. If the view is in fullscreen mode because a window triggered fullscreen, and that window closes, euclid will switch back to its normal tiled layout; if the user manually triggered fullscreen mode, euclid will remain in fullscreen. 
 .IP 
 .B M + <tab> 
 \- toggle the orientation of the tracks (vertical or horizontal layout)
@@ -116,7 +122,6 @@ Notes on fullscreen mode: In fullscreen mode the stack is disabled, widows canno
 .B M + PgUp/PgDown
 \- when multiple screen is in use, switch focus to previous/next screen. 
 
-NB: multiscreen is experimental and is included mainly for testing purposes (I would say "undocumented" but . . . ): Multiscreen behavior (including these bindings) may change significantly. Don't expect it to work consistently yet, and don't expect it to remain the same. 
 .SH FILES
 .IP
 On startup euclid will look for 
