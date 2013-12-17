@@ -1982,12 +1982,12 @@ int event_loop() {
 			//Debugging, print all events:
 			//char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
 			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
-			
-			if (ev.type == MotionNotify && sloppy_focus == true ) {
+		
+			switch (ev.type){ //using a switch, even types are defined in /usr/include/X11/X.h; they range from 2-36
+			case MotionNotify:
 				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
 					if (f != NULL) {
-						//cs->v->mfocus = f;
 							struct screen *s = firstscreen;
 							while (s != NULL && s->v != f->track->view) {
 								s = s->next;
@@ -1998,7 +1998,9 @@ int event_loop() {
 						redraw = true;
 					};
 				}; 
-			} else if (ev.type == EnterNotify && ev.xcrossing.focus == false && sloppy_focus == true) { 
+			break;
+			case EnterNotify:
+				if (!(ev.xcrossing.focus && sloppy_focus == true)) {break;};
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
@@ -2017,7 +2019,9 @@ int event_loop() {
 						};
 					};
 				};
-			} else if (ev.type == KeyPress) {
+			break;
+			case KeyPress:
+			{
 			//first find the keypress index from bindings[]
 			//set the lockmask to 0 first
 			//LockMask ^ ev.xkey.state
@@ -2027,7 +2031,7 @@ int event_loop() {
 					i++;
 				};
   
-				switch (i) {
+				switch (i) { 
 					//resize
 					case 0:
 						resize(4);
@@ -2404,7 +2408,9 @@ int event_loop() {
 						}
 				};
 	
-			} else if (ev.type == ReparentNotify) {
+			break;
+			}
+			case ReparentNotify:
 				if (ev.xreparent.parent == root) {
 					if (is_top_level(ev.xreparent.window) == true) {
 						struct win *t;
@@ -2420,7 +2426,8 @@ int event_loop() {
 					forget_win(ev.xreparent.window);
 				};
 		
-			} else if (ev.type == ClientMessage) {
+			break;
+			case ClientMessage:
 				if (ev.xclient.message_type == wm_change_state) {
 					if (ev.xclient.data.l[1] == wm_fullscreen) {
 						struct cont *wc = id_to_cont(ev.xclient.window);
@@ -2443,9 +2450,12 @@ int event_loop() {
 						};
 					};
 				};
-			} else if (ev.type == DestroyNotify ) {
+			break;
+			case DestroyNotify:
 				forget_win(ev.xdestroywindow.window);
-			} else if (ev.type == MapNotify && is_top_level(ev.xmap.window) == true) {
+			break;
+			case MapNotify:
+				if (!is_top_level(ev.xmap.window)){break;};
 				//check whether it's in the layout, if not add it
 				if (id_to_cont(ev.xmap.window) == NULL) {
 					//see whether we know about the window
@@ -2507,8 +2517,9 @@ int event_loop() {
 
 					};
 				};
-			} else if (ev.type == UnmapNotify ) {
-				struct cont *s;
+			break;
+			case UnmapNotify:
+			{	struct cont *s;
 				s = id_to_cont(ev.xunmap.window);
 				if (s != NULL ) {
 					
@@ -2523,9 +2534,15 @@ int event_loop() {
 					//we could potentially save cycles by first checking whether this view is displayed on a screen before redrawing
 					redraw = true;
 				};
-			} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
+			//} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
+			break;
+			}
+			case CreateNotify:
+				if (!is_top_level(ev.xcreatewindow.window)) {break;};
 				add_win(ev.xcreatewindow.window);
-			} else if (ev.type == ConfigureNotify) {
+			break;
+			case ConfigureNotify:
+			{
 				//if a window tries to manage itself we are going to play rough, unless it is putting itself in or out of fullscreen
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
 				if (wc != NULL) {
@@ -2617,6 +2634,7 @@ int event_loop() {
 					};
 				};
 			};
+			}
 	
 		} while (XPending(dpy)); 
 	
