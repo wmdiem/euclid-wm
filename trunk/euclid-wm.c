@@ -1983,7 +1983,7 @@ int event_loop() {
 			//char *events[] = {NULL, NULL, "KeyPress","KeyRelease","ButtonPress","ButtonRelease","MotionNotify","EnterNotify","LeaveNotify","FocusIn","FocusOut","KeymapNotify","Expose","GraphicsExpose","NoExpose","VisibilityNotify","CreateNotify","DestroyNotify","UnmapNotify","MapNotify","MapRequest","ReparentNotify","ConfigureNotify","ConfigureRequest","GravityNotify","ResizeRequest","CirculateNotify","CirculateRequest","PropertyNotify","SelectionClear","SelectionRequest","SelectionNotify","ColormapNotify","ClientMessage","MappingNotify","GenericEvent"};
 			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 		
-			switch (ev.type){ //using a switch, even types are defined in /usr/include/X11/X.h; they range from 2-36
+			switch (ev.type){ //using a switch, event types are defined in /usr/include/X11/X.h; they range from 2-36
 			case MotionNotify:
 				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
 					struct cont *f = id_to_cont(ev.xmotion.window);
@@ -2000,7 +2000,7 @@ int event_loop() {
 				}; 
 			break;
 			case EnterNotify:
-				if (!(ev.xcrossing.focus && sloppy_focus == true)) {break;};
+				if (!(ev.xcrossing.focus == false && sloppy_focus == true)) {break;};
 				struct timeval ctime;
 				gettimeofday(&ctime,0);
 				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
