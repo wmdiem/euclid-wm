@@ -98,19 +98,24 @@ int pclose (FILE *);
 char *tempnam(char *,char*);
 
 
-#define BINDINGS 65 
+//number of builtin commands
+#define BCMDS 55
+//maximum number of supported custom commands
+#define CCMDS 99
+//total maximum number of commands
+#define BINDINGS (BCMDS + CCMDS)
+
 /*BASIC VARIABLE TYPES*/
 
 /*
  * Overall structure
- * 
- * v = view
- * 		|		\
- * t = 	tracks		stack
- * 		|
- * c = 	containers
- * 		|
- * w = win
+ * v =		 views
+ * 		  |		\
+ * t = 		tracks		stack
+ * 		  |
+ * c = 		containers
+ * 		  |
+ * w = 		 wins
  * 
  */
 
@@ -126,51 +131,51 @@ struct screen {
 };
 
 struct view {
-	struct view *next;
+	struct view *next; //the views of a screen are in a doubly linked list
 	struct view *prev;
 	struct track *ft; //first track
 	struct stack_item *stack;
-	struct cont *mfocus; //focus
-	struct stack_item *sfocus;//stackfocus
-	int idx;
-	bool showstack;
+	struct cont *mfocus; //container for focused window  
+	struct stack_item *sfocus; //stackfocus
+	int idx; //index
+	bool showstack; //is it visible
 	bool orientv; //tracks run verically?
 	bool fs; //fullscreen?
 };
 
 struct track {
-	struct view *view;
-	struct track *next;
+	struct view *view; //what view does this track belong to
+	struct track *next; //tracks on a view are in a doubly linked list
 	struct track *prev;
-	struct cont *c;
+	struct cont *c; //first container in the track
 	int size;
 };
 
 struct cont {
-	struct track *track;
-	struct cont *next;
-	struct cont *prev;
-	struct win *win; 
+	struct track *track; //what track is the container in?
+	struct cont *next; //doubly linked list of conts in a track
+	struct cont *prev; 
+	struct win *win;  //pointer to window that the cont holds
 	int size; //size represents h or w depending on the orientation of the layout
 
 };
 
 struct win {
-	Window id; 
-	struct win *next;
-	bool del_win;
-	bool take_focus;
-	bool fullscreen;
+	Window id; //X11 window id
+	struct win *next; //linked list of ALL windows everywhere that euclid cares about
+	bool del_win; 
+	bool take_focus; 
+	bool fullscreen; 
 	bool req_fullscreen; //did this window originate the fullscreen state of the view?
 };
 
-struct stack_item {
-	struct win *win;
+struct stack_item { //items in the stack are doubly linked per view
+	struct win *win; 
 	struct stack_item *next;
 	struct stack_item *prev;
 };
 
-struct binding {
+struct binding { // keep track of our keybindings
 	unsigned int *mask;
 	unsigned int keycode;
 };
@@ -180,53 +185,40 @@ struct binding {
  *GLOBAL VARIABLES
  */
 
-struct view *fv = NULL; //first view
-//struct view *cs->v = NULL; //current view
-struct screen *cs = NULL;
-struct screen *firstscreen = NULL;
-struct win *first_win = NULL;
-
-//unsigned int cs->w = 1026;
-//unsigned int cs->h = 860; 
-unsigned int mod = Mod1Mask;
-unsigned int mods = Mod1Mask | ShiftMask;
-bool sloppy_focus = true;
-struct binding bindings[BINDINGS];
-Display *dpy;
-Window root;
-unsigned long focus_pix; 
+struct view *fv = NULL; 			//first view
+struct screen *cs = NULL; 			//currently active screen
+struct screen *firstscreen = NULL; 		//start of a list of screens
+struct win *first_win = NULL; 			//start of our linked list of all windows
+unsigned int mod = Mod1Mask; 			//modifyer key
+unsigned int mods = Mod1Mask | ShiftMask; 	//modifyer key + shift These are for sending keybindings to X
+bool sloppy_focus = true; 			//focus follows mouse
+struct binding bindings[BINDINGS];		//all the info on our keybindings
+Display *dpy;					// need this to talk to X
+Window root;					// root window struct
+unsigned long focus_pix; 			//these are X colors
 unsigned long unfocus_pix;
 unsigned long stack_background_pix;
 unsigned long stack_focus_pix;
 unsigned long stack_unfocus_pix;
-GC focus_gc = NULL;
+GC focus_gc = NULL;				//who even knows? X Needs graphical contexts
 GC unfocus_gc = NULL;
-bool gxerror = false;
-//Window cs->stackid;
-Atom wm_del_win;
+bool gxerror = false;				//so Xlib can tell us something went wrong, again, Xlib needs this
+Atom wm_del_win;				//atoms for getting info on windows
 Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
-char *dcmd = NULL;
-char *tcmd = NULL;
-char *ccmd01 = NULL;
-char *ccmd02 = NULL;
-char *ccmd03 = NULL;
-char *ccmd04 = NULL;
-char *ccmd05 = NULL;
-char *ccmd06 = NULL;
-char *ccmd07 = NULL;
-char *ccmd08 = NULL;
-char *ccmd09 = NULL;
-char *ccmd10 = NULL;
-unsigned short res_top = 0;
+char *dcmd = NULL;				//string that gets passed to /bin/sh when we invoke the menu
+char *tcmd = NULL;				//string that gets passed to /bin/sh when we invoke the terminal
+char *ccmds[CCMDS];				//array of strings that can be set by the user to pass to /bin/sh
+unsigned short res_top = 0;			//reserved space top, bottom, left, right
 unsigned short res_bot = 0;
 unsigned short res_left = 0;
 unsigned short res_right = 0;
-unsigned short resize_inc = 15;
-unsigned short offscreen = 0;
-struct timeval last_redraw;
+unsigned short resize_inc = 15;			//resize increment, sorta
+unsigned short empty_stack_height = 8;		//what it says, we show an empty stack (if visible) so the user knows that (1) the stack is empty and (2) the stack is toggled on
+unsigned short offscreen = 0;			//we'll set this later so we know where to move windows we don't want to be onscreen (i.e., a hidden stack)
+struct timeval last_redraw;			//we use this to keep track of whether events are triggered by euclid moving things around (e.g., if we move a window under the cursor we get an enter notify even, even though the pointer never moved) or whether we need to pay attention to them
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -326,16 +318,16 @@ void load_defaults() {
 	//toggle orientation
 	bind_key("Tab",&mod,&bindings[50]);
 	
-	// user defined -60
-
-	bind_key("r",&mod,&bindings[61]);
+	bind_key("r",&mod,&bindings[51]);
 
 	//prev/next view
-	bind_key("Prior", &mod,&bindings[62]);
-	bind_key("Next", &mod,  &bindings[63]);
+	bind_key("Prior", &mod,&bindings[52]);
+	bind_key("Next", &mod,  &bindings[53]);
 
 	//bind search
-	bind_key("slash",&mods, &bindings[64]);
+	bind_key("slash",&mods, &bindings[54]);
+
+	// user defined
 }
 
 void spawn(char *cmd) {
@@ -371,6 +363,12 @@ void split(char *in, char *out1, char *out2, char delim) {
 	};
 }
 
+char *str_dup(char *in) {
+	char * out = (char *) malloc(strlen(in) + 1);
+	strcpy(out,in);
+	return out;
+}
+
 void load_conf() {
 	FILE *conf;
 	char confdir[512];
@@ -390,11 +388,15 @@ void load_conf() {
 	} else { 
 		strcat(confdir,xdgconf);
 	};
+	//what happens here if both xdgconf and home were NULL?
+
+	//run rc file
 	strcat(confdir,"/euclid-wm");
 	strcpy(rcfile,confdir);
 	strcat(rcfile,"/euclidrc");
 	spawn(rcfile);
 
+	//open and parse config file
 	strcpy(conffile,confdir);
 	strcat(conffile,"/euclid-wm.conf");
         conf = fopen(conffile,"r");
@@ -428,13 +430,13 @@ void load_conf() {
 			};
 		
 			if (strcmp(key,"dmenu") == 0) {
-				dcmd = (char *) malloc(strlen(v) * sizeof(char));
-				strcpy(dcmd,v);
+				dcmd = str_dup(v);
 			} else if (strcmp(key,"term") == 0) {
-				tcmd = (char *) malloc(strlen(v) * sizeof(char));
-				strcpy(tcmd,v);
+				tcmd = str_dup(v);
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
+			} else if (strcmp(key,"empty_stack_height") == 0) {
+				empty_stack_height = atoi(v);
 			} else if (strcmp(key,"reserved_top") == 0) {
 				res_top = atoi(v);
 			} else if (strcmp(key,"reserved_bottom") == 0) {
@@ -496,30 +498,11 @@ void load_conf() {
 			//custom commands
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
-					#define ALSTR(P,S)\
-					P = (char *) malloc(strlen(S)  * sizeof(char));\
-					strcpy(P,S);
-
-				if (key[15] == '0' && key[16] == '1') {
-					ALSTR(ccmd01,v)
- 				} else if (key[15] == '0' && key[16] == '2') {
-					ALSTR(ccmd02,v)
-				} else if (key[15] == '0' && key[16] == '3') {
-					ALSTR(ccmd03,v)
-				} else if (key[15] == '0' && key[16] == '4') {
-					ALSTR(ccmd04,v)
-				} else if (key[15] == '0' && key[16] == '5') {
-					ALSTR(ccmd05,v)
-				} else if (key[15] == '0' && key[16] == '6') {
-					ALSTR(ccmd06,v)
-				} else if (key[15] == '0' && key[16] == '7') {
-					ALSTR(ccmd07,v)
-				} else if (key[15] == '0' && key[16] == '8') {
-					ALSTR(ccmd08,v)
-				} else if (key[15] == '0' && key[16] == '9') {
-					ALSTR(ccmd09,v)
-				} else if (key[15] == '1' && key[16] == '0') {
-					ALSTR(ccmd10,v)
+				const int ccmd_index = atoi(&key[15]) - 1;
+				if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+					ccmds[ccmd_index] = str_dup(v);
+				} else {
+					fprintf(stderr,"euclid-wm ERROR: wrong ccmd_index: %d\n",ccmd_index);
 				};
 				
 			/*
@@ -594,34 +577,22 @@ void load_conf() {
 					bindx = 49;
 				} else if (strcmp(key,"bind_toggle_orientation") == 0) {
 					bindx = 50;
-				} else if (strcmp(key,"bind_custom_01") == 0) {
-  					bindx = 51;
-  				} else if (strcmp(key,"bind_custom_02") == 0) {
-					bindx = 52;
-				} else if (strcmp(key,"bind_custom_03") == 0) {
-					bindx = 53;
-				} else if (strcmp(key,"bind_custom_04") == 0) {
-					bindx = 54;
-				} else if (strcmp(key,"bind_custom_05") == 0) {
-					bindx = 55;
-				} else if (strcmp(key,"bind_custom_06") == 0) {
-					bindx = 56;
-				} else if (strcmp(key,"bind_custom_07") == 0) {
-					bindx = 57;
-				} else if (strcmp(key,"bind_custom_08") == 0) {
-					bindx = 58;
-				} else if (strcmp(key,"bind_custom_09") == 0) {
-					bindx = 59;
-				} else if (strcmp(key,"bind_custom_10") == 0) {
-					bindx = 60;
 				} else if (strcmp(key,"bind_reload_config") == 0) {
-					bindx = 61;
+					bindx = 51;
 				} else if (strcmp(key,"bind_goto_previous_screen") == 0) {
-					bindx = 62;
+					bindx = 52;
 				} else if (strcmp(key,"bind_goto_next_screen") == 0) {
-					bindx = 63;
+					bindx = 53;
 				}else if (strcmp(key,"bind_search") == 0) {
-					bindx = 64;
+					bindx = 54;
+				} else if (strncmp(key,"bind_custom_", 12) == 0) {
+					const int ccmd_index = atoi(&key[12]) - 1;
+					if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+						bindx = BCMDS + ccmd_index;
+					} else {
+						fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key);
+						known = false;
+					};
 				} else {
 					fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key),
 					known = false;
@@ -633,11 +604,16 @@ void load_conf() {
 					char m[3];
 					char xkey[24];
 					split(v,m,xkey,' ');
-					if (m[1] == 'S') {
-						bind_key(xkey,&mods,&bindings[bindx]);
+					if (m[0] == 'M') {
+						if (m[1] == 'S') {
+							bind_key(xkey,&mods,&bindings[bindx]);
+						} else {
+							bind_key(xkey,&mod,&bindings[bindx]);
+						};
 					} else {
-						bind_key(xkey,&mod,&bindings[bindx]);				
-					};
+						static unsigned int mod = 0U;
+						bind_key(xkey,&mod,&bindings[bindx]);
+					}
 				};
 			};	 
 		};
@@ -1528,8 +1504,21 @@ void goto_view(struct view *v) {
 		if (s->v == v) {return;};
 		s = s->next;
 	};
-	struct track *t = cs->v->ft;
+
+	struct track *t;
 	struct cont *c;
+
+	t = v->ft;
+	while (t != NULL) {
+		c = t->c;
+		while (c != NULL) {
+			XMapWindow(dpy,c->win->id);
+			c = c->next;
+		};
+		t = t->next;
+	};
+
+	t = cs->v->ft;
 	while (t != NULL) {
 		c = t->c;
 		while (c != NULL) {
@@ -1550,17 +1539,9 @@ void goto_view(struct view *v) {
 		};
 		free(cs->v);
 	};
+
 	cs->v = v;
-	t = v->ft;
-	while (t != NULL) {
-		c = t->c;
-		while (c != NULL) {
-			XMapWindow(dpy,c->win->id);
-			c = c->next;
-		};
-		t = t->next;
-	};
-	//gettimeofday
+
 	gettimeofday(&last_redraw,0);
 }
 
@@ -1605,6 +1586,9 @@ struct cont * id_to_cont(Window w) {
 }
 
 void resize (int dir) {
+	if (cs->v->mfocus == NULL) {
+		return;
+	};
 	if (cs->v->orientv == true) {
 		switch (dir) {
 			case 1:
@@ -1780,7 +1764,7 @@ void layout() {
 			};
 			stackheight = (i * 20); 
 			if (i == 0) {
-				stackheight = 8; 
+				stackheight = empty_stack_height;
 			};
 		};
 		//draw the stack 
@@ -1816,13 +1800,6 @@ void layout() {
 			XSetWindowBorderWidth(dpy,s->v->mfocus->win->id,0);
 			int w = s->w; //this overflows onto adjacent screens. 
 			int h = s->h;
-/*			if (s->v->showstack == true) {
-				h += 1;
-			} else {
-				h += 2;
-			};
-These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
-*/
 			h -= stackheight;
 			XMoveResizeWindow(dpy,s->v->mfocus->win->id,(xo),(yo),(w),(h));
 			XRaiseWindow(dpy,s->v->mfocus->win->id);
@@ -1895,15 +1872,20 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 				//if tot == target, do nothing
 				//else calculate and distribute difference
 				if (tot != target) {
-					signed int delta = target - tot;
+					signed int difference = target - tot;
+					signed int delta;
 				 	if (noofconts != 0) {
-						delta /= noofconts;
+						delta = difference/noofconts;
 					} else {
 						delta = 0;
 					};
 					curc = curt->c;
 					while (curc != NULL) {
 						curc->size += delta;
+						if (curc->next == NULL) {
+							//ensure that the last the track is fully filled
+							curc->size += difference - delta*noofconts;
+						};
 						curc = curc->next;
 					};
 				};
@@ -1942,7 +1924,7 @@ These lines shouldn't be necessary AS LONG AS we are hidding the stack in fs
 							cm.data.l[0] = wm_take_focus;
 							cm.data.l[1] = CurrentTime;
 						}; 
-						//we intentionally do this even if the event was sent, the
+						//we intentionally do this; even if the event was sent, the
 						//event alone does not suffice to get focus on the window
 						XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
 	
@@ -1988,7 +1970,6 @@ int xerror(Display *d, XErrorEvent *e) {
 
 int event_loop() {
 	bool redraw;
-	//struct timeval last_redraw;
 	last_redraw.tv_sec = 0;
 	last_redraw.tv_usec = 0;
 	layout();
@@ -2047,7 +2028,7 @@ int event_loop() {
 				};
   
 				switch (i) {
-				//resize
+					//resize
 					case 0:
 						resize(4);
 						redraw = true;
@@ -2352,76 +2333,12 @@ int event_loop() {
 						break;
 
 					case 51:
-						spawn(ccmd01);
-						break;
-					case 52:
-						spawn(ccmd02);
-						break;
-
-					case 53:
-						spawn(ccmd03);
-						break;
-					case 54:
-						spawn(ccmd04);
-						break;
-					case 55:
-						spawn(ccmd05);
-						break;
-					case 56:
-						spawn(ccmd06);
-						break;
-					case 57:
-						spawn(ccmd07);
-						break;
-					case 58:
-						spawn(ccmd08);
-						break;
-					case 59:
-						spawn(ccmd09);
-						break;
-					case 60:
-						spawn(ccmd10);
-						break;
-					case 61:
 						//reload configs:
-						//XFreeGC()
-						//free commands
 						if (true) {
-							if (tcmd != NULL) {
-								free(tcmd);
-							};
-							if (dcmd != NULL) {
-								free(dcmd);
-							};
-							if (ccmd01 != NULL) {
-								free(ccmd01);
-							};
-							if (ccmd02 != NULL) {
-								free(ccmd02);
-							};
-							if (ccmd03 != NULL) {
-								free(ccmd03);
-							};
-							if (ccmd04 != NULL) {
-								free(ccmd04);
-							};
-							if (ccmd05 != NULL) {
-								free(ccmd05);
-							};
-							if (ccmd06 != NULL) {
-								free(ccmd06);
-							};
-							if (ccmd07 != NULL) {
-								free(ccmd07);
-							};
-							if (ccmd08 != NULL) {
-								free(ccmd08);
-							};
-							if (ccmd09 != NULL) {
-								free(ccmd09);
-							};
-							if (ccmd10 != NULL) {
-								free(ccmd10);
+							free(tcmd);
+							free(dcmd);
+							for (int i = 0; i < sizeof(ccmds)/sizeof(ccmds[0]); i++) {
+								free(ccmds[i]);
 							};
 
 							//Unbind keys
@@ -2450,7 +2367,7 @@ int event_loop() {
 							xgcv.foreground = stack_unfocus_pix;
 							unfocus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 						};
-					case 62:
+					case 52:
 						//move to previous screen
 						if (cs != firstscreen) {
 							struct screen *s = firstscreen;
@@ -2461,19 +2378,30 @@ int event_loop() {
 							redraw = true;
 						};
 						break;
-					case 63:
+					case 53:
 						//move to next screen
 						if (cs->next != NULL) {
 							cs = cs->next;
 							redraw = true;
 						};
 						break;
-					case 64:
+					case 54:
 						search_wins();	
 						redraw = true;
 				
 
 						break;
+
+					default:
+						{
+							const int ccmd_index = i - BCMDS;
+							if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+								spawn(ccmds[ccmd_index]);
+							} else {
+								fprintf(stderr,"euclid-wm ERROR: unknown key id: %d",i);
+							};
+							break;
+						}
 				};
 	
 			} else if (ev.type == ReparentNotify) {
