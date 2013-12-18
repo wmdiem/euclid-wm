@@ -92,8 +92,8 @@ bind_stack_focus_up = M semicolon
 bind_stack_focus_down = M apostrophe
 
 #push the item with stack focus up or down in the stack
-bind_swap_stack_up = MS ;
-bind_swap_stack_down = MS '
+bind_swap_stack_up = MS semicolon
+bind_swap_stack_down = MS apostrophe
 
 #flip the tracks of the current view 
 bind_toggle_orientation = M Tab
