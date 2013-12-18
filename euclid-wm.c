@@ -949,23 +949,122 @@ void forget_win (Window id) {
 
 void add_client_to_view (struct win *p, struct view *v) {
 	//first make sure it is not already in the target view:
-	struct track *tp = v->ft;
-	struct cont *cp = NULL;
-	while (tp != NULL) {
-		cp = tp->c;
-		while (cp != NULL) {
-			if (cp->win->id == p->id) {
+	//while doing this we are also going to count the tracks, to help with finding a good place for the new container later
+	struct track *tmpt = v->ft;
+	struct cont *tmpc = NULL;
+	int trks = 0;
+	int cnts = 0;
+	while (tmpt != NULL) {
+		trks++;
+		tmpc = tmpt->c;
+		while (tmpc != NULL) {
+			if (tmpc->win->id == p->id) {
 				return;
 			};
-			cp = cp->next;
+			tmpc = tmpc->next;
 		};
-		tp = tp->next;
+		tmpt = tmpt->next;
 	};
 
 
 	//make a cont for it
 	struct cont *c = (struct cont *) malloc  (sizeof(struct cont));
-	//no we need to test all these
+	c->win = p;
+	
+	//first, count the tracks on the view
+		
+	//second starting with the current track, walk thorugh the tracks until certain conditions are met (we find a track with enough room, or we get back to where we started), storing useful information as we go
+
+	if (v->mfocus != NULL) {
+	
+		tmpt = v->mfocus->track;
+		struct cont *tmpc = tmpt->c;
+		struct cont *fallbackc = NULL;
+		int ctcnts = 0; //current track's number of conts;
+		do {
+			cnts = 1;
+				while ( cnts < trks + 1 &&  tmpc->next != NULL){ //we stop if we realize there are too many contrs in this track already, or if we run out of conts to count. 
+					cnts++;
+					tmpc = tmpc->next;
+				}; 			
+			if (cnts < trks) {break;}; //this track had more then enough room, just stop
+			if (tmpt == v->mfocus->track) {
+				ctcnts = cnts;
+				if (cnts < trks + 1) {break;}; //we can stop right now because there is enough room in the currently focused track
+			} else if (cnts == trks && fallbackc == NULL) { //if we are here we have already checked the focused track it is at least pressed for space; this is the first alternate track
+				fallbackc = tmpc;
+			};
+			if (tmpt->next != NULL) {
+				tmpt = tmpt->next;
+			} else {
+				tmpt = v->ft;
+			};
+			tmpc = tmpt->c;
+		} while (tmpt != v->mfocus->track); //we went through them all and didn't find anything we liked
+	
+		//at this point we have: 
+		//tmpt = either the first suitable track with no pressure OR the focused track (if all tracks are at least pressed for space)
+		//if tmpt = the first track -> need to see whether this is because they are all full 
+			//or whether it is just because it has room
+		//if it is full, check whether we found a fallbackt;
+		//if fallback is null add a track
+
+		if (tmpc->track == v->mfocus->track) {
+			if (trks >= ctcnts) { //this is the track we want, just use old behavior and put it after v->mfocus
+				c->next = v->mfocus->next;
+				c->prev = v->mfocus;
+				if (v->mfocus->next != NULL) {
+					v->mfocus->next->prev = c;
+				};
+				v->mfocus->next = c;
+				c->track = v->mfocus->track;
+				c->size = v->mfocus->size;
+			
+			} else if (fallbackc) {//put it after fallbackc, the last container in the first track where num of tracks == num of containers
+				c->next = fallbackc->next;
+				c->prev = fallbackc;
+				fallbackc->next = c;
+				c->track = fallbackc->track;
+				c->size = fallbackc->size;
+			} else {
+			//make a new  track for it
+			while (tmpt->next != NULL) {tmpt = tmpt->next;};
+			//make track, 
+			struct track *nt = (struct track *) malloc(sizeof(struct track));
+			tmpt->next = nt;
+			nt->next = NULL;
+			nt->prev = tmpt;
+			nt->view = v;
+			nt->c = c;
+			nt->size = tmpt->size;
+			//set cont in it
+			c->track = nt;
+			c->next = NULL;
+			c->prev = NULL;
+			c->size = 100; //doesn't matter;
+			};
+		} else { //put it in tempt, tmpc
+			c->next = tmpc->next;
+			c->prev = tmpc;
+			tmpc->next = c;
+			c->track = tmpc->track;
+			c->size = tmpc->size;
+		};
+
+	} else { //first client on view 
+		c->next = NULL;
+		c->prev = NULL;
+		c->track = v->ft;
+		v->ft->c = c;
+		if (v->orientv == true) {
+			c->size = cs->h;
+		} else {
+			c->size = cs->w;
+		};
+
+	};
+
+/* Old version, a config variable in the furture may make it possible to choose which routine gets used for placement
 	if (v->mfocus != NULL) {
 		c->next = v->mfocus->next;
 		c->prev = v->mfocus;
@@ -989,6 +1088,8 @@ void add_client_to_view (struct win *p, struct view *v) {
 	};
 	c->win = p;
 	v->mfocus = c;
+*/
+v->mfocus = c;
 }
 
 void move_to_stack(struct cont *c) {
