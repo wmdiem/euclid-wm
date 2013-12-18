@@ -1941,13 +1941,14 @@ void layout() {
 			};
 			//compare tot to target, if they match go on 
 			if (tot != target) {
-				signed int delta = target - tot;
-				delta /= nooftracks;
+				signed int difference = target - tot;
+				signed int delta = difference/nooftracks;
 				curt = s->v->ft;
-				while (curt != NULL) {
+				while (curt->next != NULL) {
 					curt->size += delta;
 					curt = curt->next;
 				};
+				curt->size += difference - (delta*(nooftracks-1));
 			};
 			//else calculate the difference, and adjust all tracks
 			//second check that within each track the containers fit
