@@ -44,7 +44,9 @@ modkey = 1
 #BINDINGS
 #binding format is bind_ACT = MOD KEY
 #values of mod are M or MS (mod or mod + shift)
-#KEY is an X Keyname
+#KEY is an X Keyname; 
+#you can find the X Keyname for a key by running xev in a terminal and prssing the key while the xev window is focused 
+#it will appear after the keysym
 
 #spawn terminal or menu 
 #the second line of each pair is defining the command to send to /bin/sh
