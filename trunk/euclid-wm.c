@@ -222,7 +222,7 @@ unsigned short resize_inc = 15;			//resize increment, sorta
 unsigned short empty_stack_height = 8;		//what it says, we show an empty stack (if visible) so the user knows that (1) the stack is empty and (2) the stack is toggled on
 unsigned short offscreen = 0;			//we'll set this later so we know where to move windows we don't want to be onscreen (i.e., a hidden stack)
 struct timeval last_redraw;			//we use this to keep track of whether events are triggered by euclid moving things around (e.g., if we move a window under the cursor we get an enter notify even, even though the pointer never moved) or whether we need to pay attention to them
-
+bool default_orientation = true; 		//which way do we initialize views with their tracks running?
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
 	unsigned int code;
@@ -678,7 +678,7 @@ struct view * make_view() {
 	ptr->ft->prev = NULL;
 	ptr->ft->c = NULL;
 	ptr->ft->size = cs->w;
-	ptr->orientv = true;
+	ptr->orientv = default_orientation;
 	ptr->stack = NULL;
 	ptr->showstack = true;
 	ptr->fs = false;
@@ -1094,11 +1094,12 @@ void add_client_to_view (struct win *p, struct view *v) {
 		};	
 
 		
-	} else if (v->mfocus != NULL) { //we get here if it is a window with no previous position
+	} else if (v->mfocus != NULL) { //we get here if it is a window with no previous position but is being add to a view with other windows
 	
 		tmpt = v->mfocus->track;
 		struct cont *tmpc = tmpt->c;
-		struct cont *fallbackc = NULL;
+		struct cont *bestp = NULL; //we set this to whatever track has the fewest conts in it but it has fewer conts than tracks
+		int btcnts = 0; //number of conts in best track
 		int ctcnts = 0; //current track's number of conts;
 		do {
 			cnts = 1;
@@ -1106,12 +1107,14 @@ void add_client_to_view (struct win *p, struct view *v) {
 					cnts++;
 					tmpc = tmpc->next;
 				}; 			
-			if (cnts < trks) {break;}; //this track had more then enough room, just stop
 			if (tmpt == v->mfocus->track) {
 				ctcnts = cnts;
-				if (cnts < trks + 1) {break;}; //we can stop right now because there is enough room in the currently focused track
-			} else if (cnts == trks && fallbackc == NULL) { //if we are here we have already checked the focused track it is at least pressed for space; this is the first alternate track
-				fallbackc = tmpc;
+			} else if (cnts <= trks && bestp == NULL) { 
+				bestp = tmpc;
+				btcnts = cnts;
+			} else if (cnts < btcnts) {
+				bestp = tmpc;
+				btcnts = cnts;
 			};
 			if (tmpt->next != NULL) {
 				tmpt = tmpt->next;
@@ -1119,58 +1122,44 @@ void add_client_to_view (struct win *p, struct view *v) {
 				tmpt = v->ft;
 			};
 			tmpc = tmpt->c;
-		} while (tmpt != v->mfocus->track); //we went through them all and didn't find anything we liked
-	
-		//at this point we have: 
-		//tmpt = either the first suitable track with no pressure OR the focused track (if all tracks are at least pressed for space)
-		//if tmpt = the current track -> need to see whether this is because they are all full 
-			//or whether it is just because it has room
-		//if it is full, check whether we found a fallbackt;
-		//if fallback is null add a track
-
-		if (tmpc->track == v->mfocus->track) {
-			if (trks >= ctcnts) { //this is the track we want, just use old behavior and put it after v->mfocus
-				c->next = v->mfocus->next;
-				c->prev = v->mfocus;
-				if (v->mfocus->next != NULL) {
-					v->mfocus->next->prev = c;
-				};
-				v->mfocus->next = c;
-				c->track = v->mfocus->track;
-				c->size = v->mfocus->size;
-			
-			} else if (fallbackc) {//put it after fallbackc, the last container in the first track where num of tracks == num of containers
-				c->next = fallbackc->next;
-				c->prev = fallbackc;
-				fallbackc->next = c;
-				c->track = fallbackc->track;
-				c->size = fallbackc->size;
-			} else {
-				//make a new  track for it
-				while (tmpt->next != NULL) {tmpt = tmpt->next;};
-				//make track, 
-				struct track *nt = (struct track *) malloc(sizeof(struct track));
-				tmpt->next = nt;
-				nt->next = NULL;
-				nt->prev = tmpt;
-				nt->view = v;
-				nt->c = c;
-				nt->size = tmpt->size;
-				//set cont in it
-				c->track = nt;
-				c->next = NULL;
-				c->prev = NULL;
-				c->size = 100; //doesn't matter; layout will figure it out
-	
+		} while (tmpt != v->mfocus->track); 
+		if (btcnts < ctcnts && btcnts < trks + 1 && bestp) {
+			//put it in bestp
+			c->next = bestp->next;
+			c->prev = bestp;
+			bestp->next = c;
+			c->track = bestp->track;
+			c->size = bestp->size;
+		} else if (ctcnts < trks + 1) {
+			//put it after mfocus
+			c->next = v->mfocus->next;
+			c->prev = v->mfocus;
+			if (v->mfocus->next) {
+				v->mfocus->next->prev = c;
 			};
-		} else { //put it in tempt, tmpc
-			c->next = tmpc->next;
-			c->prev = tmpc;
-			tmpc->next = c;
-			c->track = tmpc->track;
-			c->size = tmpc->size;
-		};
+			v->mfocus->next = c;
+			c->track = v->mfocus->track;
+			c->size = v->mfocus->size;
 
+
+		} else {
+			//make a new  track for it
+			while (tmpt->next != NULL) {tmpt = tmpt->next;};
+			//make track, 
+			struct track *nt = (struct track *) malloc(sizeof(struct track));
+			tmpt->next = nt;
+			nt->next = NULL;
+			nt->prev = tmpt;
+			nt->view = v;
+			nt->c = c;
+			nt->size = tmpt->size;
+			//set cont in it
+			c->track = nt;
+			c->next = NULL;
+			c->prev = NULL;
+			c->size = 100; //doesn't matter; layout will figure it out
+		
+		}; 
 	} else { //first client on view 
 		c->next = NULL;
 		c->prev = NULL;
@@ -1782,6 +1771,7 @@ void move_to_view(struct view *v) {
 	};
 	remove_cont(cs->v->mfocus);
 	//add it to the new view
+	//we might want to reset its state information. 
 	add_client_to_view(w, v);
 }
 
