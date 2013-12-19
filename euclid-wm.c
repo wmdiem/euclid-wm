@@ -2118,10 +2118,20 @@ void layout() {
 			int y;
 			int h;
 			int w;
-			int offsett = 0;
-			int offsetc = 0;
+			int offsett;
+			int offsetc;
+			if (s->v->orientv) {
+				offsett = res_left;
+			} else {
+				offsett = res_top;
+			};
 			while (curt != NULL) {
-				offsetc = 0;
+				//offsetc = 0;
+				if (s->v->orientv) {
+					offsetc = res_top;
+				} else {
+					offsetc = res_left;
+				};
 				curc = curt->c;
 				while (curc != NULL) {
 					//make sure we tell windows that think they are fs that they aren't
@@ -2156,8 +2166,8 @@ void layout() {
 					//place window
 					if (s->v->orientv == true) {
 						//we sohuld be able to initalize the offsets to res space rather than 0 when we start instead of adding it in for each loop
-						x = offsett + res_left + xo;
-						y = offsetc + res_top + yo;
+						x = offsett + xo;
+						y = offsetc + yo;
 						if (!curt->next) { //adjust for rounding error
 							w = s->w - (offsett + 2 + res_right);
 						} else { 
@@ -2169,8 +2179,8 @@ void layout() {
 							h = curc->size - 2;
 						};
 					} else {
-						x = offsetc + res_left + xo;
-						y = offsett + res_top + yo;
+						x = offsetc + xo;
+						y = offsett + yo;
 						if (!curc->next) {
 							w = s->w - (offsetc + 2 + res_right);
 						} else {
