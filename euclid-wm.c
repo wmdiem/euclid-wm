@@ -2062,11 +2062,12 @@ void layout() {
 				signed int difference = target - tot;
 				signed int delta = difference/nooftracks;
 				curt = s->v->ft;
-				while (curt->next != NULL) {
+				//while (curt->next != NULL) {
+				while (curt) {
 					curt->size += delta;
 					curt = curt->next;
 				};
-				curt->size += difference - (delta*(nooftracks-1));
+				//curt->size += difference - (delta*(nooftracks-1));
 			};
 			//else calculate the difference, and adjust all tracks
 			//second check that within each track the containers fit
@@ -2102,10 +2103,10 @@ void layout() {
 					curc = curt->c;
 					while (curc != NULL) {
 						curc->size += delta;
-						if (curc->next == NULL) {
-							//ensure that the last the track is fully filled
-							curc->size += difference - delta*noofconts;
-						};
+						//if (curc->next == NULL) {
+						//	//ensure that the last the track is fully filled
+						//	curc->size += difference - delta*noofconts;
+					//	};
 						curc = curc->next;
 					};
 				};
@@ -2154,15 +2155,32 @@ void layout() {
 					};
 					//place window
 					if (s->v->orientv == true) {
+						//we sohuld be able to initalize the offsets to res space rather than 0 when we start instead of adding it in for each loop
 						x = offsett + res_left + xo;
 						y = offsetc + res_top + yo;
-						w = curt->size - 2;
-						h = curc->size - 2;
+						if (!curt->next) { //adjust for rounding error
+							w = s->w - (offsett + 2 + res_right);
+						} else { 
+							w = curt->size - 2;
+						};
+						if (!curc->next) {
+							h = s->h - (offsetc + 2 + stackheight + res_bot);
+						} else {
+							h = curc->size - 2;
+						};
 					} else {
 						x = offsetc + res_left + xo;
 						y = offsett + res_top + yo;
-						w = curc->size - 2;
-						h = curt->size - 2;
+						if (!curc->next) {
+							w = s->w - (offsetc + 2 + res_right);
+						} else {
+							w = curc->size - 2;
+						};
+						if (!curt->next) {
+							h = s->h - (offsett + 2 + stackheight + res_bot);
+						} else {
+							h = curt->size - 2;
+						};
 					};
 					XMoveResizeWindow(dpy,curc->win->id,(x),(y),(w),(h));
 					offsetc += curc->size;
