@@ -2035,7 +2035,7 @@ void layout() {
 				};
 				XSetInputFocus(dpy,s->v->mfocus->win->id,None,CurrentTime);
 			};
-			XSync(dpy,false);
+			XSync(dpy,false); //could we postpone this till we are done?
 		} else {
 			//first check that the tracks layout:
 			struct track *curt = s->v->ft;
@@ -2059,8 +2059,8 @@ void layout() {
 			};
 			//compare tot to target, if they match go on 
 			if (tot != target) {
-				signed int difference = target - tot;
-				signed int delta = difference/nooftracks;
+				signed int delta = target - tot;
+				delta = delta/nooftracks;
 				curt = s->v->ft;
 				//while (curt->next != NULL) {
 				while (curt) {
@@ -2093,10 +2093,10 @@ void layout() {
 				//if tot == target, do nothing
 				//else calculate and distribute difference
 				if (tot != target) {
-					signed int difference = target - tot;
 					signed int delta;
 				 	if (noofconts != 0) {
-						delta = difference/noofconts;
+						delta = target - tot;
+						delta = delta/noofconts;
 					} else {
 						delta = 0;
 					};
@@ -2158,14 +2158,11 @@ void layout() {
 						//we intentionally do this; even if the event was sent, the
 						//event alone does not suffice to get focus on the window
 						XSetInputFocus(dpy,curc->win->id,None,CurrentTime);
-	
-	
 					} else {
 						XSetWindowBorder(dpy,curc->win->id,unfocus_pix);
 					};
 					//place window
 					if (s->v->orientv == true) {
-						//we sohuld be able to initalize the offsets to res space rather than 0 when we start instead of adding it in for each loop
 						x = offsett + xo;
 						y = offsetc + yo;
 						if (!curt->next) { //adjust for rounding error
