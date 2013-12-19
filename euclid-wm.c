@@ -1759,8 +1759,17 @@ void goto_view(struct view *v) {
 void move_to_view(struct view *v) {
 	//move currenlty focused item
 	if (v == NULL || v == cs->v || cs->v->mfocus == NULL) {return;};
-	//remove it from the current view
 	struct win *w = cs->v->mfocus->win;
+	//remove it from the current view
+	//we might want to reset its state information.
+	//i think we do, at least if it is getting sent to a view with more than one other window
+	if (v->ft->next || (v->ft->c && v->ft->c->next)) {
+		 //clear position information
+		w->last_only_chld = false;
+		w->last_tpos = 0;
+		w->last_cpos = 0;
+	};
+
 	//check whether the view we are moving it to is displayed before unmapping
 	struct screen *s = firstscreen;
 	while (s != NULL && s->v != v) {
@@ -1771,7 +1780,6 @@ void move_to_view(struct view *v) {
 	};
 	remove_cont(cs->v->mfocus);
 	//add it to the new view
-	//we might want to reset its state information. 
 	add_client_to_view(w, v);
 }
 
