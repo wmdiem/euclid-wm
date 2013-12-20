@@ -19,3 +19,4 @@ fi
 #$CONFDIR/euclidrc 
 
 exec euclid-wm
+#euclid-wm > ~/euclid-session.log
