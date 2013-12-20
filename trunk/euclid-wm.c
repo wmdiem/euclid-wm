@@ -990,6 +990,7 @@ void forget_win (Window id) {
 void add_client_to_view (struct win *p, struct view *v) {
 	//first make sure it is not already in the target view:
 	//while doing this we are also going to count the tracks, to help with finding a good place for the new container later
+	//printf("adding client to view\n");
 	struct track *tmpt = v->ft;
 	struct cont *tmpc = NULL;
 	int trks = 0;
@@ -2229,42 +2230,6 @@ int event_loop() {
 			//printf ("eventtype: %d %s\n",ev.type,events[ev.type]);
 		
 			switch (ev.type){ //using a switch, event types are defined in /usr/include/X11/X.h; they range from 2-36
-			case MotionNotify:
-				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
-					struct cont *f = id_to_cont(ev.xmotion.window);
-					if (f != NULL) {
-							struct screen *s = firstscreen;
-							while (s != NULL && s->v != f->track->view) {
-								s = s->next;
-							};
-							cs = s;
-							cs->v->mfocus = f;
-
-						redraw = true;
-					};
-				}; 
-			break;
-			case EnterNotify:
-				if (!(ev.xcrossing.focus == false && sloppy_focus == true)) {break;};
-				struct timeval ctime;
-				gettimeofday(&ctime,0);
-				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
-				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
-				if ( sec > 1 || (sec == 0 && usec >= 10000) || (sec == 1 && usec >= -990000)) { 
-					if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xcrossing.window) {
-						struct cont *f = id_to_cont(ev.xmotion.window);
-						if (f != NULL) {
-							struct screen *s = firstscreen;
-							while (s != NULL && s->v != f->track->view) {
-								s = s->next;
-							};
-							cs = s;
-							cs->v->mfocus = f;
-							redraw = true;
-						};
-					};
-				};
-			break;
 			case KeyPress:
 			{
 			//first find the keypress index from bindings[]
@@ -2616,6 +2581,7 @@ int event_loop() {
 							xgcv.foreground = stack_unfocus_pix;
 							unfocus_gc = XCreateGC(dpy,cs->stackid,GCForeground,&xgcv);
 						};
+						break;
 					case 52:
 						//move to previous screen
 						if (cs != firstscreen) {
@@ -2653,52 +2619,107 @@ int event_loop() {
 						}
 				};
 	
-			break;
 			}
-			case ReparentNotify:
-				if (ev.xreparent.parent == root) {
-					if (is_top_level(ev.xreparent.window) == true) {
-						struct win *t;
-						t = add_win(ev.xreparent.window);
-						XWindowAttributes att;
-						XGetWindowAttributes (dpy,ev.xreparent.window,&att);
-						if (att.map_state != IsUnmapped) {
-							add_client_to_view(t,cs->v);
+			break;
+
+			case KeyRelease:
+			break;
+			
+			case ButtonPress:
+			break;
+			
+			case ButtonRelease:
+			break;
+
+			case MotionNotify:
+				if (cs->v->mfocus == NULL || cs->v->mfocus->win->id != ev.xmotion.window) {
+					struct cont *f = id_to_cont(ev.xmotion.window);
+					if (f != NULL) {
+							struct screen *s = firstscreen;
+							while (s != NULL && s->v != f->track->view) {
+								s = s->next;
+							};
+							cs = s;
+							cs->v->mfocus = f;
+
+						redraw = true;
+					};
+				}; 
+			break;
+			
+			case EnterNotify:
+				if (!(ev.xcrossing.focus == false && sloppy_focus == true)) {break;};
+				struct timeval ctime;
+				gettimeofday(&ctime,0);
+				signed long usec = ctime.tv_usec - last_redraw.tv_usec;
+				signed long sec = ctime.tv_sec - last_redraw.tv_sec;
+				if ( sec > 1 || (sec == 0 && usec >= 10000) || (sec == 1 && usec >= -990000)) { 
+					if (cs->v->mfocus != NULL && cs->v->mfocus->win->id != ev.xcrossing.window) {
+						struct cont *f = id_to_cont(ev.xmotion.window);
+						if (f != NULL) {
+							struct screen *s = firstscreen;
+							while (s != NULL && s->v != f->track->view) {
+								s = s->next;
+							};
+							cs = s;
+							cs->v->mfocus = f;
 							redraw = true;
 						};
 					};
-				} else {
-					forget_win(ev.xreparent.window);
 				};
+			break;
+			
+			case LeaveNotify:
+			break;
+
+			case FocusIn:
+			break;
+
+			case FocusOut:
+			break;
+			
+			case KeymapNotify:
+			break;
 		
+			case Expose:
 			break;
-			case ClientMessage:
-				if (ev.xclient.message_type == wm_change_state) {
-					if (ev.xclient.data.l[1] == wm_fullscreen) {
-						struct cont *wc = id_to_cont(ev.xclient.window);
-						if (wc != NULL) {
-							if (ev.xclient.data.l[0] == 1) { //go into full screen
-								wc->track->view->fs = true;
-								redraw = true;
-								wc->win->fullscreen = true;
-								wc->win->req_fullscreen = true;
-								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
-							} else { // exit fullscreen
-								if (wc->win->req_fullscreen == true) {
-									wc->track->view->fs = false;
-								};
-								redraw = true;
-								wc->win->fullscreen = false;
-								wc->win->req_fullscreen = false;
-								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
-							};
-						};
-					};
-				};
+		
+			case GraphicsExpose:
 			break;
+
+			case NoExpose:
+			break;
+	
+			case VisibilityNotify:
+			break;
+
+			case CreateNotify:
+			break;
+
 			case DestroyNotify:
 				forget_win(ev.xdestroywindow.window);
 			break;
+
+			case UnmapNotify:
+			{	struct cont *s;
+				s = id_to_cont(ev.xunmap.window);
+				if (s != NULL ) {
+					
+					if (s->win->req_fullscreen == true && s->track->view->mfocus == s) {
+						cs->v->fs = false;
+						s->win->req_fullscreen = false;
+					};
+					remove_cont(s);
+					//unless we caused this, we should check the window's original state 
+					//before setting this
+					
+					//we could potentially save cycles by first checking whether this view is displayed on a screen before redrawing
+					redraw = true;
+				};
+			//} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
+			}
+			break;
+
 			case MapNotify:
 				if (!is_top_level(ev.xmap.window)){break;};
 				//check whether it's in the layout, if not add it
@@ -2763,34 +2784,33 @@ int event_loop() {
 					};
 				};
 			break;
-			case UnmapNotify:
-			{	struct cont *s;
-				s = id_to_cont(ev.xunmap.window);
-				if (s != NULL ) {
-					
-					if (s->win->req_fullscreen == true && s->track->view->mfocus == s) {
-						cs->v->fs = false;
-						s->win->req_fullscreen = false;
+	
+		case MapRequest:
+		break;
+
+		case ReparentNotify:
+				if (ev.xreparent.parent == root) {
+					if (is_top_level(ev.xreparent.window) == true) {
+						XWindowAttributes att;
+						XGetWindowAttributes (dpy,ev.xreparent.window,&att);
+						if (att.map_state != IsUnmapped) {
+							struct win *t;
+							t = add_win(ev.xreparent.window);
+							add_client_to_view(t,cs->v);
+							redraw = true;
+						};
 					};
-					remove_cont(s);
-					//unless we caused this, we should check the window's original state 
-					//before setting this
-					
-					//we could potentially save cycles by first checking whether this view is displayed on a screen before redrawing
-					redraw = true;
+				} else {
+					forget_win(ev.xreparent.window);
 				};
-			//} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
-			break;
-			}
-			case CreateNotify:
-				if (!is_top_level(ev.xcreatewindow.window)) {break;};
-				add_win(ev.xcreatewindow.window);
-			break;
-			case ConfigureNotify:
+		
+		break;
+
+		case ConfigureNotify:
 			{
 				//if a window tries to manage itself we are going to play rough, unless it is putting itself in or out of fullscreen
 				struct cont *wc = id_to_cont(ev.xconfigure.window);
-				if (wc != NULL) {
+				if (wc) {
 					struct screen *tmps = firstscreen;
 					//we will see if adding this line, is good or not: the problem is that in fs, if a window tries to bring itself to the front euclid won't let it
 					//this behavior might be good, as it could keep things from stealing focus, try and see. 
@@ -2878,9 +2898,80 @@ int event_loop() {
 						};
 					};
 				};
-			};
 			}
+			
+			
+			break;
+
+			case ConfigureRequest:
+			break;
+
+			case GravityNotify:
+			break;
+
+			case ResizeRequest:
+			break;
+
+			case CirculateNotify:
+			break;
 	
+			case CirculateRequest:
+			break;
+
+			case PropertyNotify:
+			break;
+			
+			case SelectionClear:
+			break;
+
+			case SelectionRequest:
+			break;
+
+			case SelectionNotify:
+			break;
+
+			case ColormapNotify:
+			break;
+
+			case ClientMessage:
+				if (ev.xclient.message_type == wm_change_state) {
+					if (ev.xclient.data.l[1] == wm_fullscreen) {
+						struct cont *wc = id_to_cont(ev.xclient.window);
+						if (wc != NULL) {
+							if (ev.xclient.data.l[0] == 1) { //go into full screen
+								wc->track->view->fs = true;
+								redraw = true;
+								wc->win->fullscreen = true;
+								wc->win->req_fullscreen = true;
+								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)&wm_fullscreen,1);
+							} else { // exit fullscreen
+								if (wc->win->req_fullscreen == true) {
+									wc->track->view->fs = false;
+								};
+								redraw = true;
+								wc->win->fullscreen = false;
+								wc->win->req_fullscreen = false;
+								XChangeProperty(dpy,ev.xclient.window,wm_change_state,XA_ATOM,32,PropModeReplace,(unsigned char *)0,0);
+							};
+						};
+					};
+				};
+			break;
+			//case CreateNotify:
+			//	if (!is_top_level(ev.xcreatewindow.window)) {break;};
+			//	add_win(ev.xcreatewindow.window);
+			//break;
+			
+			case MappingNotify:
+			break;
+
+			case GenericEvent:
+			break;
+
+			default:
+			break;
+
+			};	
 		} while (XPending(dpy)); 
 	
 		if (redraw == true) {
