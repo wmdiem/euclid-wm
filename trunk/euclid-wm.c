@@ -372,7 +372,7 @@ char *str_dup(char *in) {
 	return out;
 }
 
-void load_conf() {
+void load_conf( bool first_call) {
 	FILE *conf;
 	char confdir[512];
 	char conffile[512];
@@ -394,10 +394,14 @@ void load_conf() {
 	//what happens here if both xdgconf and home were NULL?
 
 	//run rc file
-	strcat(confdir,"/euclid-wm");
-	strcpy(rcfile,confdir);
-	strcat(rcfile,"/euclidrc");
-	spawn(rcfile);
+	//but only when euclid loads
+	if (first_call) {
+
+		strcat(confdir,"/euclid-wm");
+		strcpy(rcfile,confdir);
+		strcat(rcfile,"/euclidrc");
+		spawn(rcfile);
+	};
 
 	//open and parse config file
 	strcpy(conffile,confdir);
@@ -2571,7 +2575,9 @@ int event_loop() {
 							//call bind keys
 							load_defaults();
 							//call load_config
-							load_conf();
+							//don't rerun euclidrc
+							//can we check whether there are more or fewer screens?
+							load_conf(false);
 							commit_bindings();
 							XFreeGC(dpy,focus_gc);
 							XFreeGC(dpy,unfocus_gc);
@@ -3040,7 +3046,7 @@ int main() {
 	
 	//we have to do this after we get root
 	memset(bindings, '\0', sizeof(bindings));
-	load_conf();
+	load_conf(true);
 	commit_bindings();
 
 	
