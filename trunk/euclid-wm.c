@@ -1824,7 +1824,7 @@ struct cont * id_to_cont(Window w) {
 	while (ws != NULL && ws->next != NULL && ws->id!=w){
 		ws = ws->next;
 	};
-	if (ws->id == w) {
+	if (ws != NULL && ws->id == w) {
 		return (ws->cont);
 	} else {
 		return (NULL);
