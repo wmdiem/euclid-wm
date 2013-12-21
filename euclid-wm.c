@@ -163,6 +163,7 @@ struct cont {
 struct win {
 	Window id; //X11 window id
 	struct win *next; //linked list of ALL windows everywhere that euclid cares about
+	struct cont *cont; //holds a pointer to the cont if the win is in a layout
 	bool del_win; 
 	bool take_focus; 
 	bool fullscreen; 
@@ -729,6 +730,7 @@ void addscreen(short h, short w, short x, short y, short n) {
 }
 
 void remove_cont(struct cont *c) {
+	struct win *w = c->win;
 	//reset focus if necessary
 	if (c->prev != NULL) {
 		c->track->view->mfocus = c->prev;
@@ -775,6 +777,8 @@ void remove_cont(struct cont *c) {
 	} else if (c->track->next || c->track->prev) {
 		c->win->last_only_chld = true;
 	};
+	
+	w->cont = NULL;
 
 	
 	//get cont offset, add half of cont size
@@ -855,6 +859,7 @@ struct win * add_win(Window  id) {
 	p->last_tpos = 0;
 	p->last_cpos = 0;
 	p->last_only_chld = false;
+	p->cont = NULL;
 	return p;
 }
 
@@ -881,6 +886,8 @@ void forget_win (Window id) {
 	struct view *v = fv;
 	struct track *t;
 	struct cont *c;
+	//TODO, now that wins point to their cont we can remove these nested loops
+	//HOWEVER: WE MUST ENSURE THAT WE NEVER call add_client_to_view until we have first removed it from any view it is on. 
 	while (v != NULL) {
 		t = v->ft;
 		while (t != NULL) {
@@ -1015,6 +1022,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 	//make a cont for it
 	struct cont *c = (struct cont *) malloc  (sizeof(struct cont));
 	c->win = p;
+	p->cont = c;
 	
 	//starting with the current track, walk thorugh the tracks until certain conditions are met (we find a track with enough room, or we get back to where we started), storing useful information as we go
 	//preferences are
@@ -1789,10 +1797,14 @@ void move_to_view(struct view *v) {
 }
 
 struct cont * id_to_cont(Window w) {
-	struct track *t;
-	struct cont *c;
-	struct screen *s = firstscreen;
-	while (s != NULL) {
+	//struct track *t;
+	//struct cont *c;
+	//struct screen *s = firstscreen;
+	/*while (s != NULL) {
+	//TODO: First, I thought views were screen independed, so we should be looping through all views,
+	//not just those that are on a screen
+	//Second: this is expensive and gets called a lot: We should have the win struct point to the cont the window is displayed in
+	//we should be able to just update add_client to view and remove_cont
 		t = s->v->ft;
 		while (t != NULL) {
 			c = t->c;
@@ -1807,6 +1819,16 @@ struct cont * id_to_cont(Window w) {
 	s = s->next;
 	};
 	return (NULL);
+	*/
+	struct win *ws = first_win;
+	while (ws != NULL && ws->next != NULL && ws->id!=w){
+		ws = ws->next;
+	};
+	if (ws->id == w) {
+		return (ws->cont);
+	} else {
+		return (NULL);
+	};
 }
 
 void resize (int dir) {
@@ -2707,20 +2729,26 @@ int event_loop() {
 			break;
 
 			case UnmapNotify:
-			{	struct cont *s;
-				s = id_to_cont(ev.xunmap.window);
-				if (s != NULL ) {
+			{	struct cont *c;
+				c = id_to_cont(ev.xunmap.window);
+				if (c != NULL ) {
 					
-					if (s->win->req_fullscreen == true && s->track->view->mfocus == s) {
+					if (c->win->req_fullscreen == true && c->track->view->mfocus == c) {
 						cs->v->fs = false;
-						s->win->req_fullscreen = false;
+						c->win->req_fullscreen = false;
 					};
-					remove_cont(s);
-					//unless we caused this, we should check the window's original state 
-					//before setting this
-					
-					//we could potentially save cycles by first checking whether this view is displayed on a screen before redrawing
-					redraw = true;
+					//hold everything: What if the unmapnotify is a result of us moving the window to a new view?
+					//why was this not a problem before changing the id_to_cont function?
+					//so check that the view is displayed before removeing the cont:
+					struct screen *s = firstscreen;
+					while (s !=NULL && s->v != c->track->view) {
+						s = s->next;
+					};
+					if (s) { //win was on screen
+						remove_cont(c);
+					 
+						redraw = true;
+					};
 				};
 			//} else if (ev.type == CreateNotify && is_top_level(ev.xcreatewindow.window) ==true) {
 			}
