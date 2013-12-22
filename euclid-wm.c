@@ -781,7 +781,6 @@ void remove_cont(struct cont *c) {
 	w->cont = NULL;
 
 	
-	//get cont offset, add half of cont size
 	//remove c and clean up
 	//is c first in the track?
 	if (c->track->c == c) {
@@ -1078,7 +1077,7 @@ void add_client_to_view (struct win *p, struct view *v) {
 			//shove it into an existing track, ie, tp
 			//decide whether to put p above or below cp:
 			cp = tp->c;
-			while (cp !=NULL && ccoord + cp->size < p->last_cpos) {
+			while (cp->next !=NULL && ccoord + cp->size < p->last_cpos) {
 				ccoord += cp->size;
 				cp= cp->next;
 			};
@@ -2818,14 +2817,21 @@ int event_loop() {
 						redraw = true;
 
 					};
-				} else { //we know this window, and it is displayed somewhere
+				} else { //we know this window, and it is in a view somewhere
 					struct cont *c = id_to_cont(ev.xmap.window);
-					struct win *w = c->win;	
+					struct win *w = c->win;
+					struct screen *s = firstscreen;
+					while (s!=NULL && c->track->view != s->v) {	
+						s = s->next;
+					};
+					
 					//remove the cont from the prior view
-					remove_cont(c);
-					add_client_to_view(w,cs->v);	
-					//do we need to set focus? shouldn't
-					redraw = true;
+					if (!s) { //remember: we map windows immediately after switching views internally, we don't want to remove the windows as we map them!
+						remove_cont(c);
+						add_client_to_view(w,cs->v);	
+						//do we need to set focus? shouldn't
+						redraw = true;
+					};
 				};
 			break;
 	
