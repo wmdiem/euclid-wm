@@ -2756,8 +2756,95 @@ int event_loop() {
 			break;
 
 			case MapNotify:
-				//TODO This needs to be gone over
-				if (!is_top_level(ev.xmap.window)){break;};
+				if (!is_top_level(ev.xmap.window)){
+					break;
+				} else {
+
+				//check for its win struct:
+				struct win *w = first_win;
+				while (w!=NULL && w->id != ev.xmap.window) {
+					w = w->next;
+				};
+
+				if (w == NULL) { //window was unknown, add it
+					w = add_win(ev.xmap.window);
+					//need to get the win struct to pass to 
+					//add_client_to_view;
+				} else { //window is known
+					//remove from where it previously was, unless where it previously was is already on a screen (Which shouldn't happen, since then it would already have been mapped)
+					if (w->cont) { //it is in a layout somewhere
+						struct cont *c = id_to_cont(ev.xmap.window);
+						//struct win *w = c->win;
+						struct screen *s = firstscreen;
+						while (s!=NULL && c->track->view != s->v) {	
+							s = s->next;
+						};
+					
+						//remove the cont from the prior view
+						if (!s) { //remember: we map windows immediately after switching views internally, we don't want to remove the windows as we map them!
+							remove_cont(c);
+						//	add_client_to_view(w,cs->v);	
+						//	redraw = true;
+						} else { //client is already onscreen
+							break;
+						};
+
+					} else {
+						struct stack_item *s = cs->v->stack;
+						while (s != NULL) {
+							if (s->win->id == ev.xmap.window) {break;};
+							s = s->next;
+						};
+						if (s != NULL && s->win->id == ev.xmap.window) { // remove it from the stack
+							 if (s == cs->v->stack) {
+			                                        cs->v->stack = s->next;
+                        			        };
+			                                if (s == cs->v->sfocus) {
+                        			                if (s->next != NULL) {
+                                               				 cs->v->sfocus = s->next;
+                                       				 } else {
+                                              				  cs->v->sfocus = s->prev;
+                                       				 };
+                               				 };
+                               				 if (s->next != NULL) {
+                                       				 s->next->prev = s->prev;
+                              				  };
+			                                if (s->prev != NULL) {
+                        		                	s->prev->next = s->next;
+                               				 };
+                               				 if (s == cs->v->stack) {
+                                      				  cs->v->stack = s->next;
+                               				 };
+                              				 free(s);
+
+						}; //finished with stack check
+						//finally add to layout
+					};
+
+				};
+				add_client_to_view(w,cs->v);
+						//but we aren't done yet. Flash maps the window already configured to be fullscreen, we ignore the first configure, because the window isn't mapped and isn't in our data structure.
+						//so we need to check NOW to see if it is trying to force fullscreen
+
+                               	if (cs->v->fs != true) { 
+					XWindowAttributes wa;
+					XGetWindowAttributes(dpy,ev.xmap.window,&wa);
+					if (gxerror == true) {gxerror = false;};
+					if (wa.height == cs->h && wa.width == cs->w) {
+						cs->v->fs = true;
+						w->fullscreen = true;
+						w->req_fullscreen = true;
+					};
+				};
+
+				redraw = true;
+
+
+			};
+					//first see if it is in a layout, second, go therough the stacks to find it
+					
+//		};
+	/*
 				//check whether it's in the layout, if not add it
 				if (id_to_cont(ev.xmap.window) == NULL) {
 					//see whether we know about the window
@@ -2835,6 +2922,7 @@ int event_loop() {
 						redraw = true;
 					};
 				};
+	*/
 			break;
 	
 		case MapRequest:
