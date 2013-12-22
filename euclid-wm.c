@@ -2755,11 +2755,13 @@ int event_loop() {
 			break;
 
 			case MapNotify:
+				//TODO This needs to be gone over
 				if (!is_top_level(ev.xmap.window)){break;};
 				//check whether it's in the layout, if not add it
 				if (id_to_cont(ev.xmap.window) == NULL) {
 					//see whether we know about the window
-					if (is_top_level(ev.xmap.window)) {
+					if (is_top_level(ev.xmap.window)) { //calling this twice in a row seems unncessecary but it might just be me. 
+						//In fact this whole routine seems to run in circles
 						struct win *w;
 						w = first_win;
 						while (w != NULL && w->id != ev.xmap.window) {
@@ -2816,6 +2818,14 @@ int event_loop() {
 						redraw = true;
 
 					};
+				} else { //we know this window, and it is displayed somewhere
+					struct cont *c = id_to_cont(ev.xmap.window);
+					struct win *w = c->win;	
+					//remove the cont from the prior view
+					remove_cont(c);
+					add_client_to_view(w,cs->v);	
+					//do we need to set focus? shouldn't
+					redraw = true;
 				};
 			break;
 	
