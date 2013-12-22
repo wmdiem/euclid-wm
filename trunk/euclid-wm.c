@@ -2431,12 +2431,14 @@ int event_loop() {
 						};
 						redraw = true;
 						break;
-					//flip the layout
+					//swap stack and main	
 					case 35:
 						if (cs->v->fs == true) {break;};
 						if (cs->v->sfocus != NULL && cs->v->mfocus != NULL) {
 							struct win *m = cs->v->mfocus->win;
 							struct win *s = cs->v->sfocus->win;
+							cs->v->sfocus->win->cont = cs->v->mfocus->win->cont;
+							cs->v->mfocus->win->cont = NULL;
 							cs->v->mfocus->win = s;
 							cs->v->sfocus->win = m;
 							XMapWindow(dpy,cs->v->mfocus->win->id);
