@@ -2577,9 +2577,12 @@ int event_loop() {
 						//reload configs:
 						if (true) {
 							free(tcmd);
+							tcmd = NULL;
 							free(dcmd);
+							dcmd = NULL;
 							for (int i = 0; i < sizeof(ccmds)/sizeof(ccmds[0]); i++) {
 								free(ccmds[i]);
+								ccmds[i] = NULL;
 							};
 
 							//Unbind keys
