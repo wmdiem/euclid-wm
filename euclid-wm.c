@@ -1957,7 +1957,7 @@ void search_wins() {
 		winnum[pos2] = '\0';
 		int id = atoi(winnum);
 	v = fv;
-	while (v != NULL) {
+	while (v != NULL) { //we can speed this up by using win->c
 		//search main area
 		struct track *t = v->ft;
 		while (t != NULL) {
@@ -2773,7 +2773,7 @@ int event_loop() {
 				} else { //window is known
 					//remove from where it previously was, unless where it previously was is already on a screen (Which shouldn't happen, since then it would already have been mapped)
 					if (w->cont) { //it is in a layout somewhere
-						struct cont *c = id_to_cont(ev.xmap.window);
+						struct cont *c = w->cont;
 						//struct win *w = c->win;
 						struct screen *s = firstscreen;
 						while (s!=NULL && c->track->view != s->v) {	
