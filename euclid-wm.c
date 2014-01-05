@@ -394,11 +394,12 @@ void load_conf( bool first_call) {
 	};
 	//what happens here if both xdgconf and home were NULL?
 
+	strcat(confdir,"/euclid-wm");
+
 	//run rc file
 	//but only when euclid loads
 	if (first_call) {
 
-		strcat(confdir,"/euclid-wm");
 		strcpy(rcfile,confdir);
 		strcat(rcfile,"/euclidrc");
 		spawn(rcfile);
