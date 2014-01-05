@@ -97,6 +97,8 @@ FILE *popen(char *, char *);
 int pclose (FILE *);
 char *tempnam(char *,char*);
 
+//determines size of a static array (won't work with pointers)
+#define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
 
 //number of builtin commands
 #define BCMDS 55
@@ -508,7 +510,7 @@ void load_conf( bool first_call) {
 			//custom_command_01 = cmd arg1 arg2
 			} else if (key[0] == 'c' && key[5] == 'm' && key[8] == 'o' && key[13] == 'd') {
 				const int ccmd_index = atoi(&key[15]) - 1;
-				if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+				if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
 					ccmds[ccmd_index] = str_dup(v);
 				} else {
 					fprintf(stderr,"euclid-wm ERROR: wrong ccmd_index: %d\n",ccmd_index);
@@ -596,7 +598,7 @@ void load_conf( bool first_call) {
 					bindx = 54;
 				} else if (strncmp(key,"bind_custom_", 12) == 0) {
 					const int ccmd_index = atoi(&key[12]) - 1;
-					if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+					if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
 						bindx = BCMDS + ccmd_index;
 					} else {
 						fprintf(stderr,"euclid-wm ERROR: uknown binding in config: \"%s\"\n",key);
@@ -2581,7 +2583,7 @@ int event_loop() {
 							tcmd = NULL;
 							free(dcmd);
 							dcmd = NULL;
-							for (int i = 0; i < sizeof(ccmds)/sizeof(ccmds[0]); i++) {
+							for (int i = 0; i < ARRAY_LEN(ccmds); i++) {
 								free(ccmds[i]);
 								ccmds[i] = NULL;
 							};
@@ -2643,7 +2645,7 @@ int event_loop() {
 					default:
 						{
 							const int ccmd_index = i - BCMDS;
-							if (ccmd_index >= 0 && ccmd_index < sizeof(ccmds)/sizeof(ccmds[0])) {
+							if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
 								spawn(ccmds[ccmd_index]);
 							} else {
 								fprintf(stderr,"euclid-wm ERROR: unknown key id: %d",i);
