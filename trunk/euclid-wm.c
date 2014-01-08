@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2010, William M. Diem <wmdiem at gmail dot com>
+Copyright (c) 2010-14, William M. Diem <wmdiem at gmail dot com>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -621,9 +621,9 @@ void load_conf( bool first_call) {
 						} else {
 							bind_key(xkey,&mod,&bindings[bindx]);
 						};
-					} else {
-						static unsigned int mod = 0U;
-						bind_key(xkey,&mod,&bindings[bindx]);
+					} else if (m[0] == 'N') {
+						static unsigned int modn = 0U;
+						bind_key(xkey,&modn,&bindings[bindx]);
 					}
 				};
 			};	 
