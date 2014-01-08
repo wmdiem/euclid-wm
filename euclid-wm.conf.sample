@@ -43,7 +43,7 @@ modkey = 1
 
 #BINDINGS
 #binding format is bind_ACT = MOD KEY
-#values of mod are M or MS (mod or mod + shift)
+#values of mod are M,  MS, or N (mod, mod + shift, none)
 #KEY is an X Keyname; 
 #you can find the X Keyname for a key by running xev in a terminal and prssing the key while the xev window is focused 
 #it will appear after the keysym
@@ -121,11 +121,11 @@ bind_goto_next_screen = M Next
 bind_search = MS slash
 
 #CUSTOM HOTKEYS
-#euclid supports up to ten hotkeys, bound to external commands
-#the format for the binding is: bind_custom_[01-10] = [M | MS] [keyname] (just like normal bindings)
-#the format for the associated commands is: custom_command_[01-10] = [command to pass to shell]
+#euclid supports up to 99 hotkeys, bound to external commands
+#the format for the binding is: bind_custom_[01-99] = [M | MS | N] [keyname] (just like normal bindings)
+#the format for the associated commands is: custom_command_[01-99] = [command to pass to shell]
 #e.g., 
-#bind_custom_01 = M Print
+#bind_custom_01 = N Print
 #custom_command_01 = scrot -e 'mv $f ~/screenshots/'
 
 #bind_custom_02 = M x
