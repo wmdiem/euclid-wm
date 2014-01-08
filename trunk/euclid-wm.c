@@ -513,7 +513,7 @@ void load_conf( bool first_call) {
 				if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
 					ccmds[ccmd_index] = str_dup(v);
 				} else {
-					fprintf(stderr,"euclid-wm ERROR: wrong ccmd_index: %d\n",ccmd_index);
+					fprintf(stderr,"euclid-wm ERROR: wrong ccmd_index: %d; max is %d\n",ccmd_index,CCMDS);
 				};
 				
 			/*
@@ -624,7 +624,10 @@ void load_conf( bool first_call) {
 					} else if (m[0] == 'N') {
 						static unsigned int modn = 0U;
 						bind_key(xkey,&modn,&bindings[bindx]);
-					}
+					} else {
+						m[2] = '\0';
+						fprintf(stderr,"euclid-wm ERROR: unknown keybinding modifier in config: \"%s\"\n",m);
+					};
 				};
 			};	 
 		};
