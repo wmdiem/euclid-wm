@@ -32,6 +32,12 @@ reserved_bottom = 0
 reserved_left = 0
 reserved_right = 0
 
+#AUTOBALANCE
+#if set to true, euclid will try to add windows to the view in order to give them all equal space,
+#Specifically, it will try to keep the ratio of rows to columns = 1:1
+#If not true, euclid places new windows below the currently focused window
+autobalance = true
+
 #RESIZE INCREMENT
 #the incremental change for each resize keypress (kinda)
 

@@ -226,6 +226,9 @@ unsigned short empty_stack_height = 8;		//what it says, we show an empty stack (
 unsigned short offscreen = 0;			//we'll set this later so we know where to move windows we don't want to be onscreen (i.e., a hidden stack)
 struct timeval last_redraw;			//we use this to keep track of whether events are triggered by euclid moving things around (e.g., if we move a window under the cursor we get an enter notify even, even though the pointer never moved) or whether we need to pay attention to them
 bool default_orientation = true; 		//which way do we initialize views with their tracks running?
+bool autobalance = false;			//is smart layout balancing enabled?
+
+
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
 	unsigned int code;
@@ -444,6 +447,12 @@ void load_conf( bool first_call) {
 				dcmd = str_dup(v);
 			} else if (strcmp(key,"term") == 0) {
 				tcmd = str_dup(v);
+			} else if (strcmp(key,"autobalance") == 0) {
+				if (strcmp(v,"true") == 0) {
+					autobalance = true;
+				} else {
+					autobalance = false;
+				};
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"empty_stack_height") == 0) {
@@ -1036,187 +1045,189 @@ void add_client_to_view (struct win *p, struct view *v) {
 	//if current track has tracks + 1 cont, put it in current track
 	//if current track has tracks + 1 cont, but another track has fewer conts (i.e., conts <= tracks) put it in the first track that meets that condition
 	//otherwise make a new track and put the window there
-	if (p->last_tpos && v->mfocus != NULL) { 
-		//if we have a record try to put it where it last was. 
-		//walk the layout, looking for the track and cont that overlays last_tpos and last_cpos
-		struct track *tp = v->ft;
-		struct cont *cp;
-		int tcoord = 0;
-		int ccoord = 0;
-		while (tp->next != NULL && tcoord + tp->size < p->last_tpos) {
-			tcoord += tp->size;
-			tp = tp->next;
-		};
-		//does the window go in the this track or did it have its own? 
-		//only way to decide is to keep a bool of last state. let's call it: last_only_chld
-		if (p->last_only_chld) {
-			//we have to make a new track for it
-			struct track *nt = (struct track *) malloc(sizeof(struct track));
-			nt->view = v; 
-			nt->c = c;
-			nt->size = tp->size;
-			c->prev = NULL;
-			c->next = NULL;
-			c->track = nt;
-			//decide where the new track goes:
-			if (tcoord + tp->size / 2 >= p->last_tpos) {
-				//put it before tp
-				nt->next = tp;
-				nt->prev = tp->prev;
-				tp->prev = nt;
-				if (nt->prev == NULL) { 
-					v->ft = nt;
+	if (autobalance) { 
+		if (p->last_tpos && v->mfocus != NULL) { 
+			//if we have a record try to put it where it last was. 
+			//walk the layout, looking for the track and cont that overlays last_tpos and last_cpos
+			struct track *tp = v->ft;
+			struct cont *cp;
+			int tcoord = 0;
+			int ccoord = 0;
+			while (tp->next != NULL && tcoord + tp->size < p->last_tpos) {
+				tcoord += tp->size;
+				tp = tp->next;
+			};
+			//does the window go in the this track or did it have its own? 
+			//only way to decide is to keep a bool of last state. let's call it: last_only_chld
+			if (p->last_only_chld) {
+				//we have to make a new track for it
+				struct track *nt = (struct track *) malloc(sizeof(struct track));
+				nt->view = v; 
+				nt->c = c;
+				nt->size = tp->size;
+				c->prev = NULL;
+				c->next = NULL;
+				c->track = nt;
+				//decide where the new track goes:
+				if (tcoord + tp->size / 2 >= p->last_tpos) {
+					//put it before tp
+					nt->next = tp;
+					nt->prev = tp->prev;
+					tp->prev = nt;
+					if (nt->prev == NULL) { 
+						v->ft = nt;
+					} else {
+						nt->prev->next = nt;
+					};
 				} else {
-					nt->prev->next = nt;
+					//put it after
+					nt->prev = tp;
+					nt->next = tp->next;
+					if (tp->next) {
+						tp->next->prev = nt;
+					};
+					tp->next = nt;
 				};
-			} else {
-				//put it after
-				nt->prev = tp;
-				nt->next = tp->next;
-				if (tp->next) {
-					tp->next->prev = nt;
+				
+			} else { 
+				//shove it into an existing track, ie, tp
+				//decide whether to put p above or below cp:
+				cp = tp->c;
+				while (cp->next !=NULL && ccoord + cp->size < p->last_cpos) {
+					ccoord += cp->size;
+					cp= cp->next;
 				};
-				tp->next = nt;
-			};
-			
-		} else { 
-			//shove it into an existing track, ie, tp
-			//decide whether to put p above or below cp:
-			cp = tp->c;
-			while (cp->next !=NULL && ccoord + cp->size < p->last_cpos) {
-				ccoord += cp->size;
-				cp= cp->next;
-			};
-			c->track = tp;
-			c->size = cp->size;
-			if (ccoord + cp->size / 2 >= p->last_cpos) {
-				//put it in front of tc;
-				c->next = cp;
-				c->prev = cp->prev;
-				cp->prev = c;
-				if (c->prev == NULL) {
-					c->track->c = c;
+				c->track = tp;
+				c->size = cp->size;
+				if (ccoord + cp->size / 2 >= p->last_cpos) {
+					//put it in front of tc;
+					c->next = cp;
+					c->prev = cp->prev;
+					cp->prev = c;
+					if (c->prev == NULL) {
+						c->track->c = c;
+					} else {
+						c->prev->next = c;
+					};
 				} else {
-					c->prev->next = c;
+					//put it after
+					c->prev = cp;
+					c->next = cp->next;
+					cp->next = c;
+					if (c->next) {
+						c->next->prev = c;
+					};
 				};
-			} else {
-				//put it after
-				c->prev = cp;
-				c->next = cp->next;
-				cp->next = c;
-				if (c->next) {
-					c->next->prev = c;
-				};
-			};
-
-		};	
-
-		
-	} else if (v->mfocus != NULL) { //we get here if it is a window with no previous position but is being add to a view with other windows
 	
-		tmpt = v->mfocus->track;
-		struct cont *tmpc = tmpt->c;
-		struct cont *bestp = NULL; //we set this to whatever track has the fewest conts in it but it has fewer conts than tracks
-		int btcnts = 0; //number of conts in best track
-		int ctcnts = 0; //current track's number of conts;
-		do {
-			cnts = 1;
-				while ( cnts < trks + 1 &&  tmpc->next != NULL){ //we stop if we realize there are too many contrs in this track already, or if we run out of conts to count. 
-					cnts++;
-					tmpc = tmpc->next;
-				}; 			
-			if (tmpt == v->mfocus->track) {
-				ctcnts = cnts;
-			} else if (cnts <= trks && bestp == NULL) { 
-				bestp = tmpc;
-				btcnts = cnts;
-			} else if (cnts < btcnts) {
-				bestp = tmpc;
-				btcnts = cnts;
-			};
-			if (tmpt->next != NULL) {
-				tmpt = tmpt->next;
+			};	
+	
+			
+		} else if (v->mfocus != NULL) { //we get here if it is a window with no previous position but is being add to a view with other windows
+		
+			tmpt = v->mfocus->track;
+			struct cont *tmpc = tmpt->c;
+			struct cont *bestp = NULL; //we set this to whatever track has the fewest conts in it but it has fewer conts than tracks
+			int btcnts = 0; //number of conts in best track
+			int ctcnts = 0; //current track's number of conts;
+			do {
+				cnts = 1;
+					while ( cnts < trks + 1 &&  tmpc->next != NULL){ //we stop if we realize there are too many contrs in this track already, or if we run out of conts to count. 
+						cnts++;
+						tmpc = tmpc->next;
+					}; 			
+				if (tmpt == v->mfocus->track) {
+					ctcnts = cnts;
+				} else if (cnts <= trks && bestp == NULL) { 
+					bestp = tmpc;
+					btcnts = cnts;
+				} else if (cnts < btcnts) {
+					bestp = tmpc;
+					btcnts = cnts;
+				};
+				if (tmpt->next != NULL) {
+					tmpt = tmpt->next;
+				} else {
+					tmpt = v->ft;
+				};
+				tmpc = tmpt->c;
+			} while (tmpt != v->mfocus->track); 
+			if (btcnts < ctcnts && btcnts < trks + 1 && bestp) {
+				//put it in bestp
+				c->next = bestp->next;
+				c->prev = bestp;
+				bestp->next = c;
+				c->track = bestp->track;
+				c->size = bestp->size;
+			} else if (ctcnts < trks + 1) {
+				//put it after mfocus
+				c->next = v->mfocus->next;
+				c->prev = v->mfocus;
+				if (v->mfocus->next) {
+					v->mfocus->next->prev = c;
+				};
+				v->mfocus->next = c;
+				c->track = v->mfocus->track;
+				c->size = v->mfocus->size;
+	
+	
 			} else {
-				tmpt = v->ft;
+				//make a new  track for it
+				while (tmpt->next != NULL) {tmpt = tmpt->next;};
+				//make track, 
+				struct track *nt = (struct track *) malloc(sizeof(struct track));
+				tmpt->next = nt;
+				nt->next = NULL;
+				nt->prev = tmpt;
+				nt->view = v;
+				nt->c = c;
+				nt->size = tmpt->size;
+				//set cont in it
+				c->track = nt;
+				c->next = NULL;
+				c->prev = NULL;
+				c->size = 100; //doesn't matter; layout will figure it out
+			
+			}; 
+		} else { //first client on view 
+			c->next = NULL;
+			c->prev = NULL;
+			c->track = v->ft;
+			v->ft->c = c;
+			if (v->orientv == true) {
+				c->size = cs->h;
+			} else {
+				c->size = cs->w;
 			};
-			tmpc = tmpt->c;
-		} while (tmpt != v->mfocus->track); 
-		if (btcnts < ctcnts && btcnts < trks + 1 && bestp) {
-			//put it in bestp
-			c->next = bestp->next;
-			c->prev = bestp;
-			bestp->next = c;
-			c->track = bestp->track;
-			c->size = bestp->size;
-		} else if (ctcnts < trks + 1) {
-			//put it after mfocus
+	
+		};
+	
+// Old version: just put window below window with focus
+	} else { 
+		if (v->mfocus != NULL) {
 			c->next = v->mfocus->next;
 			c->prev = v->mfocus;
-			if (v->mfocus->next) {
+			if (v->mfocus->next != NULL) {
 				v->mfocus->next->prev = c;
 			};
 			v->mfocus->next = c;
 			c->track = v->mfocus->track;
 			c->size = v->mfocus->size;
-
-
 		} else {
-			//make a new  track for it
-			while (tmpt->next != NULL) {tmpt = tmpt->next;};
-			//make track, 
-			struct track *nt = (struct track *) malloc(sizeof(struct track));
-			tmpt->next = nt;
-			nt->next = NULL;
-			nt->prev = tmpt;
-			nt->view = v;
-			nt->c = c;
-			nt->size = tmpt->size;
-			//set cont in it
-			c->track = nt;
+			//first client in view
 			c->next = NULL;
 			c->prev = NULL;
-			c->size = 100; //doesn't matter; layout will figure it out
-		
-		}; 
-	} else { //first client on view 
-		c->next = NULL;
-		c->prev = NULL;
-		c->track = v->ft;
-		v->ft->c = c;
-		if (v->orientv == true) {
-			c->size = cs->h;
-		} else {
-			c->size = cs->w;
+			c->track = v->ft;
+			v->ft->c = c;
+			if (v->orientv == true) {
+				c->size = cs->h;
+			} else {
+				c->size = cs->w;
+			};
 		};
-
+		c->win = p;
 	};
-
-/* Old version, a config variable in the furture may make it possible to choose which routine gets used for placement
-	if (v->mfocus != NULL) {
-		c->next = v->mfocus->next;
-		c->prev = v->mfocus;
-		if (v->mfocus->next != NULL) {
-			v->mfocus->next->prev = c;
-		};
-		v->mfocus->next = c;
-		c->track = v->mfocus->track;
-		c->size = v->mfocus->size;
-	} else {
-		//first client in view
-		c->next = NULL;
-		c->prev = NULL;
-		c->track = v->ft;
-		v->ft->c = c;
-		if (v->orientv == true) {
-			c->size = cs->h;
-		} else {
-			c->size = cs->w;
-		};
-	};
-	c->win = p;
+//
 	v->mfocus = c;
-*/
-v->mfocus = c;
 }
 
 void move_to_stack(struct cont *c) {
