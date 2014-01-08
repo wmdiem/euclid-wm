@@ -348,7 +348,12 @@ void spawn(char *cmd) {
 			close(ConnectionNumber(dpy));
 		};
 		setsid();
-		execl("/bin/sh","/bin/sh","-c",cmd,NULL);
+		char cmd2[264];
+		strcpy (&cmd2[0],"exec ");
+		strcpy (&cmd2[5],cmd);
+		int end = strlen (cmd2);
+		cmd2[end++] = '\0';
+		execl("/bin/sh","/bin/sh","-c",cmd2,NULL);
 		fprintf(stderr,"error number %d  spawning %s\n",errno,cmd);
 		exit(1);
 	} else {

@@ -18,5 +18,9 @@ fi
 
 #$CONFDIR/euclidrc 
 
+#start caching conffile while euclid loads
+
+cat $CONFDIR/euclid-wm.conf > /dev/null &
+
 exec euclid-wm
 #euclid-wm > ~/euclid-session.log
