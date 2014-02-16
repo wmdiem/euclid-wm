@@ -227,7 +227,7 @@ unsigned short offscreen = 0;			//we'll set this later so we know where to move 
 struct timeval last_redraw;			//we use this to keep track of whether events are triggered by euclid moving things around (e.g., if we move a window under the cursor we get an enter notify even, even though the pointer never moved) or whether we need to pay attention to them
 bool default_orientation = true; 		//which way do we initialize views with their tracks running?
 bool autobalance = false;			//is smart layout balancing enabled?
-
+bool win_menu = false; 				//if false use dmenu for to search windows, if true use euclid-menu, eventually we may phase dmenu out altogether
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -339,8 +339,7 @@ void load_defaults() {
 	// user defined
 }
 
-void spawn(char *cmd) {
-	if (cmd == NULL || cmd[0] == '\0') {
+void spawn(char *cmd) { if (cmd == NULL || cmd[0] == '\0') {
 		return;
 	};
 	if (fork() == 0) {
@@ -470,6 +469,8 @@ void load_conf( bool first_call) {
 				res_left = atoi(v);
 			} else if (strcmp(key,"reserved_right") == 0) {
 				res_right = atoi(v);
+			} else if (strcmp(key,"window_menu") == 0) {
+				win_menu = v;
 			} else if (strcmp(key,"modkey") == 0) {
 				if (strcmp(v,"1") == 0) {
 					mod = Mod1Mask;
@@ -1938,9 +1939,20 @@ void search_wins() {
 		
 		fclose(list);
 		FILE *ret;
-		char *com = malloc(strlen(fname) + 12);
-		strcpy(com,"dmenu -i < ");
-		strcat(com,fname);
+		char *com;
+		if (win_menu == false) { 
+			com = malloc(strlen(fname) + 12);
+			strcpy(com,"dmenu -i < ");
+			strcat(com,fname);
+
+		} else {
+
+			com = malloc(strlen(fname) + 35);
+			strcpy(com,"euclid-menu -l \".echo_file.sh ");
+			strcat(com,fname);
+			strcat(com," \" -r");
+
+		};
 		ret = (FILE *) popen(com,"r");
 		free(com);
 		
