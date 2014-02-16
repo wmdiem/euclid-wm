@@ -40,8 +40,14 @@ autobalance = true
 
 #RESIZE INCREMENT
 #the incremental change for each resize keypress (kinda)
-
 resize_increment = 30 
+
+#SEARCH WINDOW MENU
+#euclid can use either dmenu or euclid-menu to present a list of windows when searching
+#a non-zero value will result in euclid using euclid-menu
+#otherwise, euclid will use dmenu
+window_menu = 0
+
 
 #MODKEY
 #This is just a number, e.g, mod2 = 2. 
