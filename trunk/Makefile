@@ -18,9 +18,12 @@ LDFLAGS = -lX11 -lXinerama
 
 .PHONY: all install install_conf clean uninstall dist dist_clean
 
-all: euclid-wm
+all: euclid-wm euclid-menu
 
 euclid-wm: euclid-wm.c
+	${CC} $< ${LDFLAGS} ${CFLAGS} -o $@
+
+euclid-menu: euclid-menu.c
 	${CC} $< ${LDFLAGS} ${CFLAGS} -o $@
 
 noxinerama: euclid-wm.c
@@ -36,6 +39,12 @@ install: all
 	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION 2>/dev/null || echo "From SVN: `svn info | grep Revision: | cut -d ' ' -f2`/`date +%F`" >${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
 	@sed s_/usr/share_/${SHAREDIR}_ <start-euclid >start-euclid-local
 	@install -m755 start-euclid-local -D ${DESTDIR}/${BINDIR}/start-euclid
+	@install -m755 euclid-menu -D ${DESTDIR}/${BINDIR}/euclid-menu
+	@install -m755 ./handlers/c.sh -D  ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/c.sh
+	@install -m755 ./handlers/default.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/default.sh
+	@install -m755 ./handlers/.echo_file.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/.echo_file.sh
+
+
 
 install_conf:
 	@install -b -D -m600 euclid-wm.conf.sample ${CONFDIR}/euclid-wm.conf
@@ -45,11 +54,14 @@ uninstall:
 	rm -f ${DESTDIR}/${BINDIR}/euclid-wm
 	rm -f ${DESTDIR}/${SHAREDIR}/xsessions/euclid.desktop
 	rm -f ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
+	rm -f ${DESTDIR}/${BINDIR}/euclid-menu
+	rm -rf ${DESTDIR}/${SHAREDIR}/euclid-menu/
 
 clean:
 	rm -f euclid-wm
 	rm -f start-euclid-local
 	rm -f noxinerama
+	rm -f euclid-menu
 
 dist: 
 	mkdir ${DIST}	
