@@ -133,7 +133,7 @@ void draw_win ()  {
 	};
 	XSync(dpy,false);
 
-};
+}
 
 inline char* trim_name(char* file)  {
 	char * ret[32];
@@ -147,7 +147,8 @@ inline char* trim_name(char* file)  {
 	// printf("%s\n",ret);
 	return(ret);
 
-};
+}
+
 void load_handlers() {
 	//find xdg_config_home
 	/*char *xdgconf = getenv("XDG_CONFIG_HOME");
@@ -208,12 +209,12 @@ void load_handlers() {
 	//read all files
 	//store the names of all that are executable in a linked list
 	chdir(getenv("HOME")); //so when we run a program it isn't in a config dir. 
-};
+}
 
 inline char* find_handler() {
 	//read buf use an aray to pick the appropriate file handler and return the command
 //what is here now is a bit simple, we need to also check the end of the line to see whether the returned command is prompting for another handler (e.g., if the command takes a filename or a URL as an argument
-	if (buf[0] == '!') {
+	if (buf[0] == ':') {
 		if (buf[1] != '\0') {
 			//find match:
 			int i = 0;
@@ -241,14 +242,14 @@ inline char* find_handler() {
 					results[i] = (char *) malloc(strlen(handlers_trimmed[i] + 5));
 				};
 				if (strlen(handlers_trimmed[i]) +1 <= strlen(results[i])) {
-					strcpy(results[i],"!");
+					strcpy(results[i],":");
 					strcat(results[i],handlers_trimmed[i]);
 					
 				} else { 
 					results[i] = realloc(results[i],strlen(handlers_trimmed[i]) + 1);
 					
 					result_size[i] = strlen(handlers_trimmed[i]) + 1;
-					strcpy(results[i],"!");
+					strcpy(results[i],":");
 					strcat(results[i],handlers_trimmed[i]);
 				};
 				//printf("%s\n",results[i]);
@@ -282,7 +283,7 @@ inline char* find_handler() {
 		};
 		return(handlers[i]); //could be null;
 	};
-};
+}
 
 
 void setup_pipes(char *cmd) {
@@ -385,7 +386,7 @@ void update_options() {
 		if (fout) {
 			//printf("out is open\n");
 			int i = 1;
-			if (buf[0] == '!') { //trim handler name
+			if (buf[0] == ':') { //trim handler name
 				while (buf[i] != '\0' && buf[i-1] !=' ') {
 					i++;
 				};
@@ -607,9 +608,9 @@ char* loop () {
 				if (buf[0] == '\0' && strcmp(handler,"default")) {
 					//handler should be default, but isn't
 					handler = NULL;
-				} else if (buf[0] == '!' && buf[1] == '\0' ) {
+				} else if (buf[0] == ':' && buf[1] == '\0' ) {
 					handler = NULL;
-				} else if (buf[0] == '!') {
+				} else if (buf[0] == ':') {
 					int i = 0;
 					while (buf[i+1] != '\0' && handler[i] != '\0') {
 						if (buf[i+1] != handler[i] && buf[i+1] != ' ') {
@@ -636,7 +637,7 @@ char* loop () {
 		} while (XPending(dpy));
 	};	
 	return (t_exec);
-};
+}
 
 void clean_up() {
 	XFreeFontSet(dpy,xfs);
@@ -781,4 +782,4 @@ int main (int argc, char *argv[] ) {
 		return 0;
 	};
 
-};
+}
