@@ -2728,7 +2728,9 @@ int event_loop() {
 								s = s->next;
 							};
 							cs = s;
-							cs->v->mfocus = f;
+							if (cs != NULL) {
+								cs->v->mfocus = f;
+							};
 							redraw = true;
 						};
 					};
