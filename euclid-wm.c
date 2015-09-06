@@ -463,6 +463,8 @@ void load_conf( bool first_call) {
 				} else {
 					autobalance = false;
 				};
+			} else if (strcmp(key,"sloppy_focus") == 0) {
+				sloppy_focus = (strcmp(v,"true") == 0);
 			} else if (strcmp(key,"resize_increment") == 0) { 
 				resize_inc = atoi(v);
 			} else if (strcmp(key,"empty_stack_height") == 0) {

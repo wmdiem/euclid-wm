@@ -38,6 +38,12 @@ reserved_right = 0
 #If not true, euclid places new windows below the currently focused window
 autobalance = true
 
+#SLOPPY FOCUS
+#if set to true, euclid will automatically make window under mouse cursor focused
+#If not true, focus should be changed via keyboard
+#Note that new value of this option is applied to new windows
+sloppy_focus = true
+
 #RESIZE INCREMENT
 #the incremental change for each resize keypress (kinda)
 resize_increment = 30 
