@@ -1,0 +1,35 @@
+# Installation #
+
+Please ignore the naive automatic highlighting.
+
+
+```
+:~$ wget http://euclid-wm.googlecode.com/files/euclid-wm-0.1.1.tar.gz
+--2010-07-23 16:17:36--  http://euclid-wm.googlecode.com/files/euclid-wm-0.1.1.tar.gz
+Resolving euclid-wm.googlecode.com... 72.14.204.82
+Connecting to euclid-wm.googlecode.com|72.14.204.82|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 19832 (19K) [application/x-gzip]
+Saving to: “euclid-wm-0.1.1.tar.gz”
+
+100%[===================================================>] 19,832      54.7K/s   in 0.4s    
+
+2010-07-23 16:17:42 (54.7 KB/s) - “euclid-wm-0.1.1.tar.gz” saved [19832/19832]
+
+:~$ tar -xzf euclid-wm-0.1.1.tar.gz 
+:~$ cd euclid-wm-0.1.1/
+:~/euclid-wm-0.1.1$ make
+cc -pedantic -Wall -lX11 -O2 -std=c99 euclid-wm.c -o euclid-wm
+:~/euclid-wm-0.1.1$ su 
+Password: 
+:/home/wmdiem/euclid-wm-0.1.1# make install
+:/home/wmdiem/euclid-wm-0.1.1# suspend 
+[1]+  Stopped                 su
+:~/development/src/euclid-wm-0.1.1$ man euclid-wm 
+```
+
+If you use a display manger euclid-wm should now be in its list of sessions.
+If you use xinitrc, you should `exec start-euclid`.
+
+
+NOTE: you should either make sure you have dmenu and xterm installed prior to running euclid-wm, or you should edit the config file for euclid to use other tools to provide menu and terminal functions.

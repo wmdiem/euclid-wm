@@ -1,0 +1,184 @@
+# Introduction #
+This tutorial serves two purposes. First, it is a tutorial for people interested in learning how to use euclid-wm. Second it also serves as a quick way for those interested in euclid-wm to see how euclid works, before installing.
+
+
+# Details #
+
+Once installed, euclid-wm should show up in your display manager's list of sessions, so you can start is just like any other WM.
+
+Once euclid has started, you will be greated by a big empty screen. So far so good.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial-1.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial-1.png' height='160' width='256"' /> </a>
+
+To get some windows to manage we can do one of two things:
+
+> `<alt> + <enter>`
+
+will launch dmenu (assuming you have already installed it), and allow you to start any application you like.
+
+> `<alt> + <shift> + <enter>`
+
+will launch xterm, or whatever you define in euclid-wm.conf.
+
+**Caution**--if you haven't used dmenu before realize that it takes the keyboard focus until you close it (either by selecting an entry with `<enter>`, or by exiting it with `<escape>`.
+
+
+So let's start an xterm:
+
+> `<alt> + <shift> + <enter>`
+
+
+Now your whole screen will be a single xterm. euclid always expands windows to take up as much space as is available.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial2.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial2.png' height='160' width='256"' /> </a>
+
+Note the single pixel, blue border, this indicates that that window has focus. Of course since there is only one window it doesn't tell you much; So let's start another:
+
+> `<alt> + <shift> + <enter>`
+
+Now you should have two xterms, stacked one on top of the other, the bottom one (which btw, is the new one) should have a blue border indicating that it is focused.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial3.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial3.png' height='160' width='256"' /> </a>
+
+Go ahead and open 4 xterms so we can do some neat stuff:
+
+> `<alt> + <shift> + <enter>` (x2)
+
+Now we have four xterms, still stacked one on top of the other.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial4.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial4.png' height='160' width='256"' /> </a>
+
+This is a little-bit ridiculous, as the windows are getting somewhat short. So let's move the 3rd one from the bottom to a new "track".
+
+First, we have to focus it. Changing focus uses the standard h/j/k/l keys (left, up, down, right) with the alt key. So, assuming the focus is on the bottom (4th, window) we select the 3rd window with:
+
+> `<alt> + k`
+
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial5.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial5.png' height='160' width='256"' /> </a>
+
+Now we can move this window right. Moving windows the same keys as moving focus, except that it is distinguished with the addition of the `<shfit>` key. So to move this window right use:
+
+> `<alt> + <shift> + l`
+
+Now you will have two equal, vertically-oriented tracks. The one on the left has three stacked windows, the one on the right has a single window. The window on the right should still have focus.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial6.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial6.png' height='160' width='256"' /> </a>
+
+We can resize it using y/u/i/o Remember these are just like the standard movement keys, just shifted up a row. Think of them as moving the bottom right corner, so to make it wider move the bottom-right corner right. Hold:
+
+> `<alt> + o`
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial7.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial7.png' height='160' width='256"' /> </a>
+
+Maybe we need it way bigger:
+
+> `<alt> + <shift> + <space>`
+
+will toggle fullscreen.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial8.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial8.png' height='160' width='256"' /> </a>
+
+
+Now we are done with the middle window in the left column and wish to hid it for now, so we add it to the "stack". First we focus it:
+
+> `<alt> + h`
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial9.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial9.png' height='160' width='256"' /> </a>
+
+Then we minimize it to the stack:
+
+> `<alt> + .`
+
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial10.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial10.png' height='160' width='256"' /> </a>
+
+
+It should now be hidden, with the other two windows in the collumn taking up the extra space.
+
+Now it should be in the stack. You can toggle the stack's visibility with:
+
+> `<alt> + <shift> + <space>`
+
+We can add another window to the stack too:
+
+
+> `<alt> + .`
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial11.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial11.png' height='160' width='256"' /> </a>
+
+
+You can change stack focus by using
+
+> `<alt> + ;`
+
+to go up or
+
+> `<alt> + '`
+
+to go down.
+
+Bring one of them back:
+
+> `<alt> + ,`
+
+(Notice, , and . control putting windows into and out of the stack.)
+
+One last thing before moving on to view:
+
+> `<alt> + <tab>`
+
+will flip the orientation of the layout: a vertical layout becomes horizontal.
+
+<a href='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial12.png'><img src='http://euclid-wm.googlegroups.com/web/euclid-wm-tutorial12.png' height='160' width='256"' /> </a>
+
+
+Okay, now about views. They are actually really simple. Views are just euclid's version of virtual desktops.
+
+By default you are on view 1 (since you just started).
+
+So you can go to view 1, by hitting
+
+> `<alt> + 1`
+
+Pretty simple. Of course you were already on view one, so nothing changed. Try:
+
+> `<alt> + 3`
+
+This takes you to view 3. It's blank, since you haven't put any windows there. So go back to 1:
+> `<alt> + 1`
+
+Now send a window to 3:
+
+> `<alt> + <shift> + 3`
+
+Whichever window was focused should have just disappeared, but it didn't go far, don't worry:
+
+> `<alt> + 3`
+
+Now you should see your window. Now we will go back to 1 a different way:
+
+> `<alt> + n`
+
+takes us to the previous view, since there are only views 1 and 3, and we are on 3, the previous view is 1.
+
+But what if we want to insert 2? Let's send a window to 2:
+
+
+> `<alt> + <shift> + 2`
+
+Now go find it:
+
+> `<alt> + m`
+
+takes us to the next view, which is now 2. Do it again to see 3:
+
+> `<alt> + m`
+
+etc.
+
+You can read all the keybindings on the man page.
+You can configure them (and lots of other things) in euclid-wm.conf.
+
+
+
