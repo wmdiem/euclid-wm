@@ -339,13 +339,19 @@ void load_defaults() {
 	// user defined
 }
 
-void spawn(char *cmd) { if (cmd == NULL || cmd[0] == '\0') {
+void spawn(char *cmd) {
+	if (cmd == NULL || cmd[0] == '\0') {
 		return;
 	};
 	if (fork() == 0) {
 		if (dpy != NULL) {
 			close(ConnectionNumber(dpy));
 		};
+
+		// restore default handling of SIGCHLD signal to allow shell function
+		// properly
+		signal(SIGCHLD, SIG_DFL);
+
 		setsid();
 		char cmd2[264];
 		strcpy (&cmd2[0],"exec ");
