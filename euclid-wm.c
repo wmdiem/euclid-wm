@@ -2727,8 +2727,8 @@ int event_loop() {
 							while (s != NULL && s->v != f->track->view) {
 								s = s->next;
 							};
-							cs = s;
-							if (cs != NULL) {
+							if (s != NULL) {
+								cs = s;
 								cs->v->mfocus = f;
 							};
 							redraw = true;
