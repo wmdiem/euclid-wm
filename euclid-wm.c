@@ -173,6 +173,7 @@ struct win {
 	bool last_only_chld; //last time this window was mapped, was it in its own track?
 	int last_tpos; // we will store the last track and cont coords for the CENTER of the window here to allow semi-persistence
 	int last_cpos;
+	struct cont *prev_focus; // container of previously focused window (needs validity check before use)
 };
 
 struct stack_item { //items in the stack are doubly linked per view
@@ -758,10 +759,24 @@ void addscreen(short h, short w, short x, short y, short n) {
 	XSync(dpy,False);
 }
 
+//checks whether cont is part of the specified view
+bool view_contains_win(struct view *v, struct cont *cont) {
+	for (struct track *t = v->ft; t != NULL; t = t->next) {
+		for (struct cont *c = t->c; c != NULL; c = c->next) {
+			if (c == cont) {
+				return true;
+			};
+		};
+	};
+	return false;
+}
+
 void remove_cont(struct cont *c) {
 	struct win *w = c->win;
-	//reset focus if necessary
-	if (c->prev != NULL) {
+	//reset focus if necessary (prefer previously focused container if it's in the same view)
+	if (w->prev_focus != NULL && view_contains_win(c->track->view, w->prev_focus)) {
+		c->track->view->mfocus = w->prev_focus;
+	} else if (c->prev != NULL) {
 		c->track->view->mfocus = c->prev;
 	} else if (c->next != NULL) {
 		c->track->view->mfocus = c->next;
@@ -888,6 +903,7 @@ struct win * add_win(Window  id) {
 	p->last_cpos = 0;
 	p->last_only_chld = false;
 	p->cont = NULL;
+	p->prev_focus = NULL;
 	return p;
 }
 
@@ -2815,9 +2831,12 @@ int event_loop() {
 
 				if (w == NULL) { //window was unknown, add it
 					w = add_win(ev.xmap.window);
+					w->prev_focus = cs->v->mfocus;
 					//need to get the win struct to pass to 
 					//add_client_to_view;
 				} else { //window is known
+					//reset pointer to previously focused container on window move
+					w->prev_focus = NULL;
 					//remove from where it previously was, unless where it previously was is already on a screen (Which shouldn't happen, since then it would already have been mapped)
 					if (w->cont) { //it is in a layout somewhere
 						struct cont *c = w->cont;
