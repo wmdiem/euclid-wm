@@ -101,7 +101,7 @@ char *tempnam(char *,char*);
 #define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
 
 //number of builtin commands
-#define BCMDS 55
+#define BCMDS 56
 //maximum number of supported custom commands
 #define CCMDS 99
 //total maximum number of commands
@@ -229,6 +229,7 @@ struct timeval last_redraw;			//we use this to keep track of whether events are 
 bool default_orientation = true; 		//which way do we initialize views with their tracks running?
 bool autobalance = false;			//is smart layout balancing enabled?
 bool win_menu = false; 				//if false use dmenu for to search windows, if true use euclid-menu, eventually we may phase dmenu out altogether
+int last_view_idx = 1; //index of the last seen view
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -336,6 +337,9 @@ void load_defaults() {
 
 	//bind search
 	bind_key("slash",&mods, &bindings[54]);
+
+	//go to previous view
+	bind_key("backslash",&mod, &bindings[55]);
 
 	// user defined
 }
@@ -620,6 +624,8 @@ void load_conf( bool first_call) {
 					bindx = 53;
 				}else if (strcmp(key,"bind_search") == 0) {
 					bindx = 54;
+				} else if (strcmp(key,"bind_move_to_last_view") == 0) {
+					bindx = 55;
 				} else if (strncmp(key,"bind_custom_", 12) == 0) {
 					const int ccmd_index = atoi(&key[12]) - 1;
 					if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
@@ -1774,6 +1780,8 @@ void goto_view(struct view *v) {
 		s = s->next;
 	};
 
+	last_view_idx = cs->v->idx;
+
 	struct track *t;
 	struct cont *c;
 
@@ -2691,10 +2699,12 @@ int event_loop() {
 						};
 						break;
 					case 54:
-						search_wins();	
+						search_wins();
 						redraw = true;
-				
-
+						break;
+					case 55:
+						goto_view(find_view(last_view_idx));
+						redraw = true;
 						break;
 
 					default:
