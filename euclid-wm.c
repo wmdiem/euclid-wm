@@ -215,6 +215,8 @@ Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
+Atom current_desktop;
+Atom utf8;
 char *dcmd = NULL;				//string that gets passed to /bin/sh when we invoke the menu
 char *tcmd = NULL;				//string that gets passed to /bin/sh when we invoke the terminal
 char *ccmds[CCMDS];				//array of strings that can be set by the user to pass to /bin/sh
@@ -695,14 +697,15 @@ void set_atoms() {
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wm_change_state = XInternAtom(dpy,"_NET_WM_STATE",False);
 	wm_fullscreen = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+	current_desktop = XInternAtom(dpy,"_NET_CURRENT_DESKTOP",False);
+	utf8 = XInternAtom(dpy,"UTF8_STRING",False);
 	Atom wm_supported = XInternAtom(dpy,"_NET_SUPPORTED",False);
 	Atom wm_check = XInternAtom(dpy,"_NET_SUPPORTING_WM_CHECK",False);
 	Atom wm_name = XInternAtom(dpy,"_NET_WM_NAME",False);
-	Atom utf8 = XInternAtom(dpy,"UTF8_STRING",False);
-	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen};
+	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen, current_desktop};
 	XChangeProperty(dpy,root,wm_check,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
 	XChangeProperty(dpy,root,wm_name,utf8,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
-	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,4);
+	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,ARRAY_LEN(supported));
 	XSync(dpy,False);
 }
 
@@ -1768,6 +1771,12 @@ struct view * find_view(int i) {
 	return(v);
 }
 
+void set_desktop_name(int i) {
+	char desktop_name[128];
+	snprintf(desktop_name, sizeof(desktop_name), "%d", i);
+	XChangeProperty(dpy,root,current_desktop,utf8,8,PropModeReplace,(unsigned char *) desktop_name,strlen(desktop_name));
+}
+
 void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
 	//sets cs->v
@@ -1820,6 +1829,8 @@ void goto_view(struct view *v) {
 	cs->v = v;
 
 	gettimeofday(&last_redraw,0);
+
+	set_desktop_name(v->idx);
 }
 
 
@@ -3348,5 +3359,7 @@ int main() {
 
 	layout();
 	
+	set_desktop_name(1);
+
 	return (event_loop());
 }
