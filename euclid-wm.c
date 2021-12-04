@@ -916,26 +916,8 @@ struct win * add_win(Window  id) {
 	return p;
 }
 
-void forget_win (Window id) {
-	//first see whether we have a record of it
-	if (first_win == NULL) {
-		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n",id);
-		return;
-	};
-	struct win * w = first_win;
-	struct win * w2 = first_win;
-	if (w->id != id) {
-		while (w->next != NULL && w->next->id != id) {
-			w = w->next;
-		};
-		w2 = w; //this should be the win struct before the one we are deleting
-		w = w->next;
-	}; 
-	
-	if (w == NULL) { 
-		return;
-	};
-	//we have the win struct stored in w;
+// finds window in layout and removes it (possibly removing its parent track)
+void erase_win (struct win * w) {
 	struct view *v = fv;
 	struct track *t;
 	struct cont *c;
@@ -1003,6 +985,8 @@ void forget_win (Window id) {
 						};
 						free(c);
 					};
+
+                    return;
 				};
 				c = c->next;
 			};
@@ -1010,8 +994,31 @@ void forget_win (Window id) {
 		};
 		v = v->next;
 	};
+}
+
+void forget_win (Window id) {
+	//first see whether we have a record of it
+	if (first_win == NULL) {
+		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n",id);
+		return;
+	};
+	struct win * w = first_win;
+	struct win * w2 = first_win;
+	if (w->id != id) {
+		while (w->next != NULL && w->next->id != id) {
+			w = w->next;
+		};
+		w2 = w; //this should be the win struct before the one we are deleting
+		w = w->next;
+	}; 
+	
+	if (w == NULL) { 
+		return;
+	};
+
+    erase_win(w);
 	//we also need to check the stacks:
-	v = fv;
+	struct view *v = fv;
 	struct stack_item *s = NULL;
 	while (v != NULL) {
 		s = v->stack;
