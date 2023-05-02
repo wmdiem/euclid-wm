@@ -138,6 +138,9 @@ bind_goto_next_screen = M Next
 #search for a window via dmenu
 bind_search = MS slash
 
+#switch to last view
+bind_move_to_last_view = M backslash
+
 #CUSTOM HOTKEYS
 #euclid supports up to 99 hotkeys, bound to external commands
 #the format for the binding is: bind_custom_[01-99] = [M | MS | N] [keyname] (just like normal bindings)

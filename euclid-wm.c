@@ -101,7 +101,7 @@ char *tempnam(char *,char*);
 #define ARRAY_LEN(x) (sizeof(x)/sizeof((x)[0]))
 
 //number of builtin commands
-#define BCMDS 55
+#define BCMDS 56
 //maximum number of supported custom commands
 #define CCMDS 99
 //total maximum number of commands
@@ -173,6 +173,7 @@ struct win {
 	bool last_only_chld; //last time this window was mapped, was it in its own track?
 	int last_tpos; // we will store the last track and cont coords for the CENTER of the window here to allow semi-persistence
 	int last_cpos;
+	struct cont *prev_focus; // container of previously focused window (needs validity check before use)
 };
 
 struct stack_item { //items in the stack are doubly linked per view
@@ -214,6 +215,8 @@ Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
+Atom current_desktop;
+Atom utf8;
 char *dcmd = NULL;				//string that gets passed to /bin/sh when we invoke the menu
 char *tcmd = NULL;				//string that gets passed to /bin/sh when we invoke the terminal
 char *ccmds[CCMDS];				//array of strings that can be set by the user to pass to /bin/sh
@@ -228,6 +231,7 @@ struct timeval last_redraw;			//we use this to keep track of whether events are 
 bool default_orientation = true; 		//which way do we initialize views with their tracks running?
 bool autobalance = false;			//is smart layout balancing enabled?
 bool win_menu = false; 				//if false use dmenu for to search windows, if true use euclid-menu, eventually we may phase dmenu out altogether
+int last_view_idx = 1; //index of the last seen view
 
 //records the keycode in appropriate array
 void bind_key(char s[12], unsigned int *m, struct binding *b) {
@@ -335,6 +339,9 @@ void load_defaults() {
 
 	//bind search
 	bind_key("slash",&mods, &bindings[54]);
+
+	//go to previous view
+	bind_key("backslash",&mod, &bindings[55]);
 
 	// user defined
 }
@@ -619,6 +626,8 @@ void load_conf( bool first_call) {
 					bindx = 53;
 				}else if (strcmp(key,"bind_search") == 0) {
 					bindx = 54;
+				} else if (strcmp(key,"bind_move_to_last_view") == 0) {
+					bindx = 55;
 				} else if (strncmp(key,"bind_custom_", 12) == 0) {
 					const int ccmd_index = atoi(&key[12]) - 1;
 					if (ccmd_index >= 0 && ccmd_index < ARRAY_LEN(ccmds)) {
@@ -688,14 +697,15 @@ void set_atoms() {
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wm_change_state = XInternAtom(dpy,"_NET_WM_STATE",False);
 	wm_fullscreen = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+	current_desktop = XInternAtom(dpy,"_NET_CURRENT_DESKTOP",False);
+	utf8 = XInternAtom(dpy,"UTF8_STRING",False);
 	Atom wm_supported = XInternAtom(dpy,"_NET_SUPPORTED",False);
 	Atom wm_check = XInternAtom(dpy,"_NET_SUPPORTING_WM_CHECK",False);
 	Atom wm_name = XInternAtom(dpy,"_NET_WM_NAME",False);
-	Atom utf8 = XInternAtom(dpy,"UTF8_STRING",False);
-	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen};
+	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen, current_desktop};
 	XChangeProperty(dpy,root,wm_check,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
 	XChangeProperty(dpy,root,wm_name,utf8,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
-	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,4);
+	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,ARRAY_LEN(supported));
 	XSync(dpy,False);
 }
 
@@ -758,10 +768,24 @@ void addscreen(short h, short w, short x, short y, short n) {
 	XSync(dpy,False);
 }
 
+//checks whether cont is part of the specified view
+bool view_contains_win(struct view *v, struct cont *cont) {
+	for (struct track *t = v->ft; t != NULL; t = t->next) {
+		for (struct cont *c = t->c; c != NULL; c = c->next) {
+			if (c == cont) {
+				return true;
+			};
+		};
+	};
+	return false;
+}
+
 void remove_cont(struct cont *c) {
 	struct win *w = c->win;
-	//reset focus if necessary
-	if (c->prev != NULL) {
+	//reset focus if necessary (prefer previously focused container if it's in the same view)
+	if (w->prev_focus != NULL && view_contains_win(c->track->view, w->prev_focus)) {
+		c->track->view->mfocus = w->prev_focus;
+	} else if (c->prev != NULL) {
 		c->track->view->mfocus = c->prev;
 	} else if (c->next != NULL) {
 		c->track->view->mfocus = c->next;
@@ -888,29 +912,12 @@ struct win * add_win(Window  id) {
 	p->last_cpos = 0;
 	p->last_only_chld = false;
 	p->cont = NULL;
+	p->prev_focus = NULL;
 	return p;
 }
 
-void forget_win (Window id) {
-	//first see whether we have a record of it
-	if (first_win == NULL) {
-		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n",id);
-		return;
-	};
-	struct win * w = first_win;
-	struct win * w2 = first_win;
-	if (w->id != id) {
-		while (w->next != NULL && w->next->id != id) {
-			w = w->next;
-		};
-		w2 = w; //this should be the win struct before the one we are deleting
-		w = w->next;
-	}; 
-	
-	if (w == NULL) { 
-		return;
-	};
-	//we have the win struct stored in w;
+// finds window in layout and removes it (possibly removing its parent track)
+void erase_win (struct win * w) {
 	struct view *v = fv;
 	struct track *t;
 	struct cont *c;
@@ -978,6 +985,8 @@ void forget_win (Window id) {
 						};
 						free(c);
 					};
+
+                    return;
 				};
 				c = c->next;
 			};
@@ -985,8 +994,31 @@ void forget_win (Window id) {
 		};
 		v = v->next;
 	};
+}
+
+void forget_win (Window id) {
+	//first see whether we have a record of it
+	if (first_win == NULL) {
+		fprintf(stderr,"euclid-wm: cannot remove window %6.0lx, internal data structure is corrpupt or there are not windows being managed (no first_win defined)\n",id);
+		return;
+	};
+	struct win * w = first_win;
+	struct win * w2 = first_win;
+	if (w->id != id) {
+		while (w->next != NULL && w->next->id != id) {
+			w = w->next;
+		};
+		w2 = w; //this should be the win struct before the one we are deleting
+		w = w->next;
+	}; 
+	
+	if (w == NULL) { 
+		return;
+	};
+
+    erase_win(w);
 	//we also need to check the stacks:
-	v = fv;
+	struct view *v = fv;
 	struct stack_item *s = NULL;
 	while (v != NULL) {
 		s = v->stack;
@@ -1746,6 +1778,12 @@ struct view * find_view(int i) {
 	return(v);
 }
 
+void set_desktop_name(int i) {
+	char desktop_name[128];
+	snprintf(desktop_name, sizeof(desktop_name), "%d", i);
+	XChangeProperty(dpy,root,current_desktop,utf8,8,PropModeReplace,(unsigned char *) desktop_name,strlen(desktop_name));
+}
+
 void goto_view(struct view *v) {
 	//this just unmaps the windows of the current view
 	//sets cs->v
@@ -1757,6 +1795,8 @@ void goto_view(struct view *v) {
 		if (s->v == v) {return;};
 		s = s->next;
 	};
+
+	last_view_idx = cs->v->idx;
 
 	struct track *t;
 	struct cont *c;
@@ -1796,6 +1836,8 @@ void goto_view(struct view *v) {
 	cs->v = v;
 
 	gettimeofday(&last_redraw,0);
+
+	set_desktop_name(v->idx);
 }
 
 
@@ -2675,10 +2717,12 @@ int event_loop() {
 						};
 						break;
 					case 54:
-						search_wins();	
+						search_wins();
 						redraw = true;
-				
-
+						break;
+					case 55:
+						goto_view(find_view(last_view_idx));
+						redraw = true;
 						break;
 
 					default:
@@ -2815,9 +2859,12 @@ int event_loop() {
 
 				if (w == NULL) { //window was unknown, add it
 					w = add_win(ev.xmap.window);
+					w->prev_focus = cs->v->mfocus;
 					//need to get the win struct to pass to 
 					//add_client_to_view;
 				} else { //window is known
+					//reset pointer to previously focused container on window move
+					w->prev_focus = NULL;
 					//remove from where it previously was, unless where it previously was is already on a screen (Which shouldn't happen, since then it would already have been mapped)
 					if (w->cont) { //it is in a layout somewhere
 						struct cont *c = w->cont;
@@ -3319,5 +3366,7 @@ int main() {
 
 	layout();
 	
+	set_desktop_name(1);
+
 	return (event_loop());
 }
