@@ -485,7 +485,7 @@ void load_conf( bool first_call) {
 			} else if (strcmp(key,"reserved_right") == 0) {
 				res_right = atoi(v);
 			} else if (strcmp(key,"window_menu") == 0) {
-				win_menu = v;
+				win_menu = atoi(v);
 			} else if (strcmp(key,"modkey") == 0) {
 				if (strcmp(v,"1") == 0) {
 					mod = Mod1Mask;
