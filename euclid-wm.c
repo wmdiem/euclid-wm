@@ -2308,6 +2308,7 @@ void layout() {
 			};
 		};
 		s = s->next;
+		XSync(dpy,false);
 	};
 }
 
