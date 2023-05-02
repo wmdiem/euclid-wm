@@ -18,7 +18,8 @@ LDFLAGS = -lX11 -lXinerama
 
 .PHONY: all install install_conf clean uninstall dist dist_clean
 
-all: euclid-wm euclid-menu
+#all: euclid-wm euclid-menu
+all: euclid-wm 
 
 euclid-wm: euclid-wm.c
 	${CC} $< ${LDFLAGS} ${CFLAGS} -o $@
@@ -36,13 +37,13 @@ install: all
 	@install -m644 euclid.1 -D ${DESTDIR}/${MANDIR}/man1/euclid-wm.1
 	@install -m644 euclid-wm.conf.sample -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclid-wm.conf
 	@install -m644 euclidrc -D -b ${DESTDIR}/${SHAREDIR}/euclid-wm/euclidrc
-	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION 2>/dev/null || echo "From SVN: `svn info | grep Revision: | cut -d ' ' -f2`/`date +%F`" >${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
+	@install -m644 VERSION -D ${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION 2>/dev/null || echo "From git: `git show --format="%H" --no-patch`/`date +%F`" >${DESTDIR}/${SHAREDIR}/euclid-wm/VERSION
 	@sed s_/usr/share_/${SHAREDIR}_ <start-euclid >start-euclid-local
 	@install -m755 start-euclid-local -D ${DESTDIR}/${BINDIR}/start-euclid
-	@install -m755 euclid-menu -D ${DESTDIR}/${BINDIR}/euclid-menu
-	@install -m755 ./handlers/c.sh -D  ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/c.sh
-	@install -m755 ./handlers/default.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/default.sh
-	@install -m755 ./handlers/.echo_file.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/.echo_file.sh
+	#@install -m755 euclid-menu -D ${DESTDIR}/${BINDIR}/euclid-menu
+	#@install -m755 ./handlers/c.sh -D  ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/c.sh
+	#@install -m755 ./handlers/default.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/default.sh
+	#@install -m755 ./handlers/.echo_file.sh -D ${DESTDIR}/${SHAREDIR}/euclid-menu/handlers/.echo_file.sh
 
 
 
