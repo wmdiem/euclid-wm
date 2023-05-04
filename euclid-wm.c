@@ -215,6 +215,7 @@ Atom wm_take_focus;
 Atom wm_prot;
 Atom wm_change_state;
 Atom wm_fullscreen;
+Atom wm_dock;
 Atom current_desktop;
 Atom utf8;
 char *dcmd = NULL;				//string that gets passed to /bin/sh when we invoke the menu
@@ -697,12 +698,14 @@ void set_atoms() {
 	wm_prot = XInternAtom(dpy, "WM_PROTOCOLS", False);
 	wm_change_state = XInternAtom(dpy,"_NET_WM_STATE",False);
 	wm_fullscreen = XInternAtom(dpy,"_NET_WM_STATE_FULLSCREEN",False);
+	wm_dock = XInternAtom(dpy,"_NET_WM_WINDOW_TYPE_DOCK",False);
 	current_desktop = XInternAtom(dpy,"_NET_CURRENT_DESKTOP",False);
 	utf8 = XInternAtom(dpy,"UTF8_STRING",False);
+	Atom wm_win_type = XInternAtom(dpy,"_NET_WM_WINDOW_TYPE",False);
 	Atom wm_supported = XInternAtom(dpy,"_NET_SUPPORTED",False);
 	Atom wm_check = XInternAtom(dpy,"_NET_SUPPORTING_WM_CHECK",False);
 	Atom wm_name = XInternAtom(dpy,"_NET_WM_NAME",False);
-	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen, current_desktop};
+	Atom supported[] = {wm_supported, wm_name, wm_change_state, wm_fullscreen, wm_win_type, current_desktop};
 	XChangeProperty(dpy,root,wm_check,XA_WINDOW,32,PropModeReplace,(unsigned char *)&root,1);
 	XChangeProperty(dpy,root,wm_name,utf8,8,PropModeReplace,(unsigned char *) "LG3D",strlen("LG3D"));
 	XChangeProperty(dpy,root,wm_supported,XA_ATOM,32,PropModeReplace,(unsigned char *) supported,ARRAY_LEN(supported));
@@ -1361,20 +1364,43 @@ bool is_top_level(Window id) {
 		return(false);
 	};
 	int i;
+	//what we are doing here is seeing if it is a child of the root window or not. 
 	for (i = 0; i < nc; i++) {
 		if (c[i] == id) {
+			//this is a child of the root window, so we are potentially interested. 
+			XFree(c);
 			XWindowAttributes wa;
 			XGetWindowAttributes(dpy,id,&wa);
 			if (gxerror == true) {
 				gxerror = false;
-				XFree(c);
 				return(false);
 			};
+			
 			if (wa.override_redirect == true) {
-				XFree(c);
 				return(false);
+			}; 
+			//here check if it has declared itself a dock--in which case, let it manage itself. 
+			Atom actual_type;
+   			int actual_format;
+			unsigned long nitems, bytes_after;
+   			unsigned char *prop;
+			Atom net_wm_type = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
+			if (XGetWindowProperty(dpy, id, net_wm_type, 0L, 1L, False,
+                              XA_ATOM, &actual_type, &actual_format, &nitems,
+                              &bytes_after, &prop) == Success && prop) {
+				Atom *atoms = (Atom*)prop;
+		            	Atom atom = atoms[0];
+				if (atom == wm_dock) {
+					printf("New window presenting as a dock--not managing\n");
+					XFree(prop);
+					return (false);
+				} else {
+					XFree(prop);
+					return(true);
+				}	
+			
 			} else {
-				XFree(c);
+				//atom was not set, so treat as top level.
 				return(true);
 			};
 		};
