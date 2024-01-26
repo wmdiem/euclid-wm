@@ -1026,6 +1026,9 @@ void forget_win (Window id) {
 	while (v != NULL) {
 		s = v->stack;
 		while (s != NULL) {
+			//storing this in case the entry will get free()'d
+			struct stack_item *next_s = s->next;
+
 			if (s->win == w) {
 				if (s == v->stack) {
 					v->stack = s->next;
@@ -1048,7 +1051,8 @@ void forget_win (Window id) {
 				};
 				free(s);
 			};
-			s = s->next;
+
+			s = next_s;
 		};
 		v = v->next;
 	};
